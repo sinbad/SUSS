@@ -25,7 +25,12 @@ public class SUSS : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core"
+				"Core",
+				"Engine",
+				"CoreUObject",
+                "AIModule",
+                "GameplayTags",
+                "NavigationSystem"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
