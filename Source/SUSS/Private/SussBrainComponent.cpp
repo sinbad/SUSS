@@ -1,5 +1,6 @@
 ﻿#include "SussBrainComponent.h"
 
+#include "AIController.h"
 #include "SussSettings.h"
 #include "SussWorldSubsystem.h"
 
@@ -50,5 +51,31 @@ void USussBrainComponent::Update()
 
 	bQueuedForUpdate = false;
 	TimeSinceLastUpdate = 0;
+}
+
+AAIController* USussBrainComponent::GetAIController() const
+{
+	if (const auto Cached = AiController.Get())
+	{
+		return Cached;
+	}
+
+	AAIController* Found = Cast<AAIController>(GetOwner());
+	if (!Found)
+	{
+		if (const APawn* Pawn = Cast<APawn>(GetOwner()))
+		{
+			Found = Cast<AAIController>(Pawn->GetController());
+		}
+	}
+
+	if (Found)
+	{
+		AiController = Found;
+		return Found;
+	}
+
+	return nullptr;
+	
 }
 

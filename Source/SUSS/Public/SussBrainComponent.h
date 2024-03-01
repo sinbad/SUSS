@@ -22,6 +22,7 @@ protected:
 	float TimeSinceLastUpdate;
 
 	float CachedUpdateRequestTime;
+	mutable TWeakObjectPtr<AAIController> AiController;
 
 public:
 	// Sets default values for this component's properties
@@ -31,6 +32,10 @@ public:
 	bool NeedsUpdate() const { return bQueuedForUpdate; }
 	/// Update function which triggers an evaluation & action decision
 	void Update();
+
+	/// Get the AI controller associated with the actor that owns this brain
+	UFUNCTION(BlueprintCallable)
+	AAIController* GetAIController() const;
 
 protected:
 	// Called when the game starts
