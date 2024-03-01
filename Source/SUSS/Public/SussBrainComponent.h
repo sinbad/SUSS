@@ -3,9 +3,41 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SussAction.h"
+#include "SussContext.h"
 #include "Runtime/AIModule/Classes/BrainComponent.h"
 #include "SussBrainComponent.generated.h"
 
+USTRUCT()
+struct FSussActionDef
+{
+	GENERATED_BODY()
+
+	// The action which is going to be called
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<USussAction> ActionClass;
+
+	// .. Considerations
+
+	// .. Post-consideration re-weight
+
+	// .. Priority
+
+	
+};
+
+/// Output result of an action+context pair being considered; only recorded if score > 0
+USTRUCT()
+struct FActionConsiderationResult
+{
+	GENERATED_BODY()
+
+public:
+	FSussActionDef* Def;
+	FSussContext Context;
+	float Score;
+	
+};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SUSS_API USussBrainComponent : public UBrainComponent
@@ -20,6 +52,10 @@ protected:
 	/// Time that has elapsed since the last brain update
 	UPROPERTY(BlueprintReadOnly)
 	float TimeSinceLastUpdate;
+
+	/// The action definitions
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FSussActionDef> ActionDefs;
 
 	float CachedUpdateRequestTime;
 	mutable TWeakObjectPtr<AAIController> AiController;
