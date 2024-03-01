@@ -41,10 +41,10 @@ public:
 
 	/// Min and max values of interest of the input, which normalises the range
 	UPROPERTY(EditDefaultsOnly)
-	FVector2f Bookends;
+	FVector2f Bookends = FVector2f(0,100);
 
 	UPROPERTY(EditDefaultsOnly)
-	ESussCurveType CurveType;
+	ESussCurveType CurveType = ESussCurveType::Linear;
 
 	/// If curve is not custom, the parameters which change how the curve behaves (m,k,b,c)
 	/// m = slope
