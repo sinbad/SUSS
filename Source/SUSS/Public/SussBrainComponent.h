@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "SussAction.h"
+#include "SussConsideration.h"
 #include "SussContext.h"
 #include "Runtime/AIModule/Classes/BrainComponent.h"
 #include "SussBrainComponent.generated.h"
@@ -17,7 +18,8 @@ struct FSussActionDef
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<USussAction> ActionClass;
 
-	// .. Considerations
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FSussConsideration> Considerations;
 
 	// .. Post-consideration re-weight
 
