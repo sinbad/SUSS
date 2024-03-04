@@ -3,13 +3,13 @@
 
 #include "SussInputProvider.h"
 
-void USussInputProvider::GenerateContexts(AActor* Self, TArray<FSussContext>& OutputContexts) const
+void USussInputProvider::GenerateContexts_Implementation(AActor* SelfActor, TArray<FSussContext>& OutputContexts) const
 {
 	// By default, generate a single context
-	OutputContexts.Add(FSussContext {Self});
+	OutputContexts.Add(FSussContext {SelfActor});
 }
 
-float USussInputProvider::Evaluate(const FSussContext& Context) const 
+float USussInputProvider::Evaluate_Implementation(const FSussContext& Context) const 
 {
 	return 0;
 }

@@ -39,9 +39,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, meta=(Categories="Suss.Input"))
 	FGameplayTag InputTag;
 
-	/// Min and max values of interest of the input, which normalises the range
+	/// Optional input float parameters to the input provider for the chosen InputTag
 	UPROPERTY(EditDefaultsOnly)
-	FVector2f Bookends = FVector2f(0,100);
+	TArray<float> InputFloatParams;
+
+	/// Min and max values of interest of the input, which can re-normalise the range.
+	/// Note: your input may be doing its own normalisation; this is mainly when you want to access raw values
+	UPROPERTY(EditDefaultsOnly)
+	FVector2f Bookends = FVector2f(0,1);
 
 	UPROPERTY(EditDefaultsOnly)
 	ESussCurveType CurveType = ESussCurveType::Linear;

@@ -35,8 +35,10 @@ public:
 	const FGameplayTag& GetGameplayTag() const { return GameplayTag; }
 
 	/// Generate a list of contexts based on what variants this input can provide
-	void GenerateContexts(AActor* Self, TArray<FSussContext>& OutputContexts) const;
+	UFUNCTION(BlueprintNativeEvent)	
+	void GenerateContexts(AActor* SelfActor, TArray<FSussContext>& OutputContexts) const;
 
 	/// Evaluate the input given a context
+	UFUNCTION(BlueprintNativeEvent)	
 	float Evaluate(const FSussContext& Context) const;
 };
