@@ -4,6 +4,7 @@
 #include "SussBrainComponent.h"
 #include "SussCommon.h"
 #include "SussSettings.h"
+#include "SussTimeMeasurement.h"
 
 USussWorldSubsystem::USussWorldSubsystem()
 {
@@ -30,7 +31,7 @@ void USussWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 TStatId USussWorldSubsystem::GetStatId() const
 {
-	RETURN_QUICK_DECLARE_CYCLE_STAT(USussWorldSubsystem, STATGROUP_Tickables);
+	RETURN_QUICK_DECLARE_CYCLE_STAT(USussWorldSubsystem, STATGROUP_SUSS);
 }
 
 void USussWorldSubsystem::Tick(float DeltaTime)
@@ -44,9 +45,14 @@ void USussWorldSubsystem::QueueBrainUpdate(USussBrainComponent* Brain)
 }
 
 
+DECLARE_CYCLE_STAT(TEXT("SUSS Brain Update"), STAT_SUSS_BrainUpdate, STATGROUP_SUSS);
+
 void USussWorldSubsystem::UpdateBrains()
 {
-	const double StartTime = GetWorld()->GetTimeSeconds();
+	SCOPE_CYCLE_COUNTER(STAT_SUSS_BrainUpdate);
+
+	FSussScopedPerfTimer Timer;
+	
 	while (!BrainsToUpdate.IsEmpty())
 	{
 		TWeakObjectPtr<USussBrainComponent> Brain;
@@ -56,8 +62,9 @@ void USussWorldSubsystem::UpdateBrains()
 		{
 			Brain->Update();
 		}
+		
 		// Time limit
-		if (GetWorld()->GetTimeSeconds() - StartTime >= CachedFrameTimeBudgetMs)
+		if (Timer.Milliseconds() >= CachedFrameTimeBudgetMs)
 			break;
 	}
 }
