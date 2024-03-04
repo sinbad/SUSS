@@ -6,13 +6,13 @@
 #include "GameplayTagContainer.h"
 #include "SussInputProvider.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "SussEngineSubsystem.generated.h"
+#include "SussGameSubsystem.generated.h"
 
 /**
  * Global subsystem that's mainly used to register providers that should remain regardless of Game Instances or World
  */
 UCLASS()
-class SUSS_API USussEngineSubsystem : public UGameInstanceSubsystem
+class SUSS_API USussGameSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
@@ -33,13 +33,13 @@ public:
 	USussInputProvider* GetInputProvider(const FGameplayTag& Tag);
 };
 
-inline USussEngineSubsystem* GetSUSS(UWorld* WorldContext)
+inline USussGameSubsystem* GetSUSS(UWorld* WorldContext)
 {
 	if (IsValid(WorldContext) && WorldContext->IsGameWorld())
 	{
 		auto GI = WorldContext->GetGameInstance();
 		if (IsValid(GI))
-			return GI->GetSubsystem<USussEngineSubsystem>();		
+			return GI->GetSubsystem<USussGameSubsystem>();		
 	}
 		
 	return nullptr;

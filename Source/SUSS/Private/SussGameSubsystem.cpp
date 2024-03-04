@@ -1,11 +1,11 @@
 ﻿
-#include "SussEngineSubsystem.h"
+#include "SussGameSubsystem.h"
 
 #include "SussCommon.h"
 #include "SussDummyProviders.h"
 #include "SussSettings.h"
 
-void USussEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
@@ -21,7 +21,7 @@ void USussEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	}
 }
 
-void USussEngineSubsystem::RegisterInputProvider(TSubclassOf<USussInputProvider> ProviderClass)
+void USussGameSubsystem::RegisterInputProvider(TSubclassOf<USussInputProvider> ProviderClass)
 {
 	const auto CDO = ProviderClass.GetDefaultObject();
 
@@ -54,7 +54,7 @@ void USussEngineSubsystem::RegisterInputProvider(TSubclassOf<USussInputProvider>
 	
 }
 
-USussInputProvider* USussEngineSubsystem::GetInputProvider(const FGameplayTag& Tag)
+USussInputProvider* USussGameSubsystem::GetInputProvider(const FGameplayTag& Tag)
 {
 	if (auto pProvider = InputProviders.Find(Tag))
 	{
