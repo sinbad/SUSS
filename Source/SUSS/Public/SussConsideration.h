@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "SussParameter.h"
 #include "UObject/Object.h"
 #include "SussConsideration.generated.h"
 
@@ -20,6 +21,7 @@ enum class ESussCurveType : uint8
 	Logistic,
 	Custom
 };
+
 /**
  * A consideration is a scoring function which is assigned to an action, returning a normalised utility value (0..1).
  * The function comprises:
@@ -39,14 +41,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, meta=(Categories="Suss.Input"))
 	FGameplayTag InputTag;
 
-	/// Optional input float parameters to the input provider for the chosen InputTag
+	/// Optional parameters to the evaluation - these will depend on the InputTag
 	UPROPERTY(EditDefaultsOnly)
-	TArray<float> InputFloatParams;
+	TMap<FName, FSussParameter> Parameters;
 
-	/// Min and max values of interest of the input, which can re-normalise the range.
-	/// Note: your input may be doing its own normalisation; this is mainly when you want to access raw values
+	/// Min value of interest of the input, which can be used to re-normalise the range.
 	UPROPERTY(EditDefaultsOnly)
-	FVector2f Bookends = FVector2f(0,1);
+	FSussParameter BookendMin = FSussParameter::ZeroLiteral;
+
+	/// Max value of interest of the input, which can be used to re-normalise the range.
+	UPROPERTY(EditDefaultsOnly)
+	FSussParameter BookendMax = FSussParameter::OneLiteral;
 
 	UPROPERTY(EditDefaultsOnly)
 	ESussCurveType CurveType = ESussCurveType::Linear;
