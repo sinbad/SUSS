@@ -3,30 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SussAction.h"
-#include "SussConsideration.h"
+#include "SussActionSet.h"
 #include "SussContext.h"
 #include "Runtime/AIModule/Classes/BrainComponent.h"
 #include "SussBrainComponent.generated.h"
 
-USTRUCT()
-struct FSussActionDef
-{
-	GENERATED_BODY()
-
-	// The action which is going to be called
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<USussAction> ActionClass;
-
-	UPROPERTY(EditDefaultsOnly)
-	TArray<FSussConsideration> Considerations;
-
-	// .. Post-consideration re-weight
-
-	// .. Priority
-
-	
-};
 
 /// Output result of an action+context pair being considered; only recorded if score > 0
 USTRUCT()
@@ -55,7 +36,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	float TimeSinceLastUpdate;
 
-	/// The action definitions
+	/// Re-use of pre-defined action sets
+	UPROPERTY(EditDefaultsOnly)
+	TArray<USussActionSet*> ActionSets;
+	
+	/// Specific action definitions for this behaviour (if you don't want to re-use from sets)
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FSussActionDef> ActionDefs;
 
