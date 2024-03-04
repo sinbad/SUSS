@@ -32,6 +32,9 @@ class SUSS_API USussInputProvider : public UObject
 protected:
 	FGameplayTag GameplayTag;
 public:
+
+	USussInputProvider() {}
+	
 	const FGameplayTag& GetGameplayTag() const { return GameplayTag; }
 
 	/// Generate a list of contexts based on what variants this input can provide

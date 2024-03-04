@@ -38,7 +38,7 @@ void USussEngineSubsystem::RegisterInputProvider(TSubclassOf<USussInputProvider>
 	}
 	else
 	{
-		UE_LOG(LogSuss, Error, TEXT("Unable to register Input Provider %s, gameplay tag is invalid"), *CDO->GetName())
+		UE_LOG(LogSuss, Error, TEXT("Unable to register Input Provider %s, gameplay tag is invalid, did you remember to set it in your input provider?"), *CDO->GetName())
 	}
 	
 }
