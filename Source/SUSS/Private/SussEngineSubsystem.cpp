@@ -3,12 +3,22 @@
 
 #include "SussCommon.h"
 #include "SussDummyProviders.h"
+#include "SussSettings.h"
 
 void USussEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
 	DefaultInputProvider = NewObject<USussDummyInputProvider>();
+
+	// Auto set up based on settings
+	if (auto Settings = GetDefault<USussSettings>())
+	{
+		for (auto& InputProv : Settings->InputProviders)
+		{
+			RegisterInputProvider(InputProv);
+		}
+	}
 }
 
 void USussEngineSubsystem::RegisterInputProvider(TSubclassOf<USussInputProvider> ProviderClass)
@@ -29,10 +39,11 @@ void USussEngineSubsystem::RegisterInputProvider(TSubclassOf<USussInputProvider>
 			       TEXT("Unable to register Input Provider %s, tag %s already registered (%s)"),
 			       *CDO->GetName(),
 			       *Tag.GetTagName().ToString(),
-			       *pExisting->GetDefaultObject()->GetName())
+			       *(*pExisting)->GetName())
 		}
 		else
 		{
+			InputProviders.Add(Tag, CDO);
 			UE_LOG(LogSuss, Log, TEXT("Registered Input Provider %s for tag %s"), *CDO->GetName(), *Tag.GetTagName().ToString());
 		}
 	}

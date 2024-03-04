@@ -5,19 +5,19 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "SussInputProvider.h"
-#include "Subsystems/EngineSubsystem.h"
+#include "Subsystems/GameInstanceSubsystem.h"
 #include "SussEngineSubsystem.generated.h"
 
 /**
  * Global subsystem that's mainly used to register providers that should remain regardless of Game Instances or World
  */
 UCLASS()
-class SUSS_API USussEngineSubsystem : public UEngineSubsystem
+class SUSS_API USussEngineSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TMap<FGameplayTag, TSubclassOf<USussInputProvider>> InputProviders;
+	TMap<FGameplayTag, USussInputProvider*> InputProviders;
 
 	UPROPERTY()
 	USussInputProvider* DefaultInputProvider;
@@ -33,7 +33,14 @@ public:
 	USussInputProvider* GetInputProvider(const FGameplayTag& Tag);
 };
 
-inline USussEngineSubsystem* GetSussEngineSubsystem()
+inline USussEngineSubsystem* GetSUSS(UWorld* WorldContext)
 {
-	return GEngine->GetEngineSubsystem<USussEngineSubsystem>();
+	if (IsValid(WorldContext) && WorldContext->IsGameWorld())
+	{
+		auto GI = WorldContext->GetGameInstance();
+		if (IsValid(GI))
+			return GI->GetSubsystem<USussEngineSubsystem>();		
+	}
+		
+	return nullptr;
 }

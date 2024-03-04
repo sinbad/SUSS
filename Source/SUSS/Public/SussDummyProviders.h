@@ -10,7 +10,7 @@
 /**
  * Dummy input provider for when invalid tag requested
  */
-UCLASS()
+UCLASS(Hidden)
 class SUSS_API USussDummyInputProvider : public USussInputProvider
 {
 	GENERATED_BODY()
