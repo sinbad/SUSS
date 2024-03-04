@@ -26,18 +26,18 @@ struct FSussContext
 public:
 	/// Actor which represents the pawn with the brain 
 	UPROPERTY(BlueprintReadOnly)
-	AActor* Self;
+	AActor* Self = nullptr;
 	/// Actor which represents the target in this context
 	/// When multiple targets are possible, there are multiple contexts.
 	UPROPERTY(BlueprintReadWrite)
-	AActor* Target;
+	AActor* Target = nullptr;
 
 	/// Location which could vary per context (use determined by input provider)
 	UPROPERTY(BlueprintReadWrite)
-	FVector Location;
+	FVector Location = FVector::ZeroVector;
 	/// Rotation which could vary per context (use determined by input provider)
 	UPROPERTY(BlueprintReadWrite)
-	FRotator Rotation;
+	FRotator Rotation = FRotator::ZeroRotator;
 
 	/// Map of other values that can be used by the input provider to add more parameterised contexts
 	/// This is for if you had some variations of your own you wanted to add. Unfortunately C++ only.
