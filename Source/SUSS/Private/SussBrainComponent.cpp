@@ -24,6 +24,12 @@ void USussBrainComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// No need to tick on non-server
+	if (!GetOwner()->HasAuthority())
+	{
+		SetComponentTickEnabled(false);
+	}
+
 }
 
 
@@ -34,19 +40,25 @@ void USussBrainComponent::TickComponent(float DeltaTime,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	TimeSinceLastUpdate += DeltaTime;
-	if (!bQueuedForUpdate && TimeSinceLastUpdate > CachedUpdateRequestTime)
+	if (GetOwner()->HasAuthority())
 	{
-		if (auto SS = GetSussWorldSubsystem(GetWorld()))
+		TimeSinceLastUpdate += DeltaTime;
+		if (!bQueuedForUpdate && TimeSinceLastUpdate > CachedUpdateRequestTime)
 		{
-			SS->QueueBrainUpdate(this);
-			bQueuedForUpdate = true;
+			if (auto SS = GetSussWorldSubsystem(GetWorld()))
+			{
+				SS->QueueBrainUpdate(this);
+				bQueuedForUpdate = true;
+			}
 		}
 	}
 }
 
 void USussBrainComponent::Update()
 {
+	if (!GetOwner()->HasAuthority())
+		return;
+	
 	// TODO: update decision
 
 	bQueuedForUpdate = false;
