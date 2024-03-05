@@ -39,6 +39,7 @@ public class SUSS : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"GameplayAbilities"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

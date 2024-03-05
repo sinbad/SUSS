@@ -3,7 +3,9 @@
 #include "AIController.h"
 #include "SussAction.h"
 #include "SussCommon.h"
+#include "SussGameSubsystem.h"
 #include "SussSettings.h"
+#include "SussUtility.h"
 #include "SussWorldSubsystem.h"
 
 
@@ -96,6 +98,10 @@ void USussBrainComponent::CheckForNeededUpdate(float DeltaTime)
 	}
 }
 
+void USussBrainComponent::ChooseActionFromCandidates(const TArray<FActionScoringResult>& Candidates)
+{
+}
+
 void USussBrainComponent::ChooseAction(const FActionScoringResult& ActionResult)
 {
 	checkf(!CurrentAction.IsSet(), TEXT("Trying to choose a new action before the previous one is cleared"));
@@ -139,11 +145,49 @@ void USussBrainComponent::Update()
 {
 	if (!GetOwner()->HasAuthority())
 		return;
+
+	if (CombinedActionsByPriority.IsEmpty())
+		return;
+
+	int CurrentPriority = CombinedActionsByPriority[0].Priority;
+	CandidateActions.Empty();
+	for (int i = 0; i < CombinedActionsByPriority.Num(); ++i)
+	{
+		const FSussActionDef& NextAction = CombinedActionsByPriority[i];
+		// Priority grouping - use the best option from the highest priority group first
+		if (CurrentPriority != NextAction.Priority)
+		{
+			// End of priority group
+			if (!CandidateActions.IsEmpty())
+			{
+				// OK we pick from these & don't consider the others
+				break;
+			}
+
+			// Otherwise we had no candidates in that group, carry on to the next one
+			CurrentPriority = NextAction.Priority;
+		}
+
+		// Ignore bad config or globally disabled actions
+		if (!IsValid(NextAction.ActionClass) || !USussUtility::IsActionEnabled(NextAction.ActionClass))
+			continue;
+
+		// Check required/blocking tags on self
+		if (NextAction.RequiredTags.Num() > 0 && !USussUtility::ActorHasAllTags(GetOwner(), NextAction.RequiredTags))
+			continue;
+		if (NextAction.BlockingTags.Num() > 0 && USussUtility::ActorHasAnyTags(GetOwner(), NextAction.BlockingTags))
+			continue;
+		
+		
+		
+	}
+	if (!CandidateActions.IsEmpty())
+	{
+		ChooseActionFromCandidates(CandidateActions);
+	}
+
 	
-	// - Iterate priority groups by descending priority
-	//   - Iterate actions
-	//     - Check globally disabled action classes
-	//     - Check required / blocking tags
+	
 	//     - Init score accumulator to Weight
 	//     - If score == 0, early-out
 	//     - Iterate considerations

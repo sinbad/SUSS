@@ -54,8 +54,8 @@ protected:
 	TOptional<FActionScoringResult> CurrentAction;
 	float CurrentActionInertia = 0;
 	float CurrentActionInertiaCooldown = 0;
-	
 
+	TArray<FActionScoringResult> CandidateActions;
 	
 
 public:
@@ -80,6 +80,7 @@ protected:
 
 	UFUNCTION()
 	void OnActionCompleted(USussAction* SussAction);
+	void ChooseActionFromCandidates(const TArray<FActionScoringResult>& Candidates);
 	void ChooseAction(const FActionScoringResult& ActionResult);
 	
 };

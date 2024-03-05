@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "SussAction.h"
+#include "SussActionSet.h"
 #include "SussInputProvider.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "SussGameSubsystem.generated.h"

@@ -16,6 +16,9 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "The list of input providers to automatically register at startup"))
 	TArray<TSubclassOf<USussInputProvider>> InputProviders;
 
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "List of action classes which are globally disabled; useful for debugging, or disabling experimental behaviours"))
+	TArray<TSubclassOf<USussAction>> DisabledActions;
+	
 	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "The frame time budget in milliseconds for running updates on AI brains"))
 	float BrainUpdateFrameTimeBudgetMilliseconds = 0.5f;
 
