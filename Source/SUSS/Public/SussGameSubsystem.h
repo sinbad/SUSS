@@ -9,7 +9,7 @@
 #include "SussGameSubsystem.generated.h"
 
 /**
- * Global subsystem that's mainly used to register providers that should remain regardless of Game Instances or World
+ * Global subsystem that's used to register providers that should remain regardless of World
  */
 UCLASS()
 class SUSS_API USussGameSubsystem : public UGameInstanceSubsystem

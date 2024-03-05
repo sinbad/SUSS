@@ -11,7 +11,7 @@
 
 /// Output result of an action+context pair being considered; only recorded if score > 0
 USTRUCT()
-struct FActionConsiderationResult
+struct FActionScoringResult
 {
 	GENERATED_BODY()
 
@@ -47,6 +47,17 @@ protected:
 	float CachedUpdateRequestTime;
 	mutable TWeakObjectPtr<AAIController> AiController;
 
+	/// Combination of ActionSets and ActionDefs, sorted by descending priority group
+	TArray<FSussActionDef> CombinedActionsByPriority;
+
+	/// The current action being executed, if any
+	TOptional<FActionScoringResult> CurrentAction;
+	float CurrentActionInertia = 0;
+	float CurrentActionInertiaCooldown = 0;
+	
+
+	
+
 public:
 	// Sets default values for this component's properties
 	USussBrainComponent();
@@ -63,5 +74,12 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	void InitActions();
+	void CheckForNeededUpdate(float DeltaTime);
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
+
+	UFUNCTION()
+	void OnActionCompleted(USussAction* SussAction);
+	void ChooseAction(const FActionScoringResult& ActionResult);
+	
 };

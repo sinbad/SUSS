@@ -12,7 +12,7 @@ USTRUCT()
 struct FSussActionDef
 {
 	GENERATED_BODY()
-
+public:
 	// The action which is going to be called
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<USussAction> ActionClass;
@@ -44,6 +44,15 @@ struct FSussActionDef
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer BlockingTags;
 
+	/// Once the decision has been made to perform this action, what additional "Inertia" score to add to it
+	/// to avoid the brain flip/flopping on a boundary condition. This inertia cools down over a period of time so eventually
+	/// a better scored decision can interrupt it, if the ActionClass allows interruptions.
+	UPROPERTY(EditDefaultsOnly)
+	float Inertia = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float InertiaCooldown = 5.0f;
+	
 };
 /**
  * An action set is a re-usable collection of actions, to make it quicker & easier to build AIs from pre-built behaviours
@@ -57,6 +66,9 @@ protected:
 	/// The action definitions
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FSussActionDef> ActionDefs;
+
+public:
+	TArray<FSussActionDef>& GetActions() { return ActionDefs; }
 
 	
 };
