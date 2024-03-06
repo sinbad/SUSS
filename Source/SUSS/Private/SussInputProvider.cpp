@@ -9,7 +9,8 @@ void USussInputProvider::GenerateContexts_Implementation(AActor* SelfActor, TArr
 	OutputContexts.Add(FSussContext {SelfActor});
 }
 
-float USussInputProvider::Evaluate_Implementation(const FSussContext& Context) const 
+float USussInputProvider::Evaluate_Implementation(const FSussContext& Context,
+	const TMap<FName, FSussParameter>& Parameters) const
 {
 	return 0;
 }

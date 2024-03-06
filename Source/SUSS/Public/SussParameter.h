@@ -18,7 +18,7 @@ enum class ESussParamType : uint8
 	// TODO: perhaps support parsed expressions sometime
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FSussParameter
 {
 	GENERATED_BODY()

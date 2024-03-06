@@ -43,5 +43,5 @@ public:
 
 	/// Evaluate the input given a context
 	UFUNCTION(BlueprintNativeEvent)	
-	float Evaluate(const FSussContext& Context) const;
+	float Evaluate(const FSussContext& Context, const TMap<FName, FSussParameter>& Parameters) const;
 };
