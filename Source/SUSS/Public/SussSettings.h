@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "SussInputProvider.h"
+#include "SussQueryProvider.h"
 #include "SussSettings.generated.h"
 
 /**
@@ -15,6 +16,9 @@ public:
 
 	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "The list of input providers to automatically register at startup"))
 	TArray<TSubclassOf<USussInputProvider>> InputProviders;
+
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "The list of query providers to automatically register at startup"))
+	TArray<TSubclassOf<USussQueryProvider>> QueryProviders;
 
 	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "List of action classes which are globally disabled; useful for debugging, or disabling experimental behaviours"))
 	TArray<TSubclassOf<USussAction>> DisabledActions;

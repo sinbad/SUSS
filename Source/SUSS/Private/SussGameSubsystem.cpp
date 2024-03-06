@@ -18,6 +18,10 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		{
 			RegisterInputProvider(InputProv);
 		}
+		for (auto& QProv : Settings->QueryProviders)
+		{
+			RegisterQueryProvider(QProv);
+		}
 	}
 }
 

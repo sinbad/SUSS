@@ -39,8 +39,11 @@ enum class ESussQueryContextElement : uint8
  * could ask for targets to be queried, and another could ask for locations from a different query. But they could not
  * both ask for targets to be queried, unless the query being asked for is the same.
  *
- * Do NOT subclass from this base class, however. Base your implementations on one of the direct subclasses
- * such as USussTargetQueryProvider or USussLocationQueryProvider.
+ * Do NOT subclass from this base class. When setting up a query provider, you must:
+ *   1. Subclass from one of the derived classes USussTargetQueryProvider, USussLocationQueryProvider etc
+ *   2. Set QueryTag to some identifying value that begins with "Suss.Query". This is what others will refer to
+ *   3. If your query needs parameters, add their names to ParamNames
+ *   4. Register your provider with USussGameSubsystem, most easily via Project Settings > Plugins > SUSS > Query Providers
  */
 UCLASS(Abstract)
 class SUSS_API USussQueryProvider : public UObject
