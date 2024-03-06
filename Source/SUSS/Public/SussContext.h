@@ -24,24 +24,22 @@ struct FSussContext
 {
 	GENERATED_BODY()
 public:
-	/// Actor which represents the pawn with the brain 
+	/// Actor which represents the pawn with the brain, this is always present
 	UPROPERTY(BlueprintReadOnly)
 	AActor* Self = nullptr;
-	/// Actor which represents the target in this context
+	
+	/// Actor which represents the target in this context, if applicable
 	/// When multiple targets are possible, there are multiple contexts.
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	AActor* Target = nullptr;
-
 	/// Location which could vary per context (use determined by input provider)
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	FVector Location = FVector::ZeroVector;
 	/// Rotation which could vary per context (use determined by input provider)
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	FRotator Rotation = FRotator::ZeroRotator;
 
-	/// Map of other values that can be used by the input provider to add more parameterised contexts
-	/// This is for if you had some variations of your own you wanted to add. Unfortunately C++ only.
-	TMap<FName, TSussContextValue> OtherValues;
-
+	/// Any other custom context value you'd like to use (C++ only)
+	TSussContextValue Custom;
 	
 };
