@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "SussContext.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SussUtility.generated.h"
 
@@ -19,10 +20,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static bool IsActionEnabled(TSubclassOf<USussAction> ActionClass);
 	/// Check whether an actor has a specific tag
+	UFUNCTION(BlueprintCallable)
 	static bool ActorHasTag(AActor* Actor, const FGameplayTag& Tag);
 	/// Check whether an actor has ANY of the supplied tags
+	UFUNCTION(BlueprintCallable)
 	static bool ActorHasAnyTags(AActor* Actor, const FGameplayTagContainer& Tags);
 	/// Check whether an actor has ALL of the supplied tags
+	UFUNCTION(BlueprintCallable)
 	static bool ActorHasAllTags(AActor* Actor, const FGameplayTagContainer& Tags);
 
 };
