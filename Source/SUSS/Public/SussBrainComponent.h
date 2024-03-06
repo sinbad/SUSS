@@ -11,7 +11,7 @@
 
 /// Output result of an action+context pair being considered; only recorded if score > 0
 USTRUCT()
-struct FActionScoringResult
+struct FSussActionScoringResult
 {
 	GENERATED_BODY()
 
@@ -51,11 +51,11 @@ protected:
 	TArray<FSussActionDef> CombinedActionsByPriority;
 
 	/// The current action being executed, if any
-	TOptional<FActionScoringResult> CurrentAction;
+	TOptional<FSussActionScoringResult> CurrentAction;
 	float CurrentActionInertia = 0;
 	float CurrentActionInertiaCooldown = 0;
 
-	TArray<FActionScoringResult> CandidateActions;
+	TArray<FSussActionScoringResult> CandidateActions;
 	
 
 public:
@@ -80,7 +80,8 @@ protected:
 
 	UFUNCTION()
 	void OnActionCompleted(USussAction* SussAction);
-	void ChooseActionFromCandidates(const TArray<FActionScoringResult>& Candidates);
-	void ChooseAction(const FActionScoringResult& ActionResult);
+	void ChooseActionFromCandidates(const TArray<FSussActionScoringResult>& Candidates);
+	void ChooseAction(const FSussActionScoringResult& ActionResult);
+	const TArray<FSussContext>& GenerateContexts(const FSussActionDef& Action);
 	
 };

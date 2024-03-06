@@ -98,11 +98,11 @@ void USussBrainComponent::CheckForNeededUpdate(float DeltaTime)
 	}
 }
 
-void USussBrainComponent::ChooseActionFromCandidates(const TArray<FActionScoringResult>& Candidates)
+void USussBrainComponent::ChooseActionFromCandidates(const TArray<FSussActionScoringResult>& Candidates)
 {
 }
 
-void USussBrainComponent::ChooseAction(const FActionScoringResult& ActionResult)
+void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionResult)
 {
 	checkf(!CurrentAction.IsSet(), TEXT("Trying to choose a new action before the previous one is cleared"));
 	checkf(ActionResult.Def, TEXT("No supplied action def"));
@@ -149,8 +149,11 @@ void USussBrainComponent::Update()
 	if (CombinedActionsByPriority.IsEmpty())
 		return;
 
+	auto SUSS = GetSUSS(GetWorld());
+	
 	int CurrentPriority = CombinedActionsByPriority[0].Priority;
-	CandidateActions.Empty();
+	// Use reset not empty in order to keep memory stable
+	CandidateActions.Reset();
 	for (int i = 0; i < CombinedActionsByPriority.Num(); ++i)
 	{
 		const FSussActionDef& NextAction = CombinedActionsByPriority[i];
@@ -168,6 +171,10 @@ void USussBrainComponent::Update()
 			CurrentPriority = NextAction.Priority;
 		}
 
+		// Ignore zero-weighted actions
+		if (NextAction.Weight < UE_KINDA_SMALL_NUMBER)
+			continue;
+
 		// Ignore bad config or globally disabled actions
 		if (!IsValid(NextAction.ActionClass) || !USussUtility::IsActionEnabled(NextAction.ActionClass))
 			continue;
@@ -177,6 +184,12 @@ void USussBrainComponent::Update()
 			continue;
 		if (NextAction.BlockingTags.Num() > 0 && USussUtility::ActorHasAnyTags(GetOwner(), NextAction.BlockingTags))
 			continue;
+
+		const TArray<FSussContext>& Contexts = GenerateContexts(NextAction);
+		
+		float Score = NextAction.Weight;
+		
+
 		
 		
 		
@@ -193,8 +206,8 @@ void USussBrainComponent::Update()
 	//     - Iterate considerations
 	//         - Generate contexts from input
 	//         - Iterate contexts
-	//           - Update non-literal params
 	//           - Evaluate input
+	//				- Provide way for input to resolve non-literal params
 	//           - Apply bookends
 	//           - Apply curve
 	//           - Multiply value with accumulator
@@ -206,6 +219,153 @@ void USussBrainComponent::Update()
 
 	bQueuedForUpdate = false;
 	TimeSinceLastUpdate = 0;
+}
+
+const TArray<FSussContext>& USussBrainComponent::GenerateContexts(const FSussActionDef& Action)
+{
+	auto SUSS = GetSUSS(GetWorld());
+	
+	// Figure out what queries we need first
+	USussTargetQueryProvider* TargetQ = nullptr;
+	USussLocationQueryProvider* LocationQ = nullptr;
+	USussRotationQueryProvider* RotationQ = nullptr;
+	USussCustomValueQueryProvider* CustomQ = nullptr;
+	
+	for (const auto& Con : Action.Considerations)
+	{
+		auto Input = SUSS->GetInputProvider(Con.InputTag);
+		if (!Input)
+			continue;
+
+		const FGameplayTagContainer& QueryTags = Input->GetRequestedQueryTags();
+		for (auto& QTag : QueryTags.GetGameplayTagArray())
+		{
+			if (auto QueryProv = SUSS->GetQueryProvider(QTag))
+			{
+				switch (QueryProv->GetProvidedContextElement())
+				{
+				case ESussQueryContextElement::Target:
+					{
+						if (auto NewTQ = Cast<USussTargetQueryProvider>(QueryProv))
+						{
+							if (TargetQ && TargetQ != NewTQ)
+							{
+								UE_LOG(LogSuss,
+								       Error,
+								       TEXT(
+									       "Action is attempting to use 2 different target queries at once! Action Class: %s Target queries: %s, %s"
+								       ),
+								       *Action.ActionClass->GetName(),
+								       *TargetQ->GetQueryTag().ToString(),
+								       *QTag.ToString());
+								continue;
+							}
+
+							TargetQ = NewTQ;
+						}
+						else
+						{
+							UE_LOG(LogSuss, Error, TEXT("Query provider %s claims to provide target information but isn't subclassed from SussTargetQueryProvider"), *QueryProv->GetClass()->GetName());
+						}
+					}
+					break;
+				case ESussQueryContextElement::Location:
+					{
+						if (auto NewLQ = Cast<USussLocationQueryProvider>(QueryProv))
+						{
+							if (LocationQ && LocationQ != NewLQ)
+							{
+								UE_LOG(LogSuss,
+									   Error,
+									   TEXT(
+										   "Action is attempting to use 2 different location queries at once! Action Class: %s Target queries: %s, %s"
+									   ),
+									   *Action.ActionClass->GetName(),
+									   *LocationQ->GetQueryTag().ToString(),
+									   *QTag.ToString());
+								continue;
+							}
+
+							LocationQ = NewLQ;
+						}
+						else
+						{
+							UE_LOG(LogSuss, Error, TEXT("Query provider %s claims to provide target information but isn't subclassed from SussTargetQueryProvider"), *QueryProv->GetClass()->GetName());
+						}
+					}
+					break;
+				case ESussQueryContextElement::Rotation:
+					{
+						if (auto NewRQ = Cast<USussRotationQueryProvider>(QueryProv))
+						{
+							if (RotationQ && RotationQ != NewRQ)
+							{
+								UE_LOG(LogSuss,
+									   Error,
+									   TEXT(
+										   "Action is attempting to use 2 different location queries at once! Action Class: %s Target queries: %s, %s"
+									   ),
+									   *Action.ActionClass->GetName(),
+									   *RotationQ->GetQueryTag().ToString(),
+									   *QTag.ToString());
+								continue;
+							}
+
+							RotationQ = NewRQ;
+						}
+						else
+						{
+							UE_LOG(LogSuss, Error, TEXT("Query provider %s claims to provide target information but isn't subclassed from SussTargetQueryProvider"), *QueryProv->GetClass()->GetName());
+						}
+					}
+					break;
+				case ESussQueryContextElement::CustomValue:
+					{
+						if (auto NewCQ = Cast<USussCustomValueQueryProvider>(QueryProv))
+						{
+							if (CustomQ && CustomQ != NewCQ)
+							{
+								UE_LOG(LogSuss,
+									   Error,
+									   TEXT(
+										   "Action is attempting to use 2 different location queries at once! Action Class: %s Target queries: %s, %s"
+									   ),
+									   *Action.ActionClass->GetName(),
+									   *CustomQ->GetQueryTag().ToString(),
+									   *QTag.ToString());
+								continue;
+							}
+
+							CustomQ = NewCQ;
+						}
+						else
+						{
+							UE_LOG(LogSuss, Error, TEXT("Query provider %s claims to provide target information but isn't subclassed from SussTargetQueryProvider"), *QueryProv->GetClass()->GetName());
+						}
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	// Get query results
+
+			
+	
+	// Enumerate contexts from all considerations
+	// Note: this gives us all possible contexts from all considerations, and we evaluate each consideration with all
+	// contexts. It's possible that consideration 1 generates 3 contexts, but consideration 2 only needs one, because the
+	// value it uses is common to all 3. In order to only call consideration 2 once, and re-use that result for the 3
+	// calls to consideration 1, means being able to determine that context 1.A-B are all subsets of context 2.A.
+	// But what if they're not subsets? What if the only thing they share is Self, and the other parameters
+	// generate 3 contexts each but they're different? Clearly the other considerations don't care about these other
+	// contexts, so we shouldn't create 3x3 contexts because 6 of them will be useless to each.
+	// Really what we need is a set of contexts per consideration, which calculates the score. Then we combine the
+	// contexts?
+
+
+	return TempConsiderationContexts;
 }
 
 AAIController* USussBrainComponent::GetAIController() const

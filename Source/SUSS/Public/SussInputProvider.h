@@ -43,7 +43,7 @@ public:
 	USussInputProvider() {}
 	
 	const FGameplayTag& GetInputTag() const { return InputTag; }
-	const FGameplayTagContainer& GetRequestedQueries() const { return QueryTags; }
+	const FGameplayTagContainer& GetRequestedQueryTags() const { return QueryTags; }
 	
 	/// Evaluate the input given a context
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)	
