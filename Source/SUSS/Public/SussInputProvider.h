@@ -30,18 +30,22 @@ class SUSS_API USussInputProvider : public UObject
 {
 	GENERATED_BODY()
 protected:
-	FGameplayTag GameplayTag;
+	/// The tag which identifies the input which this provider is supplying
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTag InputTag;
+	/// Tags which identify which queries the input needs to be run to provide context(s)
+	/// If empty, the input only needs "Self" ie the actor the brain is running on.
+	/// Otherwise, for every tag, a query will be run (or the results re-used))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTagContainer QueryTags;
 public:
 
 	USussInputProvider() {}
 	
-	const FGameplayTag& GetGameplayTag() const { return GameplayTag; }
-
-	/// Generate a list of contexts based on what variants this input can provide
-	UFUNCTION(BlueprintNativeEvent)	
-	void GenerateContexts(AActor* SelfActor, TArray<FSussContext>& OutputContexts) const;
-
+	const FGameplayTag& GetInputTag() const { return InputTag; }
+	const FGameplayTagContainer& GetRequestedQueries() const { return QueryTags; }
+	
 	/// Evaluate the input given a context
-	UFUNCTION(BlueprintNativeEvent)	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)	
 	float Evaluate(const FSussContext& Context, const TMap<FName, FSussParameter>& Parameters) const;
 };

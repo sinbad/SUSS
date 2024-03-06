@@ -31,7 +31,7 @@ public:
 	/// Actor which represents the target in this context, if applicable
 	/// When multiple targets are possible, there are multiple contexts.
 	UPROPERTY(BlueprintReadOnly)
-	AActor* Target = nullptr;
+	TWeakObjectPtr<AActor> Target;
 	/// Location which could vary per context (use determined by input provider)
 	UPROPERTY(BlueprintReadOnly)
 	FVector Location = FVector::ZeroVector;

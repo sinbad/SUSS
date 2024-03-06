@@ -38,5 +38,22 @@ public:
 
 	static FSussParameter ZeroLiteral;
 	static FSussParameter OneLiteral;
-	
+
+	friend bool operator==(const FSussParameter& Lhs, const FSussParameter& Rhs)
+	{
+		if (Lhs.Type != Rhs.Type)
+			return false;
+
+		if (Lhs.Type == ESussParamType::Literal)
+			return FMath::IsNearlyEqual(Lhs.Value, Rhs.Value);
+
+		// for input, return the same tag
+		return Lhs.InputTag == Rhs.InputTag;
+		
+	}
+
+	friend bool operator!=(const FSussParameter& Lhs, const FSussParameter& Rhs)
+	{
+		return !(Lhs == Rhs);
+	}
 };
