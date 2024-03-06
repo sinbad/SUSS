@@ -5,15 +5,20 @@ void USussQueryProvider::Tick(float DeltaTime)
 	TimeSinceLastRun += DeltaTime;
 }
 
-void USussQueryProvider::MaybeExecuteQuery(const TMap<FName, FSussParameter>& Params)
+void USussQueryProvider::MaybeExecuteQuery(const TMap<FName, float>& Params)
 {
 	if (!ShouldUseCachedResults(Params))
 	{
-		ExecuteQuery(Params);
+		// Store the subset of params we need
+		CachedRelevantParams = Params.FilterByPredicate([this](const TMap<FName, float>::ElementType& Elem)
+		{
+			return ParamNames.Contains(Elem.Key);
+		});
+		ExecuteQuery(CachedRelevantParams);
 	}
 }
 
-bool USussQueryProvider::ShouldUseCachedResults(const TMap<FName, FSussParameter>& Params) const
+bool USussQueryProvider::ShouldUseCachedResults(const TMap<FName, float>& Params) const
 {
 	// Always re-run if time has run out for cached results
 	if (TimeSinceLastRun > ReuseResultsDuration)

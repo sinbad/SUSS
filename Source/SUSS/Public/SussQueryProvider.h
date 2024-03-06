@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "SussContext.h"
-#include "SussParameter.h"
 #include "UObject/Object.h"
 #include "SussQueryProvider.generated.h"
 
@@ -61,7 +60,7 @@ protected:
 
 	/// The relevant parameters which were used to obtain cached results in the last execution
 	/// May be a subset of the passed-in parameters, if we didn't use some of them.
-	TMap<FName, FSussParameter> CachedRelevantParams;
+	TMap<FName, float> CachedRelevantParams;
 
 	/// The time period in seconds for which query results will be re-used rather than the query being re-executed
 	UPROPERTY(EditDefaultsOnly)
@@ -86,10 +85,10 @@ public:
 
 
 protected:
-	void MaybeExecuteQuery(const TMap<FName, FSussParameter>& Params);
+	void MaybeExecuteQuery(const TMap<FName, float>& Params);
 	/// Should be overridden by subclasses
-	void ExecuteQuery(const TMap<FName, FSussParameter>& Params) {}
-	virtual bool ShouldUseCachedResults(const TMap<FName, FSussParameter>& Params) const; 
+	void ExecuteQuery(const TMap<FName, float>& Params) {}
+	virtual bool ShouldUseCachedResults(const TMap<FName, float>& Params) const; 
 	
 };
 
@@ -103,7 +102,7 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Target; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<TWeakObjectPtr<AActor>>& GetResults(const TMap<FName, FSussParameter>& Params)
+	const TArray<TWeakObjectPtr<AActor>>& GetResults(const TMap<FName, float>& Params)
 	{
 		MaybeExecuteQuery(Params);
 		return CachedResults;
@@ -120,7 +119,7 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Location; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<FVector>& GetResults(const TMap<FName, FSussParameter>& Params)
+	const TArray<FVector>& GetResults(const TMap<FName, float>& Params)
 	{
 		MaybeExecuteQuery(Params);
 		return CachedResults;
@@ -137,7 +136,7 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Rotation; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<FRotator>& GetResults(const TMap<FName, FSussParameter>& Params)
+	const TArray<FRotator>& GetResults(const TMap<FName, float>& Params)
 	{
 		MaybeExecuteQuery(Params);
 		return CachedResults;
@@ -154,7 +153,7 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::CustomValue; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<TSussContextValue>& GetResults(const TMap<FName, FSussParameter>& Params)
+	const TArray<TSussContextValue>& GetResults(const TMap<FName, float>& Params)
 	{
 		MaybeExecuteQuery(Params);
 		return CachedResults;
