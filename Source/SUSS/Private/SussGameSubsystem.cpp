@@ -127,7 +127,7 @@ TStatId USussGameSubsystem::GetStatId() const
 
 UWorld* USussGameSubsystem::GetTickableGameObjectWorld() const
 {
-	return GetGameInstance()->GetWorld();
+	return GetWorld();
 }
 
 void USussGameSubsystem::Tick(float DeltaTime)
