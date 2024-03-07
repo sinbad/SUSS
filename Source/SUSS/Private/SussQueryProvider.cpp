@@ -5,23 +5,27 @@ void USussQueryProvider::Tick(float DeltaTime)
 	TimeSinceLastRun += DeltaTime;
 }
 
-void USussQueryProvider::MaybeExecuteQuery(const TMap<FName, float>& Params)
+void USussQueryProvider::MaybeExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params)
 {
-	if (!ShouldUseCachedResults(Params))
+	if (!ShouldUseCachedResults(Brain, Self, Params))
 	{
 		// Store the subset of params we need
-		CachedRelevantParams = Params.FilterByPredicate([this](const TMap<FName, float>::ElementType& Elem)
+		CachedRelevantParams = Params.FilterByPredicate([this](const TMap<FName, FSussParameter>::ElementType& Elem)
 		{
 			return ParamNames.Contains(Elem.Key);
 		});
-		ExecuteQuery(CachedRelevantParams);
+		CachedSelf = Self;
+		ExecuteQuery(Brain, Self, CachedRelevantParams);
 	}
 }
 
-bool USussQueryProvider::ShouldUseCachedResults(const TMap<FName, float>& Params) const
+bool USussQueryProvider::ShouldUseCachedResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params) const
 {
 	// Always re-run if time has run out for cached results
 	if (TimeSinceLastRun > ReuseResultsDuration)
+		return false;
+
+	if (CachedSelf.Get() != Self)
 		return false;
 
 	// Otherwise, if we're within the re-use time, the only time we should not re-use is if the value of a relevant

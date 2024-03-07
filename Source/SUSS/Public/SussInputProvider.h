@@ -33,19 +33,15 @@ protected:
 	/// The tag which identifies the input which this provider is supplying
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FGameplayTag InputTag;
-	/// Tags which identify which queries the input needs to be run to provide context(s)
-	/// If empty, the input only needs "Self" ie the actor the brain is running on.
-	/// Otherwise, for every tag, a query will be run (or the results re-used))
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FGameplayTagContainer QueryTags;
+	
 public:
 
 	USussInputProvider() {}
 	
 	const FGameplayTag& GetInputTag() const { return InputTag; }
-	const FGameplayTagContainer& GetRequestedQueryTags() const { return QueryTags; }
+
 	
 	/// Evaluate the input given a context
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)	
-	float Evaluate(const FSussContext& Context, const TMap<FName, FSussParameter>& Parameters) const;
+	float Evaluate(const FSussContext& Context, const TMap<FName, float>& Parameters) const;
 };

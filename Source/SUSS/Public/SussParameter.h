@@ -11,11 +11,14 @@ UENUM(BlueprintType)
 enum class ESussParamType : uint8
 {
 	/// The parameter is a literal float
-	Literal,
-	/// The parameter comes from an input with the current context (input must be able to extract ONE value from the current context)
+	Float,
+	/// The parameter is a literal int
+	Int,
+	/// The parameter is a gameplay tag
+	Tag,
+	/// The parameter comes from an input with the current context (input must be able to extract ONE float value from the current context)
 	Input
 
-	// TODO: perhaps support parsed expressions sometime
 };
 
 USTRUCT(BlueprintType)
@@ -28,12 +31,22 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	ESussParamType Type;
 
-	/// Literal value of the parameter
-	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Literal", EditConditionHides))
-	float Value;
+	/// Literal float value of the parameter
+	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Float", EditConditionHides))
+	float FloatValue;
 
-	/// Tag identifying the input value we should pull into this parameter
-	UPROPERTY(EditDefaultsOnly, meta=(Categories="Suss.Input", EditCondition="Type==ESussParamType::Input", EditConditionHides))
+	/// Literal value of the parameter
+	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Int", EditConditionHides))
+	int IntValue;
+
+	/// Literal value of the parameter
+	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Tag", EditConditionHides))
+	FGameplayTag Tag;
+
+	/// Tag identifying the input value we should pull into this parameter. Can only reference "Self" ie the brain actor,
+	/// because the value is used in other queries which have yet to provide any more information. Therefore the
+	/// tags are limited to subtags of "Suss.Input.Self"
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="Suss.Input.Self", EditCondition="Type==ESussParamType::Input", EditConditionHides))
 	FGameplayTag InputTag;
 
 	static FSussParameter ZeroLiteral;
@@ -44,8 +57,14 @@ public:
 		if (Lhs.Type != Rhs.Type)
 			return false;
 
-		if (Lhs.Type == ESussParamType::Literal)
-			return FMath::IsNearlyEqual(Lhs.Value, Rhs.Value);
+		if (Lhs.Type == ESussParamType::Float)
+			return FMath::IsNearlyEqual(Lhs.FloatValue, Rhs.FloatValue);
+
+		if (Lhs.Type == ESussParamType::Int)
+			return Lhs.IntValue == Rhs.IntValue;
+		
+		if (Lhs.Type == ESussParamType::Tag)
+			return Lhs.Tag == Rhs.Tag;
 
 		// for input, return the same tag
 		return Lhs.InputTag == Rhs.InputTag;

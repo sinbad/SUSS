@@ -56,7 +56,7 @@ protected:
 	float CurrentActionInertiaCooldown = 0;
 
 	TArray<FSussActionScoringResult> CandidateActions;
-	
+
 
 public:
 	// Sets default values for this component's properties
@@ -71,6 +71,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AAIController* GetAIController() const;
 
+	/// Get the "Self" pawn this brain controls, used in contexts
+	APawn* GetSelf() const;
+
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -82,6 +86,6 @@ protected:
 	void OnActionCompleted(USussAction* SussAction);
 	void ChooseActionFromCandidates(const TArray<FSussActionScoringResult>& Candidates);
 	void ChooseAction(const FSussActionScoringResult& ActionResult);
-	const TArray<FSussContext>& GenerateContexts(const FSussActionDef& Action);
+	void GenerateContexts(const FSussActionDef& Action, TArray<FSussContext>& OutContexts);
 	
 };

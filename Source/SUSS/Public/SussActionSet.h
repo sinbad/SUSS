@@ -8,15 +8,41 @@
 #include "SussConsideration.h"
 #include "SussActionSet.generated.h"
 
+
+USTRUCT()
+struct FSussQuery
+{
+	GENERATED_BODY()
+
+	/// The tag of the query we want to run
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="Suss.Query"))
+	FGameplayTag QueryTag;
+
+	/// Parameters to pass to the query
+	UPROPERTY(EditDefaultsOnly)
+	TMap<FName, FSussParameter> Params;
+
+};
+
 USTRUCT()
 struct FSussActionDef
 {
 	GENERATED_BODY()
 public:
-	// The action which is going to be called
+	/// The action which is going to be called
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<USussAction> ActionClass;
 
+	/// Queries to run to provide values for the Considerations. Beware: multiple queries that return different
+	/// information will geometrically multiply the number of variations that will need to be considered. E.g. if you
+	/// run a query for targets, and for locations, the number of variations will be the number of results from each
+	/// multiplied together.
+	/// You can have multiple queries for the same piece of context (e.g. 2 target queries) and the results will be combined.
+	/// If there are no queries, then the considerations will be executed only once with the "Self" context reference only
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FSussQuery> Queries;
+
+	/// Considerations score the action and will be run as many times as needed by the combination of results from the queries
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FSussConsideration> Considerations;
 

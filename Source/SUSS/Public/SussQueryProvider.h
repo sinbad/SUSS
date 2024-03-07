@@ -6,9 +6,11 @@
 #include "GameplayTagContainer.h"
 #include "SussContext.h"
 #include "UObject/Object.h"
+#include "SussParameter.h"
 #include "SussQueryProvider.generated.h"
 
 
+class USussBrainComponent;
 /// Enum describing which element of the context a query is providing.
 /// A query can only populate ONE element of a context; Target(s), OR Location(s), etc.
 /// This enum indicates which the query is providing, because only one query can be run
@@ -60,7 +62,9 @@ protected:
 
 	/// The relevant parameters which were used to obtain cached results in the last execution
 	/// May be a subset of the passed-in parameters, if we didn't use some of them.
-	TMap<FName, float> CachedRelevantParams;
+	TMap<FName, FSussParameter> CachedRelevantParams;
+	/// Previous value of "self" ie brain actor
+	TWeakObjectPtr<AActor> CachedSelf;
 
 	/// The time period in seconds for which query results will be re-used rather than the query being re-executed
 	UPROPERTY(EditDefaultsOnly)
@@ -85,10 +89,11 @@ public:
 
 
 protected:
-	void MaybeExecuteQuery(const TMap<FName, float>& Params);
+	void MaybeExecuteQuery(USussBrainComponent* Brain, AActor* Self,
+	                       const TMap<FName, FSussParameter>& Params);
 	/// Should be overridden by subclasses
-	void ExecuteQuery(const TMap<FName, float>& Params) {}
-	virtual bool ShouldUseCachedResults(const TMap<FName, float>& Params) const; 
+	void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params) {}
+	virtual bool ShouldUseCachedResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params) const; 
 	
 };
 
@@ -102,9 +107,9 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Target; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<TWeakObjectPtr<AActor>>& GetResults(const TMap<FName, float>& Params)
+	const TArray<TWeakObjectPtr<AActor>>& GetResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params)
 	{
-		MaybeExecuteQuery(Params);
+		MaybeExecuteQuery(Brain, Self, Params);
 		return CachedResults;
 	}
 };
@@ -119,9 +124,9 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Location; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<FVector>& GetResults(const TMap<FName, float>& Params)
+	const TArray<FVector>& GetResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params)
 	{
-		MaybeExecuteQuery(Params);
+		MaybeExecuteQuery(Brain, Self, Params);
 		return CachedResults;
 	}
 };
@@ -136,9 +141,9 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Rotation; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<FRotator>& GetResults(const TMap<FName, float>& Params)
+	const TArray<FRotator>& GetResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params)
 	{
-		MaybeExecuteQuery(Params);
+		MaybeExecuteQuery(Brain, Self, Params);
 		return CachedResults;
 	}
 };
@@ -153,9 +158,9 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::CustomValue; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<TSussContextValue>& GetResults(const TMap<FName, float>& Params)
+	const TArray<TSussContextValue>& GetResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params)
 	{
-		MaybeExecuteQuery(Params);
+		MaybeExecuteQuery(Brain, Self, Params);
 		return CachedResults;
 	}
 };
