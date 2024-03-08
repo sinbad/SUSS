@@ -102,32 +102,44 @@ protected:
 			return;
 
 		const int OldSize = OutContexts.Num();
-		const int NewSize = OldSize * InValues.Num();
-		OutContexts.SetNum(NewSize);
 
-		int OutIndex = 0;
-		// Outer loop is for all the incoming new values
-		// We need to repeat the existing entries InValues.Num() times to create all combinations
-		// The first OldSize entries already have the other fields populated; all the others need to be initialised from
-		// the values from OldSize before adding the new InValue combinations
-		for (int i = 0; i < InValues.Num(); ++i)
+		if (OldSize == 0)
 		{
-			for (int j = 0; j < OldSize; ++j, ++OutIndex)
+			// This is the first set of values, so simply copy them in
+			OutContexts.SetNum(InValues.Num());
+			for (int i = 0; i < InValues.Num(); ++i)
 			{
-				FSussContext& OutContext = OutContexts[OutIndex];
-				if (i > 0)
+				FSussContext& OutContext = OutContexts[i];
+				OutContext.Self = Self;
+				ValueSetter(InValues[i], OutContext);
+			}
+		}
+		else
+		{
+			// Add all combinations of old & new
+			OutContexts.SetNum(OldSize * InValues.Num());
+
+			int OutIndex = 0;
+
+			// Outer loop is for all the incoming new values
+			// We need to repeat the existing entries InValues.Num() times to create all combinations
+			// The first OldSize entries already have the other fields populated; all the others need to be initialised from
+			// the values from OldSize before adding the new InValue combinations
+			for (int i = 0; i < InValues.Num(); ++i)
+			{
+				for (int j = 0; j < OldSize; ++j, ++OutIndex)
 				{
-					// This is the second+ entry, which means we need to populate the other fields from the first OldSize values
-					OutContext = OutContexts[j];
-				}
-				else
-				{
-					// Always init at least self
-					OutContext.Self = Self;
-				}
+					FSussContext* OutContext = &OutContexts[OutIndex];
+					if (i > 0)
+					{
+						// This is the second+ entry, which means we need to populate the other fields from the first OldSize values
+						// If we're within the first loop, we're still on the OldSize entries which already contain everything except the new values
+						*OutContext = OutContexts[j];
+					}
 				
-				// Now we need to add the InValue combination
-				ValueSetter(InValues[i], OutContexts[OutIndex]);
+					// Now we need to add the InValue combination
+					ValueSetter(InValues[i], *OutContext);
+				}
 			}
 		}
 	}

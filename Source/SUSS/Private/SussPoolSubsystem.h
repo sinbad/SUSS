@@ -138,7 +138,8 @@ protected:
 		}
 
 		// If we got here, did not exist
-		return FSussScopeReservedArray(FSussPooledArrayPtr(new T()), this);
+		T* NewItem = new T();
+		return FSussScopeReservedArray(FSussPooledArrayPtr(NewItem), this);
 	}
 
 public:
