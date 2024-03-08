@@ -1,8 +1,5 @@
-﻿// 
-
+﻿
 #pragma once
-
-#include <functional>
 
 #include "CoreMinimal.h"
 #include "SussActionSet.h"
@@ -96,7 +93,7 @@ protected:
 	void ChooseAction(const FSussActionScoringResult& ActionResult);
 
 	template<typename T>
-	static void AppendContexts(AActor* Self, const TArray<T>& InValues, TArray<FSussContext>& OutContexts, std::function<void(const T&, FSussContext&)> ValueSetter)
+	static void AppendContexts(AActor* Self, const TArray<T>& InValues, TArray<FSussContext>& OutContexts, TFunctionRef<void(const T&, FSussContext&)> ValueSetter)
 	{
 		if (InValues.IsEmpty())
 			return;
@@ -144,7 +141,7 @@ protected:
 		}
 	}
 	template<typename T>
-	static void AppendContexts(AActor* Self, FSussScopeReservedArray& ReservedArray, TArray<FSussContext>& OutContexts, std::function<void(const T&, FSussContext&)> ValueSetter)
+	static void AppendContexts(AActor* Self, FSussScopeReservedArray& ReservedArray, TArray<FSussContext>& OutContexts, TFunctionRef<void(const T&, FSussContext&)> ValueSetter)
 	{
 		AppendContexts<T>(Self, *ReservedArray.Get<T>(), OutContexts, ValueSetter);
 	}
