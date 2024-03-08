@@ -62,6 +62,7 @@ USussInputProvider* USussGameSubsystem::GetInputProvider(const FGameplayTag& Tag
 {
 	if (auto pProvider = InputProviders.Find(Tag))
 	{
+		return *pProvider;
 	}
 
 	if (!MissingTagsAlreadyWarnedAbout.Contains(Tag.GetTagName()))
@@ -110,6 +111,7 @@ USussQueryProvider* USussGameSubsystem::GetQueryProvider(const FGameplayTag& Tag
 {
 	if (auto pProvider = QueryProviders.Find(Tag))
 	{
+		return *pProvider;
 	}
 
 	if (!MissingTagsAlreadyWarnedAbout.Contains(Tag.GetTagName()))
