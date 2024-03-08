@@ -147,5 +147,7 @@ protected:
 	}
 
 	void GenerateContexts(const FSussActionDef& Action, TArray<FSussContext>& OutContexts);
+	FSussParameter ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const;
+	void ResolveParameters(AActor* Self, const TMap<FName, FSussParameter>& InParams, TMap<FName, FSussParameter>& OutParams);
 	
 };

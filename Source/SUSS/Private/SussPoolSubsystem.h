@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "SussContext.h"
+#include "SussParameter.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "SussPoolSubsystem.generated.h"
 
@@ -110,6 +111,56 @@ public:
 	}
 };
 
+struct FSussPooledMapPtr
+{
+public:
+	/// Internal variant pointer
+	TVariant<
+		TMap<FName, FSussParameter>*> MapPointer;
+
+	FSussPooledMapPtr(TMap<FName, FSussParameter>* Params)
+	{
+		MapPointer.Set<TMap<FName, FSussParameter>*>(Params);
+	}
+	
+
+	void Destroy()
+	{
+		// Could do this via TUniquePtr maybe, but then I wouldn't be able to copy this holder around
+		if (MapPointer.IsType<TMap<FName, FSussParameter>*>())
+		{
+			delete MapPointer.Get<TMap<FName, FSussParameter>*>();
+		}
+	}
+
+	void Reset() const
+	{
+		// A bit clunky but it's the price we pay for a non-templated holder
+		// Use reset not empty to keep allocations
+		if (MapPointer.IsType<TMap<FName, FSussParameter>*>())
+		{
+			MapPointer.Get<TMap<FName, FSussParameter>*>()->Reset();
+		}
+	}
+};
+
+struct FSussScopeReservedMap
+{
+protected:
+	FSussPooledMapPtr Holder;
+	TWeakObjectPtr<class USussPoolSubsystem> OwningSystem;
+public:
+	FSussScopeReservedMap(const FSussPooledMapPtr& H, USussPoolSubsystem* System) : Holder(H), OwningSystem(System) {}
+	~FSussScopeReservedMap();
+
+	template<typename K, typename V>
+	TMap<K, V>* Get()
+	{
+		return Holder.MapPointer.Get<TMap<K, V>*>();
+	}
+};
+
+
 /**
  * Helper system to provide re-usable pools of eg arrays between brains so they don't have to maintain their own for temp results.
  */
@@ -121,6 +172,7 @@ protected:
 	mutable FCriticalSection Guard;
 
 	TArray<FSussPooledArrayPtr> FreeArrayPools;
+	TArray<FSussPooledMapPtr> FreeMapPools;
 
 	template<typename T>
 	FSussScopeReservedArray ReserveArrayImpl()
@@ -141,6 +193,26 @@ protected:
 		T* NewItem = new T();
 		return FSussScopeReservedArray(FSussPooledArrayPtr(NewItem), this);
 	}
+	
+	template<typename T>
+	FSussScopeReservedMap ReserveMapImpl()
+	{
+		FScopeLock Lock(&Guard);
+
+		for (int i = 0; i < FreeMapPools.Num(); ++i)
+		{
+			if (FreeMapPools[i].MapPointer.IsType<T*>())
+			{
+				FSussPooledMapPtr H = FreeMapPools[i];
+				FreeMapPools.RemoveAt(i);
+				return FSussScopeReservedMap(H, this);
+			}
+		}
+
+		// If we got here, did not exist
+		T* NewItem = new T();
+		return FSussScopeReservedMap(FSussPooledMapPtr(NewItem), this);
+	}
 
 public:
 
@@ -158,10 +230,24 @@ public:
 		FreeArrayPools.Add(Holder);
 	}
 
+	template<typename K, typename V>
+	FSussScopeReservedMap ReserveMap()
+	{
+		return ReserveMapImpl<TMap<K, V>>();
+	}
+	
+	void FreeMap(const FSussPooledMapPtr& Holder)
+	{
+		FScopeLock Lock(&Guard);
+
+		Holder.Reset();
+		FreeMapPools.Add(Holder);
+	}
+
 	virtual void Deinitialize() override;
 };
 
-inline USussPoolSubsystem* GetSussArrayPool(UWorld* WorldContext)
+inline USussPoolSubsystem* GetSussPool(UWorld* WorldContext)
 {
 	if (IsValid(WorldContext))
 	{

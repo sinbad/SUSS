@@ -4,7 +4,7 @@
 #include "SussInputProvider.h"
 
 float USussInputProvider::Evaluate_Implementation(const FSussContext& Context,
-	const TMap<FName, float>& Parameters) const
+                                                  const TMap<FName, FSussParameter>& Parameters) const
 {
 	return 0;
 }

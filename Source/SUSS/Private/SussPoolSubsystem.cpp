@@ -14,7 +14,20 @@ FSussScopeReservedArray::~FSussScopeReservedArray()
 	else
 	{
 		// This should never happen
-		UE_LOG(LogSuss, Error, TEXT("FSussScopedPoolOwnership destroyed after owning subsystem, this is a memory leak!"))
+		UE_LOG(LogSuss, Error, TEXT("FSussScopeReservedArray destroyed after owning subsystem, this is a memory leak!"))
+	}
+}
+
+FSussScopeReservedMap::~FSussScopeReservedMap()
+{
+	if (OwningSystem.IsValid())
+	{
+		OwningSystem->FreeMap(Holder);
+	}
+	else
+	{
+		// This should never happen
+		UE_LOG(LogSuss, Error, TEXT("FSussScopeReservedMap destroyed after owning subsystem, this is a memory leak!"))
 	}
 }
 
@@ -30,4 +43,10 @@ void USussPoolSubsystem::Deinitialize()
 		H.Destroy();
 	}
 	FreeArrayPools.Empty();
+	
+	for (auto& H : FreeMapPools)
+	{
+		H.Destroy();
+	}
+	FreeMapPools.Empty();
 }

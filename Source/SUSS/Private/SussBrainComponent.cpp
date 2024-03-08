@@ -186,54 +186,82 @@ void USussBrainComponent::Update()
 		if (NextAction.BlockingTags.Num() > 0 && USussUtility::ActorHasAnyTags(GetOwner(), NextAction.BlockingTags))
 			continue;
 
-		auto ArrayPool = GetSussArrayPool(GetWorld());
+		auto ArrayPool = GetSussPool(GetWorld());
 		
-		FSussScopeReservedArray Contexts = ArrayPool->ReserveArray<FSussContext>();
-		GenerateContexts(NextAction, *Contexts.Get<FSussContext>());
+		FSussScopeReservedArray ContextsScope = ArrayPool->ReserveArray<FSussContext>();
+		TArray<FSussContext>& Contexts = *ContextsScope.Get<FSussContext>();
+		GenerateContexts(NextAction, Contexts);
 		
-		float Score = NextAction.Weight;
-		
+		// Evaluate this action for every applicable context
+		for (const auto& Ctx : Contexts)
+		{
+			float Score = NextAction.Weight;
+			for (auto& Consideration : NextAction.Considerations)
+			{
+				//           - Evaluate input
+				//				- Provide way for input to resolve non-literal params
+				//           - Apply bookends
+				//           - Apply curve
+				//           - Multiply value with accumulator
+				//			 - If score == 0, early-out
+				
+			}
+		}
 
 		
 		
+		//      - If combined action score > 0, push action & context & score on to result list
+		//   - Post-filter the results to those that exceed the currently executing action + inertia value (which should cool down over time)
+		//     - This means we need: a tick which reduces inertia, AND a notification of when an action is finished to remove inertia early
+		//   - Pick a result to execute (top score, random top N etc)
+	
 		
 	}
 	if (!CandidateActions.IsEmpty())
 	{
 		ChooseActionFromCandidates(CandidateActions);
 	}
-
 	
-	
-	//     - Init score accumulator to Weight
-	//     - If score == 0, early-out
-	//     - Iterate considerations
-	//         - Generate contexts from input
-	//         - Iterate contexts
-	//           - Evaluate input
-	//				- Provide way for input to resolve non-literal params
-	//           - Apply bookends
-	//           - Apply curve
-	//           - Multiply value with accumulator
-	//			 - If score == 0, early-out
-	//      - If combined action score > 0, push action & context & score on to result list
-	//   - Post-filter the results to those that exceed the currently executing action + inertia value (which should cool down over time)
-	//     - This means we need: a tick which reduces inertia, AND a notification of when an action is finished to remove inertia early
-	//   - Pick a result to execute (top score, random top N etc)
-
 	bQueuedForUpdate = false;
 	TimeSinceLastUpdate = 0;
+}
+
+void USussBrainComponent::ResolveParameters(AActor* Self,
+	const TMap<FName, FSussParameter>& InParams,
+	TMap<FName, FSussParameter>& OutParams)
+{
+	FSussContext SelfContext { Self };
+	for (const auto& Param : InParams)
+	{
+		OutParams.Add(Param.Key, ResolveParameter(SelfContext, Param.Value));
+	}
+}
+
+FSussParameter USussBrainComponent::ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const
+{
+	// No additional parameters
+	static TMap<FName, FSussParameter> DummyParams;
+	
+	if (Value.Type == ESussParamType::Input)
+	{
+		auto SUSS = GetSUSS(GetWorld());
+		if (auto InputProvider = SUSS->GetInputProvider(Value.InputTag))
+		{
+			return FSussParameter(ESussParamType::Float, InputProvider->Evaluate(SelfContext, DummyParams));
+		}
+	}
+	return FSussParameter(Value);
 }
 
 void USussBrainComponent::GenerateContexts(const FSussActionDef& Action, TArray<FSussContext>& OutContexts)
 {
 	auto SUSS = GetSUSS(GetWorld());
 
-	auto ArrayPool = GetSussArrayPool(GetWorld());
-	FSussScopeReservedArray Targets = ArrayPool->ReserveArray<TWeakObjectPtr<AActor>>();
-	FSussScopeReservedArray Locations = ArrayPool->ReserveArray<FVector>();
-	FSussScopeReservedArray Rotations = ArrayPool->ReserveArray<FRotator>();
-	FSussScopeReservedArray CustomValues = ArrayPool->ReserveArray<TSussContextValue>();
+	auto Pool = GetSussPool(GetWorld());
+	FSussScopeReservedArray Targets = Pool->ReserveArray<TWeakObjectPtr<AActor>>();
+	FSussScopeReservedArray Locations = Pool->ReserveArray<FVector>();
+	FSussScopeReservedArray Rotations = Pool->ReserveArray<FRotator>();
+	FSussScopeReservedArray CustomValues = Pool->ReserveArray<TSussContextValue>();
 
 	AActor* Self = GetSelf();
 	
@@ -242,6 +270,10 @@ void USussBrainComponent::GenerateContexts(const FSussActionDef& Action, TArray<
 		auto QueryProvider = SUSS->GetQueryProvider(Query.QueryTag);
 		if (!QueryProvider)
 			continue;
+
+		FSussScopeReservedMap ResolvedQueryParamsScope = Pool->ReserveMap<FName, FSussParameter>();
+		TMap<FName, FSussParameter>& ResolvedParams = *ResolvedQueryParamsScope.Get<FName, FSussParameter>();
+		ResolveParameters(Self, Query.Params, ResolvedParams);
 		
 		switch (QueryProvider->GetProvidedContextElement())
 		{
@@ -249,7 +281,7 @@ void USussBrainComponent::GenerateContexts(const FSussActionDef& Action, TArray<
 			{
 				if (auto TQ = Cast<USussTargetQueryProvider>(QueryProvider))
 				{
-					Targets.Get<TWeakObjectPtr<AActor>>()->Append(TQ->GetResults(this, Self, Query.Params));
+					Targets.Get<TWeakObjectPtr<AActor>>()->Append(TQ->GetResults(this, Self, ResolvedParams));
 				}
 				else
 				{
@@ -261,7 +293,7 @@ void USussBrainComponent::GenerateContexts(const FSussActionDef& Action, TArray<
 			{
 				if (auto LQ = Cast<USussLocationQueryProvider>(QueryProvider))
 				{
-					Locations.Get<FVector>()->Append(LQ->GetResults(this, Self, Query.Params));
+					Locations.Get<FVector>()->Append(LQ->GetResults(this, Self, ResolvedParams));
 				}
 				else
 				{
@@ -273,7 +305,7 @@ void USussBrainComponent::GenerateContexts(const FSussActionDef& Action, TArray<
 			{
 				if (auto RQ = Cast<USussRotationQueryProvider>(QueryProvider))
 				{
-					Rotations.Get<FRotator>()->Append(RQ->GetResults(this, Self, Query.Params));
+					Rotations.Get<FRotator>()->Append(RQ->GetResults(this, Self, ResolvedParams));
 				}
 				else
 				{
@@ -285,7 +317,7 @@ void USussBrainComponent::GenerateContexts(const FSussActionDef& Action, TArray<
 			{
 				if (auto CQ = Cast<USussCustomValueQueryProvider>(QueryProvider))
 				{
-					CustomValues.Get<TSussContextValue>()->Append(CQ->GetResults(this, Self, Query.Params));
+					CustomValues.Get<TSussContextValue>()->Append(CQ->GetResults(this, Self, ResolvedParams));
 				}
 				else
 				{
