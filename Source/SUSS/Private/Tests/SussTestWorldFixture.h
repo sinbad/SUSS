@@ -23,6 +23,12 @@ public:
 			{
 				FWorldContext& WorldContext = GEngine->CreateNewWorldContext(EWorldType::Game);
 				WorldContext.SetCurrentWorld(World);
+
+				// We need a test GI
+				USussTestGameInstance* GI = NewObject<USussTestGameInstance>();
+				GI->AddToRoot();
+				GI->TestInit(World);
+				WeakGI = MakeWeakObjectPtr(GI);
  
 				World->InitializeActorsForPlay(URL);
 				if (IsValid(World->GetWorldSettings()))
@@ -32,13 +38,6 @@ public:
 					World->GetWorldSettings()->NotifyMatchStarted();
 				}
 				WeakWorld = MakeWeakObjectPtr(World);
-
-				// We need a test GI
-				USussTestGameInstance* GI = NewObject<USussTestGameInstance>();
-				GI->AddToRoot();
-				GI->TestInit(World);
-				WeakGI = MakeWeakObjectPtr(GI);
-				
 				World->BeginPlay();
  
 			}
