@@ -92,7 +92,7 @@ protected:
 	void MaybeExecuteQuery(USussBrainComponent* Brain, AActor* Self,
 	                       const TMap<FName, FSussParameter>& Params);
 	/// Should be overridden by subclasses
-	void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params) {}
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params) {}
 	virtual bool ShouldUseCachedResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params) const; 
 	
 };

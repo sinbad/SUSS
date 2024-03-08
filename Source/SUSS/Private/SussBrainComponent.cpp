@@ -297,9 +297,39 @@ void USussBrainComponent::GenerateContexts(const FSussActionDef& Action, TArray<
 	}
 
 	// Now we have all the dimensions, produce a context for every combination
-	
+	AppendContexts<TWeakObjectPtr<AActor>>(Self, Targets,
+	                                       OutContexts,
+	                                       [](const TWeakObjectPtr<AActor>& Target, FSussContext& Ctx)
+	                                       {
+		                                       Ctx.Target = Target;
+	                                       });
+	AppendContexts<FVector>(Self, Locations,
+	                        OutContexts,
+	                        [](const FVector& Loc, FSussContext& Ctx)
+	                        {
+		                        Ctx.Location = Loc;
+	                        });
+	AppendContexts<FRotator>(Self, Rotations,
+	                         OutContexts,
+	                         [](const FRotator& Rot, FSussContext& Ctx)
+	                         {
+		                         Ctx.Rotation = Rot;
+	                         });
+	AppendContexts<TSussContextValue>(Self, CustomValues,
+	                                  OutContexts,
+	                                  [](const TSussContextValue& CV, FSussContext& Ctx)
+	                                  {
+		                                  Ctx.Custom = CV;
+	                                  });
+
+	if(OutContexts.IsEmpty())
+	{
+		// We had no dimensions, just self
+		OutContexts.Add(FSussContext { Self });
+	}
 	
 }
+
 
 AAIController* USussBrainComponent::GetAIController() const
 {
@@ -327,13 +357,14 @@ AAIController* USussBrainComponent::GetAIController() const
 	
 }
 
-APawn* USussBrainComponent::GetSelf() const
+AActor* USussBrainComponent::GetSelf() const
 {
 	if (auto Ctrl = GetAIController())
 	{
 		return Ctrl->GetPawn();
 	}
 
-	return nullptr;
+	// Fallback support for brains directly on actor (mostly for testing)
+	return GetOwner();
 }
 

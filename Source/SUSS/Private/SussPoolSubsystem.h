@@ -162,7 +162,7 @@ public:
 
 inline USussPoolSubsystem* GetSussArrayPool(UWorld* WorldContext)
 {
-	if (IsValid(WorldContext) && WorldContext->IsGameWorld())
+	if (IsValid(WorldContext))
 	{
 		auto GI = WorldContext->GetGameInstance();
 		if (IsValid(GI))

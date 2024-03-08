@@ -2,9 +2,12 @@
 
 #pragma once
 
+#include <functional>
+
 #include "CoreMinimal.h"
 #include "SussActionSet.h"
 #include "SussContext.h"
+#include "SussPoolSubsystem.h"
 #include "Runtime/AIModule/Classes/BrainComponent.h"
 #include "SussBrainComponent.generated.h"
 
@@ -27,6 +30,11 @@ class SUSS_API USussBrainComponent : public UBrainComponent
 {
 	GENERATED_BODY()
 
+#if WITH_AUTOMATION_TESTS
+public:
+	friend class FSussBrainTestContextsSpec;
+#endif
+	
 protected:
 	/// Whether this brain is awaiting an update
 	UPROPERTY(BlueprintReadOnly)
@@ -72,7 +80,7 @@ public:
 	AAIController* GetAIController() const;
 
 	/// Get the "Self" pawn this brain controls, used in contexts
-	APawn* GetSelf() const;
+	AActor* GetSelf() const;
 
 
 protected:
@@ -86,6 +94,49 @@ protected:
 	void OnActionCompleted(USussAction* SussAction);
 	void ChooseActionFromCandidates(const TArray<FSussActionScoringResult>& Candidates);
 	void ChooseAction(const FSussActionScoringResult& ActionResult);
+
+	template<typename T>
+	static void AppendContexts(AActor* Self, const TArray<T>& InValues, TArray<FSussContext>& OutContexts, std::function<void(const T&, FSussContext&)> ValueSetter)
+	{
+		if (InValues.IsEmpty())
+			return;
+
+		const int OldSize = OutContexts.Num();
+		const int NewSize = OldSize * InValues.Num();
+		OutContexts.SetNum(NewSize);
+
+		int OutIndex = 0;
+		// Outer loop is for all the incoming new values
+		// We need to repeat the existing entries InValues.Num() times to create all combinations
+		// The first OldSize entries already have the other fields populated; all the others need to be initialised from
+		// the values from OldSize before adding the new InValue combinations
+		for (int i = 0; i < InValues.Num(); ++i)
+		{
+			for (int j = 0; j < OldSize; ++j, ++OutIndex)
+			{
+				FSussContext& OutContext = OutContexts[OutIndex];
+				if (i > 0)
+				{
+					// This is the second+ entry, which means we need to populate the other fields from the first OldSize values
+					OutContext = OutContexts[j];
+				}
+				else
+				{
+					// Always init at least self
+					OutContext.Self = Self;
+				}
+				
+				// Now we need to add the InValue combination
+				ValueSetter(InValues[i], OutContexts[OutIndex]);
+			}
+		}
+	}
+	template<typename T>
+	static void AppendContexts(AActor* Self, FSussScopeReservedArray& ReservedArray, TArray<FSussContext>& OutContexts, std::function<void(const T&, FSussContext&)> ValueSetter)
+	{
+		AppendContexts<T>(Self, *ReservedArray.Get<T>(), OutContexts, ValueSetter);
+	}
+
 	void GenerateContexts(const FSussActionDef& Action, TArray<FSussContext>& OutContexts);
 	
 };
