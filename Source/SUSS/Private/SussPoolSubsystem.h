@@ -64,6 +64,33 @@ public:
 			delete ArrayPointer.Get<TArray<FSussContext>*>();
 		}
 	}
+
+	void Reset() const
+	{
+		// A bit clunky but it's the price we pay for a non-templated holder
+		// Use reset not empty to keep allocations
+		if (ArrayPointer.IsType<TArray<TWeakObjectPtr<AActor>>*>())
+		{
+			ArrayPointer.Get<TArray<TWeakObjectPtr<AActor>>*>()->Reset();
+		}
+		else if (ArrayPointer.IsType<TArray<FVector>*>())
+		{
+			ArrayPointer.Get<TArray<FVector>*>()->Reset();
+		}
+		else if (ArrayPointer.IsType<TArray<FRotator>*>())
+		{
+			ArrayPointer.Get<TArray<FRotator>*>()->Reset();
+		}
+		else if (ArrayPointer.IsType<TArray<TSussContextValue>*>())
+		{
+			ArrayPointer.Get<TArray<TSussContextValue>*>()->Reset();
+		}
+		else if (ArrayPointer.IsType<TArray<FSussContext>*>())
+		{
+			ArrayPointer.Get<TArray<FSussContext>*>()->Reset();
+		}
+		
+	}
 	
 };
 
@@ -126,6 +153,7 @@ public:
 	{
 		FScopeLock Lock(&Guard);
 
+		Holder.Reset();
 		FreeArrayPools.Add(Holder);
 	}
 
