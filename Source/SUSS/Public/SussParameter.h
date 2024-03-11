@@ -29,15 +29,15 @@ struct FSussParameter
 public:
 	/// The type of the parameter
 	UPROPERTY(EditDefaultsOnly)
-	ESussParamType Type;
+	ESussParamType Type = ESussParamType::Float;
 
 	/// Literal float value of the parameter
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Float", EditConditionHides))
-	float FloatValue;
+	float FloatValue = 0;
 
 	/// Literal value of the parameter
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Int", EditConditionHides))
-	int IntValue;
+	int IntValue = 0;
 
 	/// Literal value of the parameter
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Tag", EditConditionHides))
