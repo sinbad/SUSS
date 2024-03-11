@@ -12,7 +12,7 @@ class USussBrainComponent;
 DECLARE_DELEGATE_OneParam(FSussOnActionCompleted, class USussAction*);
 /**
  * An Action is one thing that an AI decides to do right now.
- * Actions are stateless; they should only change things on other classes such as the AI controller or the pawn.
+ * Actions are instantiated when they're executed, and can therefore store state for the duration of the action.
  */
 UCLASS(Blueprintable, Abstract)
 class SUSS_API USussAction : public UObject
@@ -32,14 +32,15 @@ public:
 	/// Override this function to perform the actual underlying actions.
 	/// Implementations MUST CALL ActionCompleted() at the natural end of the action.
 	UFUNCTION(BlueprintNativeEvent)
-	void PerformAction(USussBrainComponent* Brain, const FSussContext& Context) const;
+	void PerformAction(USussBrainComponent* Brain, const FSussContext& Context);
 
 	/// Called when the action has been interrupted because the brain has changed its mind, before completion.
 	/// Will only be called if CanBeInterrupted() returns true, otherwise no other action can be performed until
 	/// ActionCompleted() is called.
 	UFUNCTION(BlueprintNativeEvent)
-	void CancelAction(USussBrainComponent* Brain, const FSussContext& Context) const;
+	void CancelAction(USussBrainComponent* Brain, const FSussContext& Context);
 
+	/// Subclasses must call this function when they complete their action normally, but not when cancelled.
 	UFUNCTION(BlueprintCallable)
 	virtual void ActionCompleted();
 

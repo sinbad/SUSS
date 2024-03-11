@@ -1,12 +1,12 @@
 ﻿
 #include "SussAction.h"
 
-void USussAction::PerformAction_Implementation(USussBrainComponent* Brain, const FSussContext& Context) const
+void USussAction::PerformAction_Implementation(USussBrainComponent* Brain, const FSussContext& Context)
 {
 	// Subclasses must implement
 }
 
-void USussAction::CancelAction_Implementation(USussBrainComponent* Brain, const FSussContext& Context) const
+void USussAction::CancelAction_Implementation(USussBrainComponent* Brain, const FSussContext& Context)
 {
 	// Subclasses must implement
 }

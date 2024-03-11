@@ -166,25 +166,17 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	checkf(IsValid(ActionResult.Def->ActionClass), TEXT("Action class not valid"));
 
 	// Cancel previous action
-	if (CurrentAction.IsSet())
+	if (CurrentAction.IsSet() && IsValid(CurrentAction->ActionInstance))
 	{
-		if (auto CDO = CurrentAction->Def->ActionClass.GetDefaultObject())
-		{
-			CDO->CancelAction(this, CurrentAction->Context);
-		}
+		CurrentAction->ActionInstance->CancelAction(this, CurrentAction->Context);
+		CurrentAction->ActionInstance = nullptr;
 	}
 	CurrentAction = ActionResult;
 	CurrentActionInertiaCooldown = CurrentAction->Def->InertiaCooldown;
 
-	if (auto CDO = CurrentAction->Def->ActionClass.GetDefaultObject())
-	{
-		CDO->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
-		CDO->PerformAction(this, CurrentAction->Context);
-	}
-	else
-	{
-		UE_LOG(LogSuss, Error, TEXT("CDO not valid in USussBrainComponent::ChooseAction"));
-	}
+	CurrentAction->ActionInstance = NewObject<USussAction>(this, CurrentAction->Def->ActionClass->GetClass());
+	CurrentAction->ActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
+	CurrentAction->ActionInstance->PerformAction(this, CurrentAction->Context);
 	
 }
 
@@ -192,7 +184,7 @@ void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 {
 	if (CurrentAction.IsSet())
 	{
-		checkf(CurrentAction->Def->ActionClass.GetDefaultObject() == SussAction, TEXT("OnActionCompleted called from action which was not current!"))
+		checkf(CurrentAction->ActionInstance == SussAction, TEXT("OnActionCompleted called from action which was not current!"))
 		CurrentAction.Reset();
 		CurrentActionInertiaCooldown = 0;
 	}

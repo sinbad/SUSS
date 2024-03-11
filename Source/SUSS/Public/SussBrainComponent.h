@@ -18,8 +18,12 @@ struct FSussActionScoringResult
 public:
 	const FSussActionDef* Def;
 	FSussContext Context;
-	float Score;
-	
+	float Score = 0;
+
+	/// Action instance, only used for actions which are run
+	UPROPERTY()
+	USussAction* ActionInstance = nullptr;
+
 };
 
 /// How to choose the action to run
