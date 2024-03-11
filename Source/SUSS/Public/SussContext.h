@@ -26,7 +26,7 @@ struct FSussContext
 public:
 	/// Actor which represents the pawn with the brain, this is always present
 	UPROPERTY(BlueprintReadOnly)
-	AActor* Self = nullptr;
+	AActor* ControlledActor = nullptr;
 	
 	/// Actor which represents the target in this context, if applicable
 	/// When multiple targets are possible, there are multiple contexts.

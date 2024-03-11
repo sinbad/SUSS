@@ -128,7 +128,7 @@ protected:
 			for (int i = 0; i < InValues.Num(); ++i)
 			{
 				FSussContext& OutContext = OutContexts[i];
-				OutContext.Self = Self;
+				OutContext.ControlledActor = Self;
 				ValueSetter(InValues[i], OutContext);
 			}
 		}
