@@ -37,7 +37,7 @@ void FSussBrainTestContextsSpec::Define()
 			// Action with no queries
 			FSussActionDef Action;
 			TArray<FSussContext> Contexts;
-			Brain->GenerateContexts(Action, Contexts);
+			Brain->GenerateContexts(Self, Action, Contexts);
 
 			if (TestEqual("Number of contexts", Contexts.Num(), 1))
 			{
@@ -57,7 +57,7 @@ void FSussBrainTestContextsSpec::Define()
 			FSussActionDef Action;
 			Action.Queries.Add(FSussQuery {TAG_TestSingleLocationQuery });
 			TArray<FSussContext> Contexts;
-			Brain->GenerateContexts(Action, Contexts);
+			Brain->GenerateContexts(Self, Action, Contexts);
 
 			if (TestEqual("Number of contexts", Contexts.Num(), 1))
 			{
@@ -77,7 +77,7 @@ void FSussBrainTestContextsSpec::Define()
 			FSussActionDef Action;
 			Action.Queries.Add(FSussQuery {TAG_TestMultipleLocationQuery });
 			TArray<FSussContext> Contexts;
-			Brain->GenerateContexts(Action, Contexts);
+			Brain->GenerateContexts(Self, Action, Contexts);
 
 			if (TestEqual("Number of contexts", Contexts.Num(), 3))
 			{
@@ -109,7 +109,7 @@ void FSussBrainTestContextsSpec::Define()
 			Action.Queries.Add(FSussQuery {TAG_TestMultipleLocationQuery });
 			Action.Queries.Add(FSussQuery {TAG_TestMultipleRotationQuery });
 			TArray<FSussContext> Contexts;
-			Brain->GenerateContexts(Action, Contexts);
+			Brain->GenerateContexts(Self, Action, Contexts);
 
 			if (TestEqual("Number of contexts", Contexts.Num(), 9))
 			{

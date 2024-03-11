@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "SussContext.h"
+#include "SussCommon.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SussUtility.generated.h"
 
@@ -28,5 +28,12 @@ public:
 	/// Check whether an actor has ALL of the supplied tags
 	UFUNCTION(BlueprintCallable)
 	static bool ActorHasAllTags(AActor* Actor, const FGameplayTagContainer& Tags);
+
+	static float EvalStepCurve(float Input, const FVector4f& Params);
+	static float EvalLinearCurve(float Input, const FVector4f& Params);
+	static float EvalQuadraticCurve(float Input, const FVector4f& Params);
+	static float EvalExponentialCurve(float Input, const FVector4f& Params);
+	static float EvalLogisticCurve(float Input, const FVector4f& Params);
+	static float EvalCurve(ESussCurveType CurveType, float Input, const FVector4f& Params);
 
 };

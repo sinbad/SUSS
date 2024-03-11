@@ -16,10 +16,24 @@ struct FSussActionScoringResult
 	GENERATED_BODY()
 
 public:
-	FSussActionDef* Def;
+	const FSussActionDef* Def;
 	FSussContext Context;
 	float Score;
 	
+};
+
+/// How to choose the action to run
+UENUM(BlueprintType)
+enum class ESussActionChoiceMethod : uint8
+{
+	/// Always pick the highest scoring action
+	HighestScoring,
+	/// Pick a weighted random action from all non-zero scoring actions
+	WeightedRandomAll,
+	/// Pick a weighted random action from the top N non-zero scoring actions
+	WeightedRandomTopN,
+	/// Pick a weighted random action from all actions scoring within N percent of the top scorer (only non-zero)
+	WeightedRandomTopNPercent
 };
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -49,6 +63,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FSussActionDef> ActionDefs;
 
+	/// How to choose the action to take
+	UPROPERTY(EditDefaultsOnly)
+	ESussActionChoiceMethod ActionChoiceMethod = ESussActionChoiceMethod::HighestScoring;
+
+	/// When using the "Top N" or "Top N Percent" action choice methods, the value of "N"
+	UPROPERTY(EditDefaultsOnly)
+	int ActionChoiceTopN = 5;
+
 	float CachedUpdateRequestTime;
 	mutable TWeakObjectPtr<AAIController> AiController;
 
@@ -57,7 +79,6 @@ protected:
 
 	/// The current action being executed, if any
 	TOptional<FSussActionScoringResult> CurrentAction;
-	float CurrentActionInertia = 0;
 	float CurrentActionInertiaCooldown = 0;
 
 	TArray<FSussActionScoringResult> CandidateActions;
@@ -89,7 +110,7 @@ protected:
 
 	UFUNCTION()
 	void OnActionCompleted(USussAction* SussAction);
-	void ChooseActionFromCandidates(const TArray<FSussActionScoringResult>& Candidates);
+	void ChooseActionFromCandidates();
 	void ChooseAction(const FSussActionScoringResult& ActionResult);
 
 	template<typename T>
@@ -146,8 +167,8 @@ protected:
 		AppendContexts<T>(Self, *ReservedArray.Get<T>(), OutContexts, ValueSetter);
 	}
 
-	void GenerateContexts(const FSussActionDef& Action, TArray<FSussContext>& OutContexts);
+	void GenerateContexts(AActor* Self, const FSussActionDef& Action, TArray<FSussContext>& OutContexts);
+	float ResolveParameterToFloat(const FSussContext& SelfContext, const FSussParameter& Value) const;
 	FSussParameter ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const;
 	void ResolveParameters(AActor* Self, const TMap<FName, FSussParameter>& InParams, TMap<FName, FSussParameter>& OutParams);
-	
 };

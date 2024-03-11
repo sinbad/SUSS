@@ -4,23 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "SussCommon.h"
 #include "SussParameter.h"
 #include "UObject/Object.h"
 #include "SussConsideration.generated.h"
 
-
-UENUM(BlueprintType)
-enum class ESussCurveType : uint8
-{
-	/// Step function that goes from low to high in one go
-	Step,
-	Linear,
-	Exponential,
-	Quadratic,
-	/// S-shaped function
-	Logistic,
-	Custom
-};
 
 /**
  * A consideration is a scoring function which is assigned to an action, returning a normalised utility value (0..1).
@@ -58,14 +46,16 @@ public:
 	ESussCurveType CurveType = ESussCurveType::Linear;
 
 	/// If curve is not custom, the parameters which change how the curve behaves (m,k,b,c)
-	/// m = slope
-	/// k = vertical size
+	/// m = slope (step/linear/quadratic), 
+	/// k = exponent (quadratic) or vertical change (step/logistic)
 	/// b = y-shift
 	/// c = x-shift
 	UPROPERTY(EditDefaultsOnly)
-	FVector4f CurveParams;
+	FVector4f CurveParams = FVector4f(1,1,0, 0); // default x=y linear
 
 	/// If curve is custom, the actual curve to use.
 	UPROPERTY(EditDefaultsOnly)
 	UCurveFloat* CustomCurve = nullptr;
+
+	float EvaluateCurve(float Input) const;
 };

@@ -99,8 +99,64 @@ void USussBrainComponent::CheckForNeededUpdate(float DeltaTime)
 	}
 }
 
-void USussBrainComponent::ChooseActionFromCandidates(const TArray<FSussActionScoringResult>& Candidates)
+void USussBrainComponent::ChooseActionFromCandidates()
 {
+	if (CandidateActions.IsEmpty())
+	{
+		return;
+	}
+
+	CandidateActions.Sort([](const FSussActionScoringResult& L, const FSussActionScoringResult& R)
+	{
+		// sort from highest to lowest
+		return L.Score > R.Score;
+	});
+
+	if (ActionChoiceMethod == ESussActionChoiceMethod::HighestScoring)
+	{
+		ChooseAction(CandidateActions[0]);
+	}
+	else
+	{
+		// Weighted random of some kind
+		float TotalScores = 0;
+		int ChoiceCount = 0;
+		const float BestScore = CandidateActions[0].Score;
+		const float ScoreLimit = ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopNPercent ?
+			BestScore * 100.0f / (float)ActionChoiceTopN : 0;
+		for (int i = 0; i < CandidateActions.Num(); ++i, ++ChoiceCount)
+		{
+			if (ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopN)
+			{
+				if (i == ActionChoiceTopN)
+				{
+					break;
+				}
+			}
+			else if (ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopNPercent)
+			{
+				if (CandidateActions[i].Score < ScoreLimit)
+				{
+					break;
+				}
+			}
+
+			TotalScores += CandidateActions[i].Score;
+		}
+
+		const float Rand = FMath::RandRange(0.0f, TotalScores);
+		float ScoreAccum = 0;
+		for (int i = 0; i < ChoiceCount; ++i)
+		{
+			ScoreAccum += CandidateActions[i].Score;
+
+			if (Rand < ScoreAccum)
+			{
+				ChooseAction(CandidateActions[i]);
+				break;
+			}
+		}
+	}
 }
 
 void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionResult)
@@ -110,7 +166,6 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	checkf(IsValid(ActionResult.Def->ActionClass), TEXT("Action class not valid"));
 	
 	CurrentAction = ActionResult;
-	CurrentActionInertia = CurrentAction->Def->Inertia;
 	CurrentActionInertiaCooldown = CurrentAction->Def->InertiaCooldown;
 
 	if (auto CDO = CurrentAction->Def->ActionClass.GetDefaultObject())
@@ -131,7 +186,6 @@ void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 	{
 		checkf(CurrentAction->Def->ActionClass.GetDefaultObject() == SussAction, TEXT("OnActionCompleted called from action which was not current!"))
 		CurrentAction.Reset();
-		CurrentActionInertia = 0;
 		CurrentActionInertiaCooldown = 0;
 	}
 	else
@@ -151,6 +205,14 @@ void USussBrainComponent::Update()
 		return;
 
 	auto SUSS = GetSUSS(GetWorld());
+	auto Pool = GetSussPool(GetWorld());
+	AActor* Self = GetSelf();
+
+	float CurrentActionInertia = 0;
+	if (CurrentAction.IsSet() && CurrentAction->Def->Inertia > 0 && CurrentAction->Def->InertiaCooldown > 0)
+	{
+		CurrentActionInertia = CurrentAction->Def->Inertia * (CurrentActionInertiaCooldown / CurrentAction->Def->InertiaCooldown);
+	}
 	
 	int CurrentPriority = CombinedActionsByPriority[0].Priority;
 	// Use reset not empty in order to keep memory stable
@@ -190,7 +252,7 @@ void USussBrainComponent::Update()
 		
 		FSussScopeReservedArray ContextsScope = ArrayPool->ReserveArray<FSussContext>();
 		TArray<FSussContext>& Contexts = *ContextsScope.Get<FSussContext>();
-		GenerateContexts(NextAction, Contexts);
+		GenerateContexts(Self, NextAction, Contexts);
 		
 		// Evaluate this action for every applicable context
 		for (const auto& Ctx : Contexts)
@@ -198,29 +260,55 @@ void USussBrainComponent::Update()
 			float Score = NextAction.Weight;
 			for (auto& Consideration : NextAction.Considerations)
 			{
-				//           - Evaluate input
-				//				- Provide way for input to resolve non-literal params
-				//           - Apply bookends
-				//           - Apply curve
-				//           - Multiply value with accumulator
-				//			 - If score == 0, early-out
-				
+				if (auto InputProvider = SUSS->GetInputProvider(Consideration.InputTag))
+				{
+					// Resolve parameters
+					FSussScopeReservedMap ResolvedQueryParamsScope = Pool->ReserveMap<FName, FSussParameter>();
+					TMap<FName, FSussParameter>& ResolvedParams = *ResolvedQueryParamsScope.Get<FName, FSussParameter>();
+					ResolveParameters(Self, Consideration.Parameters, ResolvedParams);
+
+					const float RawInputValue = InputProvider->Evaluate(Ctx, ResolvedParams);
+
+					// Normalise to bookends and clamp
+					const float NormalisedInput = FMath::Clamp(FMath::GetRangePct(
+						                                           ResolveParameterToFloat(
+							                                           Ctx,
+							                                           Consideration.BookendMin),
+						                                           ResolveParameterToFloat(
+							                                           Ctx,
+							                                           Consideration.BookendMax),
+						                                           RawInputValue),
+					                                           0.f,
+					                                           1.f);
+
+					// Transform through curve
+					const float ConScore = Consideration.EvaluateCurve(NormalisedInput);
+
+					// Accumulate with overall score
+					Score *= ConScore;
+
+					// Early-out if we've ended up at zero, nothing can change this now
+					if (FMath::IsNearlyZero(Score))
+					{
+						break;
+					}
+					
+				}
+			}
+
+			if (!FMath::IsNearlyZero(Score))
+			{
+				// This is a possible choice, but check that it exceeds inertia
+				if (!CurrentAction.IsSet() || Score > CurrentAction->Score + CurrentActionInertia)
+				{
+					CandidateActions.Add(FSussActionScoringResult { &NextAction, Ctx, Score });
+				}
 			}
 		}
+		
+	}
 
-		
-		
-		//      - If combined action score > 0, push action & context & score on to result list
-		//   - Post-filter the results to those that exceed the currently executing action + inertia value (which should cool down over time)
-		//     - This means we need: a tick which reduces inertia, AND a notification of when an action is finished to remove inertia early
-		//   - Pick a result to execute (top score, random top N etc)
-	
-		
-	}
-	if (!CandidateActions.IsEmpty())
-	{
-		ChooseActionFromCandidates(CandidateActions);
-	}
+	ChooseActionFromCandidates();
 	
 	bQueuedForUpdate = false;
 	TimeSinceLastUpdate = 0;
@@ -237,7 +325,7 @@ void USussBrainComponent::ResolveParameters(AActor* Self,
 	}
 }
 
-FSussParameter USussBrainComponent::ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const
+float USussBrainComponent::ResolveParameterToFloat(const FSussContext& SelfContext, const FSussParameter& Value) const
 {
 	// No additional parameters
 	static TMap<FName, FSussParameter> DummyParams;
@@ -247,13 +335,18 @@ FSussParameter USussBrainComponent::ResolveParameter(const FSussContext& SelfCon
 		auto SUSS = GetSUSS(GetWorld());
 		if (auto InputProvider = SUSS->GetInputProvider(Value.InputTag))
 		{
-			return FSussParameter(ESussParamType::Float, InputProvider->Evaluate(SelfContext, DummyParams));
+			return InputProvider->Evaluate(SelfContext, DummyParams);
 		}
 	}
-	return FSussParameter(Value);
+	return Value.FloatValue;
 }
 
-void USussBrainComponent::GenerateContexts(const FSussActionDef& Action, TArray<FSussContext>& OutContexts)
+FSussParameter USussBrainComponent::ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const
+{
+	return FSussParameter(ESussParamType::Float, ResolveParameterToFloat(SelfContext, Value));
+}
+
+void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& Action, TArray<FSussContext>& OutContexts)
 {
 	auto SUSS = GetSUSS(GetWorld());
 
@@ -263,8 +356,6 @@ void USussBrainComponent::GenerateContexts(const FSussActionDef& Action, TArray<
 	FSussScopeReservedArray Rotations = Pool->ReserveArray<FRotator>();
 	FSussScopeReservedArray CustomValues = Pool->ReserveArray<TSussContextValue>();
 
-	AActor* Self = GetSelf();
-	
 	for (const auto& Query : Action.Queries)
 	{
 		auto QueryProvider = SUSS->GetQueryProvider(Query.QueryTag);
