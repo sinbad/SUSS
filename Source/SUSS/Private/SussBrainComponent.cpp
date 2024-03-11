@@ -2,6 +2,7 @@
 
 #include "AIController.h"
 #include "SussAction.h"
+#include "SussBrainConfigAsset.h"
 #include "SussCommon.h"
 #include "SussGameSubsystem.h"
 #include "SussPoolSubsystem.h"
@@ -23,17 +24,34 @@ USussBrainComponent::USussBrainComponent(): bQueuedForUpdate(false), TimeSinceLa
 
 }
 
+void USussBrainComponent::SetBrainConfig(const FSussBrainConfig& NewConfig)
+{
+	// Note that we don't do anything with the current action until we need to change our minds
+	BrainConfig = NewConfig;
+	BrainConfigChanged();
+}
+
+void USussBrainComponent::SetBrainConfigFromAsset(USussBrainConfigAsset* Asset)
+{
+	BrainConfig = Asset->BrainConfig;
+}
+
+void USussBrainComponent::BrainConfigChanged()
+{
+	if (GetOwner()->HasAuthority())
+	{
+		InitActions();
+	}
+}
+
 
 // Called when the game starts
 void USussBrainComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (GetOwner()->HasAuthority())
-	{
-		InitActions();
-	}
-	else
+	BrainConfigChanged();
+	if (!GetOwner()->HasAuthority())
 	{
 		// No need to tick on non-server
 		SetComponentTickEnabled(false);
@@ -45,7 +63,7 @@ void USussBrainComponent::InitActions()
 {
 	// Collate all the actions from referenced action sets, and actions only on this instance
 	CombinedActionsByPriority.Empty();
-	for (auto ActionSet : ActionSets)
+	for (auto ActionSet : BrainConfig.ActionSets)
 	{
 		// Guard against bad config
 		if (IsValid(ActionSet))
@@ -56,7 +74,7 @@ void USussBrainComponent::InitActions()
 			}
 		}
 	}
-	for (auto& Action : ActionDefs)
+	for (auto& Action : BrainConfig.ActionDefs)
 	{
 		CombinedActionsByPriority.Add(Action);
 	}
@@ -112,7 +130,7 @@ void USussBrainComponent::ChooseActionFromCandidates()
 		return L.Score > R.Score;
 	});
 
-	if (ActionChoiceMethod == ESussActionChoiceMethod::HighestScoring)
+	if (BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::HighestScoring)
 	{
 		ChooseAction(CandidateActions[0]);
 	}
@@ -122,18 +140,18 @@ void USussBrainComponent::ChooseActionFromCandidates()
 		float TotalScores = 0;
 		int ChoiceCount = 0;
 		const float BestScore = CandidateActions[0].Score;
-		const float ScoreLimit = ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopNPercent ?
-			BestScore * 100.0f / (float)ActionChoiceTopN : 0;
+		const float ScoreLimit = BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopNPercent ?
+			BestScore * 100.0f / (float)BrainConfig.ActionChoiceTopN : 0;
 		for (int i = 0; i < CandidateActions.Num(); ++i, ++ChoiceCount)
 		{
-			if (ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopN)
+			if (BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopN)
 			{
-				if (i == ActionChoiceTopN)
+				if (i == BrainConfig.ActionChoiceTopN)
 				{
 					break;
 				}
 			}
-			else if (ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopNPercent)
+			else if (BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopNPercent)
 			{
 				if (CandidateActions[i].Score < ScoreLimit)
 				{
@@ -159,24 +177,32 @@ void USussBrainComponent::ChooseActionFromCandidates()
 	}
 }
 
-void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionResult)
+void USussBrainComponent::StopCurrentAction()
 {
-	checkf(!CurrentAction.IsSet(), TEXT("Trying to choose a new action before the previous one is cleared"));
-	checkf(ActionResult.Def, TEXT("No supplied action def"));
-	checkf(IsValid(ActionResult.Def->ActionClass), TEXT("Action class not valid"));
-
 	// Cancel previous action
 	if (CurrentAction.IsSet() && IsValid(CurrentAction->ActionInstance))
 	{
-		CurrentAction->ActionInstance->CancelAction(this, CurrentAction->Context);
+		CurrentAction->ActionInstance->CancelAction();
 		CurrentAction->ActionInstance = nullptr;
+		CurrentAction.Reset();
 	}
+
+}
+
+void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionResult)
+{
+	checkf(ActionResult.Def, TEXT("No supplied action def"));
+	checkf(IsValid(ActionResult.Def->ActionClass), TEXT("Action class not valid"));
+
+	StopCurrentAction();
 	CurrentAction = ActionResult;
 	CurrentActionInertiaCooldown = CurrentAction->Def->InertiaCooldown;
 
 	CurrentAction->ActionInstance = NewObject<USussAction>(this, CurrentAction->Def->ActionClass->GetClass());
+	CurrentAction->ActionInstance->Init(this, CurrentAction->Context);
 	CurrentAction->ActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
-	CurrentAction->ActionInstance->PerformAction(this, CurrentAction->Context);
+	
+	CurrentAction->ActionInstance->PerformAction();
 	
 }
 

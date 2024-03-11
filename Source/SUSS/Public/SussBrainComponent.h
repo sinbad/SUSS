@@ -2,12 +2,48 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SussActionSet.h"
+#include "SussActionSetAsset.h"
 #include "SussContext.h"
 #include "SussPoolSubsystem.h"
 #include "Runtime/AIModule/Classes/BrainComponent.h"
 #include "SussBrainComponent.generated.h"
 
+/// How to choose the action to run
+UENUM(BlueprintType)
+enum class ESussActionChoiceMethod : uint8
+{
+	/// Always pick the highest scoring action
+	HighestScoring,
+	/// Pick a weighted random action from all non-zero scoring actions
+	WeightedRandomAll,
+	/// Pick a weighted random action from the top N non-zero scoring actions
+	WeightedRandomTopN,
+	/// Pick a weighted random action from all actions scoring within N percent of the top scorer (only non-zero)
+	WeightedRandomTopNPercent
+};
+
+/// Collected configuration for a brain which can be plugged in as needed
+USTRUCT(BlueprintType)
+struct FSussBrainConfig
+{
+	GENERATED_BODY()
+public:
+	/// Re-use of pre-defined action sets
+	UPROPERTY(EditDefaultsOnly)
+	TArray<USussActionSetAsset*> ActionSets;
+	
+	/// Specific action definitions for this behaviour (if you don't want to re-use from sets)
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FSussActionDef> ActionDefs;
+
+	/// How to choose the action to take
+	UPROPERTY(EditDefaultsOnly)
+	ESussActionChoiceMethod ActionChoiceMethod = ESussActionChoiceMethod::HighestScoring;
+
+	/// When using the "Top N" or "Top N Percent" action choice methods, the value of "N"
+	UPROPERTY(EditDefaultsOnly)
+	int ActionChoiceTopN = 5;
+};
 
 /// Output result of an action+context pair being considered; only recorded if score > 0
 USTRUCT()
@@ -26,19 +62,6 @@ public:
 
 };
 
-/// How to choose the action to run
-UENUM(BlueprintType)
-enum class ESussActionChoiceMethod : uint8
-{
-	/// Always pick the highest scoring action
-	HighestScoring,
-	/// Pick a weighted random action from all non-zero scoring actions
-	WeightedRandomAll,
-	/// Pick a weighted random action from the top N non-zero scoring actions
-	WeightedRandomTopN,
-	/// Pick a weighted random action from all actions scoring within N percent of the top scorer (only non-zero)
-	WeightedRandomTopNPercent
-};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SUSS_API USussBrainComponent : public UBrainComponent
@@ -59,21 +82,14 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	float TimeSinceLastUpdate;
 
-	/// Re-use of pre-defined action sets
-	UPROPERTY(EditDefaultsOnly)
-	TArray<USussActionSet*> ActionSets;
-	
-	/// Specific action definitions for this behaviour (if you don't want to re-use from sets)
-	UPROPERTY(EditDefaultsOnly)
-	TArray<FSussActionDef> ActionDefs;
+	/// Current brain configuration; can be set in defaults, or imported from USussBrainConfigAsset, or set at runtime
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, BlueprintSetter=SetBrainConfig)
+	FSussBrainConfig BrainConfig;
 
-	/// How to choose the action to take
-	UPROPERTY(EditDefaultsOnly)
-	ESussActionChoiceMethod ActionChoiceMethod = ESussActionChoiceMethod::HighestScoring;
-
-	/// When using the "Top N" or "Top N Percent" action choice methods, the value of "N"
-	UPROPERTY(EditDefaultsOnly)
-	int ActionChoiceTopN = 5;
+	/// Asset which will be used to provide the brain config. For if you want to pre-author these and simply link them to brains,
+	/// either in your Blueprint definition, or later (e.g. AIs using a shared controller class & data-driven brain config)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, BlueprintSetter=SetBrainConfigFromAsset)
+	USussBrainConfigAsset* BrainConfigAsset;
 
 	float CachedUpdateRequestTime;
 	mutable TWeakObjectPtr<AAIController> AiController;
@@ -92,6 +108,18 @@ public:
 	// Sets default values for this component's properties
 	USussBrainComponent();
 
+	const FSussBrainConfig& GetBrainConfig() const { return BrainConfig; }
+
+	UFUNCTION(BlueprintCallable)
+	void SetBrainConfig(const FSussBrainConfig& NewConfig);
+
+	UFUNCTION(BlueprintCallable)
+	void SetBrainConfigFromAsset(USussBrainConfigAsset* Asset);
+
+	/// Stop doing any current AI action
+	UFUNCTION(BlueprintCallable)
+	void StopCurrentAction();
+
 	/// Are we waiting for an update (should be queued already)
 	bool NeedsUpdate() const { return bQueuedForUpdate; }
 	/// Update function which triggers an evaluation & action decision
@@ -108,6 +136,7 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	void BrainConfigChanged();
 	void InitActions();
 	void CheckForNeededUpdate(float DeltaTime);
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);

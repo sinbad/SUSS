@@ -6,7 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
 #include "SussConsideration.h"
-#include "SussActionSet.generated.h"
+#include "SussActionSetAsset.generated.h"
 
 
 USTRUCT()
@@ -84,7 +84,7 @@ public:
  * An action set is a re-usable collection of actions, to make it quicker & easier to build AIs from pre-built behaviours
  */
 UCLASS()
-class SUSS_API USussActionSet : public UDataAsset
+class SUSS_API USussActionSetAsset : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 

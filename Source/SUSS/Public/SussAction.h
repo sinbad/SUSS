@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SussContext.h"
 #include "UObject/Object.h"
 #include "SussAction.generated.h"
 
@@ -22,9 +23,26 @@ protected:
 	/// Override this in subclasses if you want this action to not allow interruptions.
 	UPROPERTY(EditDefaultsOnly)
 	bool bAllowInterruptions = true;
+
+	UPROPERTY(BlueprintReadOnly)
+	USussBrainComponent* Brain;
+
+	UPROPERTY(BlueprintReadOnly)
+	FSussContext CurrentContext;
 public:
 
+	void Init(USussBrainComponent* InBrain, const FSussContext& InContext) { Brain = InBrain; CurrentContext = InContext; }
 	
+	USussBrainComponent* GetBrain() const
+	{
+		return Brain;
+	}
+
+	const FSussContext& GetCurrentContext() const
+	{
+		return CurrentContext;
+	}
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool CanBeInterrupted() const;
 
@@ -32,13 +50,13 @@ public:
 	/// Override this function to perform the actual underlying actions.
 	/// Implementations MUST CALL ActionCompleted() at the natural end of the action.
 	UFUNCTION(BlueprintNativeEvent)
-	void PerformAction(USussBrainComponent* Brain, const FSussContext& Context);
+	void PerformAction();
 
 	/// Called when the action has been interrupted because the brain has changed its mind, before completion.
 	/// Will only be called if CanBeInterrupted() returns true, otherwise no other action can be performed until
 	/// ActionCompleted() is called.
 	UFUNCTION(BlueprintNativeEvent)
-	void CancelAction(USussBrainComponent* Brain, const FSussContext& Context);
+	void CancelAction();
 
 	/// Subclasses must call this function when they complete their action normally, but not when cancelled.
 	UFUNCTION(BlueprintCallable)
