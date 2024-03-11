@@ -164,7 +164,15 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	checkf(!CurrentAction.IsSet(), TEXT("Trying to choose a new action before the previous one is cleared"));
 	checkf(ActionResult.Def, TEXT("No supplied action def"));
 	checkf(IsValid(ActionResult.Def->ActionClass), TEXT("Action class not valid"));
-	
+
+	// Cancel previous action
+	if (CurrentAction.IsSet())
+	{
+		if (auto CDO = CurrentAction->Def->ActionClass.GetDefaultObject())
+		{
+			CDO->CancelAction(this, CurrentAction->Context);
+		}
+	}
 	CurrentAction = ActionResult;
 	CurrentActionInertiaCooldown = CurrentAction->Def->InertiaCooldown;
 
