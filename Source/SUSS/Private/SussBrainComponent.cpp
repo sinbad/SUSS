@@ -12,7 +12,10 @@
 
 
 // Sets default values for this component's properties
-USussBrainComponent::USussBrainComponent(): bQueuedForUpdate(false), TimeSinceLastUpdate(0), CachedUpdateRequestTime(1)
+USussBrainComponent::USussBrainComponent(): bQueuedForUpdate(false),
+                                            TimeSinceLastUpdate(0),
+                                            BrainConfigAsset(nullptr),
+                                            CachedUpdateRequestTime(1)
 {
 	// Brains tick in order to queue themselves for update regularly
 	PrimaryComponentTick.bCanEverTick = true;
@@ -21,7 +24,6 @@ USussBrainComponent::USussBrainComponent(): bQueuedForUpdate(false), TimeSinceLa
 	{
 		CachedUpdateRequestTime = Settings->BrainUpdateRequestIntervalSeconds;
 	}
-
 }
 
 void USussBrainComponent::SetBrainConfig(const FSussBrainConfig& NewConfig)
@@ -49,6 +51,15 @@ void USussBrainComponent::BrainConfigChanged()
 void USussBrainComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (IsValid(BrainConfigAsset))
+	{
+		if (BrainConfig.ActionDefs.Num() || BrainConfig.ActionSets.Num())
+		{
+			UE_LOG(LogSuss, Warning, TEXT("SUSS embedded BrainConfig is being overwritten by asset link on BeginPlay"))
+		}
+		SetBrainConfigFromAsset(BrainConfigAsset);
+	}
 
 	BrainConfigChanged();
 	if (!GetOwner()->HasAuthority())

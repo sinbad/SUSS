@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
 #include "SussConsideration.h"
+#include "SussAction.h"
 #include "SussActionSetAsset.generated.h"
 
 

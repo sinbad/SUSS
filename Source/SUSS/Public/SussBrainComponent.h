@@ -87,7 +87,8 @@ protected:
 	FSussBrainConfig BrainConfig;
 
 	/// Asset which will be used to provide the brain config. For if you want to pre-author these and simply link them to brains,
-	/// either in your Blueprint definition, or later (e.g. AIs using a shared controller class & data-driven brain config)
+	/// either in your Blueprint definition, or later (e.g. AIs using a shared controller class & data-driven brain config).
+	/// This will OVERRIDE any existing BrainConfig values at startup.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, BlueprintSetter=SetBrainConfigFromAsset)
 	USussBrainConfigAsset* BrainConfigAsset;
 
