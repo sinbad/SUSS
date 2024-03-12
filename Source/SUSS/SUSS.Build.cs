@@ -30,7 +30,8 @@ public class SUSS : ModuleRules
 				"CoreUObject",
                 "AIModule",
                 "GameplayTags",
-                "NavigationSystem"
+                "NavigationSystem",
+                "Settings"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
