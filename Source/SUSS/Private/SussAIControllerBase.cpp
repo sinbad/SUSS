@@ -8,6 +8,7 @@ ASussAIControllerBase::ASussAIControllerBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	BrainComponent = CreateDefaultSubobject<USussBrainComponent>("SUSS Brain");
+	AddInstanceComponent(BrainComponent);
 	
 }
 

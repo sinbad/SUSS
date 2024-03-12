@@ -30,6 +30,10 @@ struct FSussActionDef
 {
 	GENERATED_BODY()
 public:
+	/// Optional description, for documentation and debugging
+	UPROPERTY(EditDefaultsOnly)
+	FString Description;
+
 	/// The action which is going to be called
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<USussAction> ActionClass;

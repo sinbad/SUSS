@@ -25,6 +25,10 @@ struct SUSS_API FSussConsideration
 	GENERATED_BODY()
 
 public:
+	/// Optional description, for documentation and debugging
+	UPROPERTY(EditDefaultsOnly)
+	FString Description;
+
 	/// Tag identifying the input value which we want to pull into this consideration.
 	/// Input tags must have the prefix "Suss.Input"
 	UPROPERTY(EditDefaultsOnly, meta=(Categories="Suss.Input"))

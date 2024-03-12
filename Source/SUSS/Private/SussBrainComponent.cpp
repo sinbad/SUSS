@@ -227,7 +227,7 @@ void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 	}
 	else
 	{
-		UE_LOG(LogSuss, Error, TEXT("Received an OnActionCompleted callback on %s when no current action is set"), *GetName());
+		UE_LOG(LogSuss, Error, TEXT("Received an OnActionCompleted callback on %s from action type %s when no current action is set"), *GetName(), *SussAction->GetClass()->GetName());
 	}
 
 	SussAction->InternalOnActionCompleted.Unbind();
