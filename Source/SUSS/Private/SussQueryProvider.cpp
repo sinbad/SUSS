@@ -5,9 +5,9 @@ void USussQueryProvider::Tick(float DeltaTime)
 	TimeSinceLastRun += DeltaTime;
 }
 
-void USussQueryProvider::MaybeExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params)
+void USussQueryProvider::MaybeExecuteQuery(USussBrainComponent* Brain, AActor* Self, float MaxFrequency, const TMap<FName, FSussParameter>& Params)
 {
-	if (!ShouldUseCachedResults(Brain, Self, Params))
+	if (!ShouldUseCachedResults(Brain, Self, MaxFrequency, Params))
 	{
 		// Store the subset of params we need
 		CachedRelevantParams = Params.FilterByPredicate([this](const TMap<FName, FSussParameter>::ElementType& Elem)
@@ -19,10 +19,10 @@ void USussQueryProvider::MaybeExecuteQuery(USussBrainComponent* Brain, AActor* S
 	}
 }
 
-bool USussQueryProvider::ShouldUseCachedResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params) const
+bool USussQueryProvider::ShouldUseCachedResults(USussBrainComponent* Brain, AActor* Self, float MaxFrequency, const TMap<FName, FSussParameter>& Params) const
 {
 	// Always re-run if time has run out for cached results
-	if (TimeSinceLastRun > ReuseResultsDuration)
+	if (TimeSinceLastRun >= MaxFrequency)
 		return false;
 
 	if (CachedSelf.Get() != Self)

@@ -29,16 +29,13 @@ enum class ESussQueryContextElement : uint8
 };
 
 /**
- * Query providers are responsible for supplying some element of context for an input provider.
- * Input providers list all the queries they need running, and in turn the queries declare which elements
+ * Query providers are responsible for supplying building some element of context for action evaluation.
+ * Action descriptions in a brain list all the queries they need running, and in turn the queries declare which elements
  * of the context they supply. The combination of all of these describes the full list of contexts that will be
  * generated for evaluation.
  *
- * Across all considerations for an action, only one query for each element of the context is allowed. Multiple
- * considerations can reference the same query (via their inputs), and that query will only be run once. Different
- * considerations  * can ask for different queries for different elements of the context, for example one consideration
- * could ask for targets to be queried, and another could ask for locations from a different query. But they could not
- * both ask for targets to be queried, unless the query being asked for is the same.
+ * Across all considerations for an action, only one query for each element of the context is allowed. Each action can
+ * supply different parameters to the query.
  *
  * Do NOT subclass from this base class. When setting up a query provider, you must:
  *   1. Subclass from one of the derived classes USussTargetQueryProvider, USussLocationQueryProvider etc
@@ -66,10 +63,6 @@ protected:
 	/// Previous value of "self" ie brain actor
 	TWeakObjectPtr<AActor> CachedSelf;
 
-	/// The time period in seconds for which query results will be re-used rather than the query being re-executed
-	UPROPERTY(EditDefaultsOnly)
-	float ReuseResultsDuration = 0.5f;
-
 	float TimeSinceLastRun = 100000;
 
 public:
@@ -81,19 +74,18 @@ public:
 
 	// I'd prefer to make this pure virtual but UCLASS doesn't allow that
 	virtual ESussQueryContextElement GetProvidedContextElement() const { return ESussQueryContextElement::Target; } 
-	
-	/// Immediately invalidate query results, meaning the next call will always perform the query again
-	virtual void InvalidateResults() { TimeSinceLastRun = ReuseResultsDuration + 1000; }
 
 	virtual void Tick(float DeltaTime);
 
 
 protected:
-	void MaybeExecuteQuery(USussBrainComponent* Brain, AActor* Self,
+	void MaybeExecuteQuery(USussBrainComponent* Brain,
+	                       AActor* Self,
+	                       float MaxFrequency,
 	                       const TMap<FName, FSussParameter>& Params);
 	/// Should be overridden by subclasses
 	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params) {}
-	virtual bool ShouldUseCachedResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params) const; 
+	virtual bool ShouldUseCachedResults(USussBrainComponent* Brain, AActor* Self, float MaxFrequency, const TMap<FName, FSussParameter>& Params) const; 
 	
 };
 
@@ -107,9 +99,9 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Target; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<TWeakObjectPtr<AActor>>& GetResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params)
+	const TArray<TWeakObjectPtr<AActor>>& GetResults(USussBrainComponent* Brain, AActor* Self, float MaxFrequency, const TMap<FName, FSussParameter>& Params)
 	{
-		MaybeExecuteQuery(Brain, Self, Params);
+		MaybeExecuteQuery(Brain, Self, MaxFrequency, Params);
 		return CachedResults;
 	}
 };
@@ -124,9 +116,9 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Location; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<FVector>& GetResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params)
+	const TArray<FVector>& GetResults(USussBrainComponent* Brain, AActor* Self, float MaxFrequency, const TMap<FName, FSussParameter>& Params)
 	{
-		MaybeExecuteQuery(Brain, Self, Params);
+		MaybeExecuteQuery(Brain, Self, MaxFrequency, Params);
 		return CachedResults;
 	}
 };
@@ -141,9 +133,9 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Rotation; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<FRotator>& GetResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params)
+	const TArray<FRotator>& GetResults(USussBrainComponent* Brain, AActor* Self, float MaxFrequency, const TMap<FName, FSussParameter>& Params)
 	{
-		MaybeExecuteQuery(Brain, Self, Params);
+		MaybeExecuteQuery(Brain, Self, MaxFrequency, Params);
 		return CachedResults;
 	}
 };
@@ -158,9 +150,9 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::CustomValue; }
 	/// Retrieves the query results, using cached values if possible
-	const TArray<TSussContextValue>& GetResults(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params)
+	const TArray<TSussContextValue>& GetResults(USussBrainComponent* Brain, AActor* Self, float MaxFrequency, const TMap<FName, FSussParameter>& Params)
 	{
-		MaybeExecuteQuery(Brain, Self, Params);
+		MaybeExecuteQuery(Brain, Self, MaxFrequency, Params);
 		return CachedResults;
 	}
 };

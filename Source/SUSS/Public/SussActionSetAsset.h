@@ -19,6 +19,11 @@ struct FSussQuery
 	UPROPERTY(EditDefaultsOnly, meta=(Categories="Suss.Query"))
 	FGameplayTag QueryTag;
 
+	/// The max frequency the query will be executed. If less time than this has passed since the last time the query was
+	/// executed with the same parameters, the query results will be re-used rather than the query being re-executed
+	UPROPERTY(EditDefaultsOnly)
+	float MaxFrequency = 0.5f;
+
 	/// Parameters to pass to the query
 	UPROPERTY(EditDefaultsOnly)
 	TMap<FName, FSussParameter> Params;
