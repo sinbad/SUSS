@@ -36,9 +36,13 @@ public:
 
 	USussInputProvider* GetInputProvider(const FGameplayTag& Tag);
 
-	/// Register an input provider by class
+	/// Register a query provider by class
 	UFUNCTION(BlueprintCallable)
 	void RegisterQueryProvider(TSubclassOf<USussQueryProvider> ProviderClass);
+
+	/// Unregister a query provider by class
+	UFUNCTION(BlueprintCallable)
+	void UnregisterQueryProvider(TSubclassOf<USussQueryProvider> ProviderClass);
 
 	USussQueryProvider* GetQueryProvider(const FGameplayTag& Tag);
 

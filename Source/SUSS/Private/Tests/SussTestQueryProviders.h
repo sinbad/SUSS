@@ -14,16 +14,39 @@ class USussTestSingleLocationQueryProvider : public USussLocationQueryProvider
 {
 	GENERATED_BODY()
 public:
-	USussTestSingleLocationQueryProvider() { QueryTag = TAG_TestSingleLocationQuery; }
-protected:
-	virtual void ExecuteQuery(USussBrainComponent* Brain,
-		AActor* Self,
-		const TMap<FName, FSussParameter>& Params) override
+	USussTestSingleLocationQueryProvider()
 	{
-		CachedResults.Reset();
-		CachedResults.Add(FVector(10, -20, 50));
+		QueryTag = TAG_TestSingleLocationQuery;
+
+		// Add optional params
+		ParamNames.Add("OverrideX");
+		ParamNames.Add("OverrideY");
 	}
 
+	int NumTimesRun = 0;
+protected:
+
+	virtual void ExecuteQuery(USussBrainComponent* Brain,
+		AActor* Self,
+		const TMap<FName, FSussParameter>& Params,
+		TArray<FVector>& OutResults) override
+	{
+		float X = 10;
+		float Y = -20;
+		if (auto pVal = Params.Find("OverrideX"))
+		{
+			X = pVal->FloatValue;
+		}
+		if (auto pVal = Params.Find("OverrideY"))
+		{
+			Y = pVal->FloatValue;
+		}
+
+		OutResults.Add(FVector(X, Y, 50));
+		
+
+		++NumTimesRun;
+	}
 };
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_TestMultipleLocationQuery);
@@ -34,16 +57,16 @@ class USussTestMultipleLocationQueryProvider : public USussLocationQueryProvider
 public:
 	USussTestMultipleLocationQueryProvider() { QueryTag = TAG_TestMultipleLocationQuery; }
 protected:
+	
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
-		const TMap<FName, FSussParameter>& Params) override
+		const TMap<FName, FSussParameter>& Params,
+		TArray<FVector>& OutResults) override
 	{
-		CachedResults.Reset();
-		CachedResults.Add(FVector(10, -20, 50));
-		CachedResults.Add(FVector(20, 100, -2));
-		CachedResults.Add(FVector(-40, 220, 750));
+		OutResults.Add(FVector(10, -20, 50));
+		OutResults.Add(FVector(20, 100, -2));
+		OutResults.Add(FVector(-40, 220, 750));
 	}
-
 };
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_TestMultipleRotationQuery);
@@ -54,16 +77,16 @@ class USussTestMultipleRotationQueryProvider : public USussRotationQueryProvider
 public:
 	USussTestMultipleRotationQueryProvider() { QueryTag = TAG_TestMultipleRotationQuery; }
 protected:
+
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
-		const TMap<FName, FSussParameter>& Params) override
+		const TMap<FName, FSussParameter>& Params,
+		TArray<FRotator>& OutResults) override
 	{
-		CachedResults.Reset();
-		CachedResults.Add(FRotator(10, -20, 50));
-		CachedResults.Add(FRotator(20, 100, -2));
-		CachedResults.Add(FRotator(-40, 220, 750));
+		OutResults.Add(FRotator(10, -20, 50));
+		OutResults.Add(FRotator(20, 100, -2));
+		OutResults.Add(FRotator(-40, 220, 750));
 	}
-
 };
 
 inline void RegisterTestQueryProviders(UWorld* World)
@@ -73,5 +96,15 @@ inline void RegisterTestQueryProviders(UWorld* World)
 		SUSS->RegisterQueryProvider(USussTestSingleLocationQueryProvider::StaticClass());
 		SUSS->RegisterQueryProvider(USussTestMultipleLocationQueryProvider::StaticClass());
 		SUSS->RegisterQueryProvider(USussTestMultipleRotationQueryProvider::StaticClass());
+	}
+}
+
+inline void UnregisterTestQueryProviders(UWorld* World)
+{
+	if (auto SUSS = GetSUSS(World))
+	{
+		SUSS->UnregisterQueryProvider(USussTestSingleLocationQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProvider(USussTestMultipleLocationQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProvider(USussTestMultipleRotationQueryProvider::StaticClass());
 	}
 }

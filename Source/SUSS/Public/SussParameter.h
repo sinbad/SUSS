@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Templates/TypeHash.h"
 #include "UObject/Object.h"
 #include "SussParameter.generated.h"
 
@@ -52,6 +53,11 @@ public:
 	static FSussParameter ZeroLiteral;
 	static FSussParameter OneLiteral;
 
+	FSussParameter() {}
+	FSussParameter(float Val) : Type(ESussParamType::Float), FloatValue(Val) {}
+	FSussParameter(int Val) : Type(ESussParamType::Int), FloatValue(Val) {}
+	FSussParameter(FGameplayTag Val) : Type(ESussParamType::Tag), Tag(Val) {}
+
 	friend bool operator==(const FSussParameter& Lhs, const FSussParameter& Rhs)
 	{
 		if (Lhs.Type != Rhs.Type)
@@ -74,5 +80,27 @@ public:
 	friend bool operator!=(const FSussParameter& Lhs, const FSussParameter& Rhs)
 	{
 		return !(Lhs == Rhs);
+	}
+
+	friend uint32 GetTypeHash(const FSussParameter& Arg)
+	{
+		uint32 Hash = GetTypeHash(Arg.Type);
+
+		switch (Arg.Type)
+		{
+		case ESussParamType::Float:
+			Hash = HashCombine(Hash, GetTypeHash(Arg.FloatValue));
+			break;
+		case ESussParamType::Int:
+			Hash = HashCombine(Hash, GetTypeHash(Arg.IntValue));
+			break;
+		case ESussParamType::Tag:
+			Hash = HashCombine(Hash, GetTypeHash(Arg.Tag));
+			break;
+		case ESussParamType::Input:
+			Hash = HashCombine(Hash, GetTypeHash(Arg.InputTag));
+			break;
+		};
+		return Hash;
 	}
 };

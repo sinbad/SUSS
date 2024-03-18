@@ -382,7 +382,7 @@ float USussBrainComponent::ResolveParameterToFloat(const FSussContext& SelfConte
 
 FSussParameter USussBrainComponent::ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const
 {
-	return FSussParameter(ESussParamType::Float, ResolveParameterToFloat(SelfContext, Value));
+	return FSussParameter(ResolveParameterToFloat(SelfContext, Value));
 }
 
 void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& Action, TArray<FSussContext>& OutContexts)
@@ -411,7 +411,7 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 			{
 				if (auto TQ = Cast<USussTargetQueryProvider>(QueryProvider))
 				{
-					Targets.Get<TWeakObjectPtr<AActor>>()->Append(TQ->GetResults(this, Self, Query.MaxFrequency, ResolvedParams));
+					Targets.Get<TWeakObjectPtr<AActor>>()->Append(TQ->GetResults<TWeakObjectPtr<AActor>>(this, Self, Query.MaxFrequency, ResolvedParams));
 				}
 				else
 				{
@@ -423,7 +423,7 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 			{
 				if (auto LQ = Cast<USussLocationQueryProvider>(QueryProvider))
 				{
-					Locations.Get<FVector>()->Append(LQ->GetResults(this, Self, Query.MaxFrequency, ResolvedParams));
+					Locations.Get<FVector>()->Append(LQ->GetResults<FVector>(this, Self, Query.MaxFrequency, ResolvedParams));
 				}
 				else
 				{
@@ -435,7 +435,7 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 			{
 				if (auto RQ = Cast<USussRotationQueryProvider>(QueryProvider))
 				{
-					Rotations.Get<FRotator>()->Append(RQ->GetResults(this, Self, Query.MaxFrequency, ResolvedParams));
+					Rotations.Get<FRotator>()->Append(RQ->GetResults<FRotator>(this, Self, Query.MaxFrequency, ResolvedParams));
 				}
 				else
 				{
@@ -447,7 +447,7 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 			{
 				if (auto CQ = Cast<USussCustomValueQueryProvider>(QueryProvider))
 				{
-					CustomValues.Get<TSussContextValue>()->Append(CQ->GetResults(this, Self, Query.MaxFrequency, ResolvedParams));
+					CustomValues.Get<TSussContextValue>()->Append(CQ->GetResults<TSussContextValue>(this, Self, Query.MaxFrequency, ResolvedParams));
 				}
 				else
 				{

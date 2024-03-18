@@ -107,6 +107,31 @@ void USussGameSubsystem::RegisterQueryProvider(TSubclassOf<USussQueryProvider> P
 	
 }
 
+void USussGameSubsystem::UnregisterQueryProvider(TSubclassOf<USussQueryProvider> ProviderClass)
+{
+	const auto CDO = ProviderClass.GetDefaultObject();
+
+	if (!CDO)
+	{
+		UE_LOG(LogSuss, Error, TEXT("Bad call to UnregisterQueryProvider, invalid class %s (no CDO)"), *ProviderClass->GetName())
+	}
+	auto& Tag = CDO->GetQueryTag();
+	if (Tag.IsValid())
+	{
+		if (auto pExisting = QueryProviders.Find(Tag))
+		{
+			if (*pExisting == CDO)
+			{
+				QueryProviders.Remove(Tag);
+				return;
+			}
+		}
+	}
+
+	UE_LOG(LogSuss, Warning, TEXT("Possibly bad call to UnregisterQueryProvider, %s was not registered"), *ProviderClass->GetName());
+
+}
+
 USussQueryProvider* USussGameSubsystem::GetQueryProvider(const FGameplayTag& Tag)
 {
 	if (auto pProvider = QueryProviders.Find(Tag))
