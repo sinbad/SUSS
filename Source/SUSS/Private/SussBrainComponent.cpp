@@ -214,6 +214,8 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	CurrentAction->ActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
 	
 	CurrentAction->ActionInstance->PerformAction();
+
+	ActionNamesTimeLastPerformed.Add(ActionResult.Def->ActionClass->GetFName(), GetWorld()->GetTimeSeconds());
 	
 }
 
@@ -526,5 +528,15 @@ AActor* USussBrainComponent::GetSelf() const
 
 	// Fallback support for brains directly on actor (mostly for testing)
 	return GetOwner();
+}
+
+double USussBrainComponent::GetTimeSinceActionPerformed(TSubclassOf<USussAction> ActionClass) const
+{
+	if (auto pTime = ActionNamesTimeLastPerformed.Find(ActionClass->GetFName()))
+	{
+		return GetWorld()->GetTimeSeconds() - *pTime;
+	}
+
+	return 9999999.9;
 }
 

@@ -103,6 +103,8 @@ protected:
 	float CurrentActionInertiaCooldown = 0;
 
 	TArray<FSussActionScoringResult> CandidateActions;
+	/// Record of when actions were last run, by class name
+	TMap<FName, double> ActionNamesTimeLastPerformed;
 
 
 public:
@@ -132,6 +134,10 @@ public:
 
 	/// Get the "Self" pawn this brain controls, used in contexts
 	AActor* GetSelf() const;
+
+	/// Get the time in seconds since an action was last performed
+	UFUNCTION(BlueprintCallable)
+	double GetTimeSinceActionPerformed(TSubclassOf<USussAction> ActionClass) const;
 
 
 protected:
