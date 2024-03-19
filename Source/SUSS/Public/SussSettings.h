@@ -14,11 +14,17 @@ class SUSS_API USussSettings : public UObject
 	GENERATED_BODY()
 public:
 
-	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "The list of input providers to automatically register at startup"))
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of input provider classes to automatically register at startup"))
 	TArray<TSubclassOf<USussInputProvider>> InputProviders;
 
-	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "The list of query providers to automatically register at startup"))
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of paths that Blueprint input providers will be searched for in", RelativeToGameContentDir, LongPackageName))
+	TArray<FDirectoryPath> InputProviderPaths;
+
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of query providers classes to automatically register at startup"))
 	TArray<TSubclassOf<USussQueryProvider>> QueryProviders;
+
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of paths that Blueprint query providers will be searched for in", RelativeToGameContentDir, LongPackageName))
+	TArray<FDirectoryPath> QueryProviderPaths;
 
 	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "List of action classes which are globally disabled; useful for debugging, or disabling experimental behaviours"))
 	TArray<TSubclassOf<USussAction>> DisabledActions;

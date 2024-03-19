@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "SussInputProvider.h"
 #include "SussQueryProvider.h"
+#include "Engine/ObjectLibrary.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "SussGameSubsystem.generated.h"
 
@@ -26,29 +27,50 @@ protected:
 	UPROPERTY()
 	USussInputProvider* DefaultInputProvider;
 
+	UPROPERTY()
+	UObjectLibrary* InputProviderLib;
+	UPROPERTY()
+	UObjectLibrary* QueryProviderLib;
+
 	TSet<FName> MissingTagsAlreadyWarnedAbout;
-	
+
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	/// Register an input provider by class
 	UFUNCTION(BlueprintCallable)
-	void RegisterInputProvider(TSubclassOf<USussInputProvider> ProviderClass);
+	void RegisterInputProviderClass(TSubclassOf<USussInputProvider> ProviderClass);
+	/// Register an input provider instance
+	UFUNCTION(BlueprintCallable)
+	void RegisterInputProvider(USussInputProvider* Provider);
 
 	USussInputProvider* GetInputProvider(const FGameplayTag& Tag);
 
 	/// Register a query provider by class
 	UFUNCTION(BlueprintCallable)
-	void RegisterQueryProvider(TSubclassOf<USussQueryProvider> ProviderClass);
+	void RegisterQueryProviderClass(TSubclassOf<USussQueryProvider> ProviderClass);
+	/// Register an query provider instance
+	UFUNCTION(BlueprintCallable)
+	void RegisterQueryProvider(USussQueryProvider* Provider);
 
 	/// Unregister a query provider by class
 	UFUNCTION(BlueprintCallable)
-	void UnregisterQueryProvider(TSubclassOf<USussQueryProvider> ProviderClass);
+	void UnregisterQueryProviderClass(TSubclassOf<USussQueryProvider> ProviderClass);
+
+	/// Unregister a query provider instance
+	UFUNCTION(BlueprintCallable)
+	void UnregisterQueryProvider(USussQueryProvider* Provider);
 
 	USussQueryProvider* GetQueryProvider(const FGameplayTag& Tag);
 
 	virtual TStatId GetStatId() const override;
 	virtual UWorld* GetTickableGameObjectWorld() const override;
 	virtual void Tick(float DeltaTime) override;
+
+protected:
+	void LoadClassesFromLibrary(const TArray<FDirectoryPath>& Paths, UObjectLibrary* ObjectLibrary, TArray<FSoftObjectPath>& OutSoftPaths);
+	void LoadClassesFromLibrary(const TArray<FString>& Paths, UObjectLibrary* ObjectLibrary, TArray<FSoftObjectPath>& OutSoftPaths);
+
+
 };
 
 inline USussGameSubsystem* GetSUSS(UWorld* WorldContext)

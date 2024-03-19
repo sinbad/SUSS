@@ -93,9 +93,9 @@ inline void RegisterTestQueryProviders(UWorld* World)
 {
 	if (auto SUSS = GetSUSS(World))
 	{
-		SUSS->RegisterQueryProvider(USussTestSingleLocationQueryProvider::StaticClass());
-		SUSS->RegisterQueryProvider(USussTestMultipleLocationQueryProvider::StaticClass());
-		SUSS->RegisterQueryProvider(USussTestMultipleRotationQueryProvider::StaticClass());
+		SUSS->RegisterQueryProviderClass(USussTestSingleLocationQueryProvider::StaticClass());
+		SUSS->RegisterQueryProviderClass(USussTestMultipleLocationQueryProvider::StaticClass());
+		SUSS->RegisterQueryProviderClass(USussTestMultipleRotationQueryProvider::StaticClass());
 	}
 }
 
@@ -103,8 +103,8 @@ inline void UnregisterTestQueryProviders(UWorld* World)
 {
 	if (auto SUSS = GetSUSS(World))
 	{
-		SUSS->UnregisterQueryProvider(USussTestSingleLocationQueryProvider::StaticClass());
-		SUSS->UnregisterQueryProvider(USussTestMultipleLocationQueryProvider::StaticClass());
-		SUSS->UnregisterQueryProvider(USussTestMultipleRotationQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProviderClass(USussTestSingleLocationQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProviderClass(USussTestMultipleLocationQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProviderClass(USussTestMultipleRotationQueryProvider::StaticClass());
 	}
 }
