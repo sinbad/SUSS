@@ -36,6 +36,7 @@ void USussBrainComponent::SetBrainConfig(const FSussBrainConfig& NewConfig)
 void USussBrainComponent::SetBrainConfigFromAsset(USussBrainConfigAsset* Asset)
 {
 	BrainConfig = Asset->BrainConfig;
+	BrainConfigChanged();
 }
 
 void USussBrainComponent::BrainConfigChanged()
