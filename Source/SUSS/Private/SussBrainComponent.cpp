@@ -210,7 +210,8 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	CurrentAction = ActionResult;
 	CurrentActionInertiaCooldown = CurrentAction->Def->InertiaCooldown;
 
-	CurrentAction->ActionInstance = NewObject<USussAction>(this, CurrentAction->Def->ActionClass->GetClass());
+	// Note that to allow BP classes we need to construct using the default object
+	CurrentAction->ActionInstance = NewObject<USussAction>(this, CurrentAction->Def->ActionClass, NAME_None, RF_NoFlags, CurrentAction->Def->ActionClass->GetDefaultObject());
 	CurrentAction->ActionInstance->Init(this, CurrentAction->Context);
 	CurrentAction->ActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
 	
