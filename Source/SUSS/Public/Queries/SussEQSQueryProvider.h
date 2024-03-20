@@ -37,9 +37,26 @@ public:
 #endif // WITH_EDITOR
 
 protected:
-	bool CheckResultClass(TSubclassOf<UEnvQueryItemType> ResultClass) { return false; } // needs to be overridden
-	void RunEQSQuery(USussBrainComponent* Brain,
+	TSharedPtr<FEnvQueryResult> RunEQSQuery(USussBrainComponent* Brain,
 	                 AActor* Self,
-	                 const TMap<FName, FSussParameter>& Params,
-	                 TFunctionRef<void(const FEnvQueryItem& Result)> ResultCallback);
+	                 const TMap<FName, FSussParameter>& Params);
+};
+
+/// Subclass this to provide a EQS-powered query which returns locations
+UCLASS(Blueprintable)
+class USussEQSLocationQueryProvider : public USussEQSQueryProvider
+{
+	GENERATED_BODY()
+protected:
+	/// Should be overridden by subclasses
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults);
+
+	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
+	{
+		InitResults<FVector>(OutResults);
+		ExecuteQuery(Brain, Self, Params, GetResultsArray<FVector>(OutResults));
+	}
+
+public:
+	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Location; }
 };

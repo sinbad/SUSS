@@ -2,15 +2,15 @@
 #include "Queries/SussEQSQueryProvider.h"
 
 #include "EnvironmentQuery/EnvQueryManager.h"
+#include "EnvironmentQuery/Items/EnvQueryItemType_VectorBase.h"
 #include "Misc/TransactionObjectEvent.h"
 
-void USussEQSQueryProvider::RunEQSQuery(USussBrainComponent* Brain,
+TSharedPtr<FEnvQueryResult> USussEQSQueryProvider::RunEQSQuery(USussBrainComponent* Brain,
                                         AActor* Self,
-                                        const TMap<FName, FSussParameter>& Params,
-                                        TFunctionRef<void(const FEnvQueryItem& Result)> ResultCallback)
+                                        const TMap<FName, FSussParameter>& Params)
 {
 	if (!EQSQuery)
-		return;
+		return nullptr;
 
 	if (UEnvQueryManager* EQS = UEnvQueryManager::GetCurrent(Self->GetWorld()))
 	{
@@ -50,14 +50,24 @@ void USussEQSQueryProvider::RunEQSQuery(USussBrainComponent* Brain,
 				QueryRequest.SetDynamicParam(DParam);
 			}
 		}
-		auto Result = EQS->RunInstantQuery(QueryRequest, QueryMode);
+		return EQS->RunInstantQuery(QueryRequest, QueryMode);
+	}
 
-		if (CheckResultClass(Result->ItemType))
+	return nullptr;
+}
+
+void USussEQSLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
+                                                 AActor* Self,
+                                                 const TMap<FName, FSussParameter>& Params,
+                                                 TArray<FVector>& OutResults)
+{
+	auto Result = RunEQSQuery(Brain, Self, Params);
+	if (Result->ItemType->IsChildOf(UEnvQueryItemType_VectorBase::StaticClass()))
+	{
+		const UEnvQueryItemType_VectorBase* DefTypeOb =  Result->ItemType->GetDefaultObject<UEnvQueryItemType_VectorBase>();
+		for (auto& Item : Result->Items)
 		{
-			for (const FEnvQueryItem& Item : Result->Items)
-			{
-				ResultCallback(Item);
-			}
+			OutResults.Add(DefTypeOb->GetItemLocation(Result->RawData.GetData() + Item.DataOffset));
 		}
 	}
 }

@@ -196,7 +196,7 @@ protected:
 	
 };
 
-/// Subclass this to provide a query which returns targets, and register it with USussGameSubsystem
+/// Subclass this to provide a query which returns targets
 UCLASS(Abstract, Blueprintable)
 class USussTargetQueryProvider : public USussQueryProvider
 {
@@ -217,7 +217,7 @@ public:
 
 };
 
-/// Subclass this to provide a query which returns locations, and register it with USussGameSubsystem
+/// Subclass this to provide a query which returns locations
 UCLASS(Abstract, Blueprintable)
 class USussLocationQueryProvider : public USussQueryProvider
 {
@@ -237,7 +237,7 @@ public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Location; }
 };
 
-/// Subclass this to provide a query which returns rotations, and register it with USussGameSubsystem
+/// Subclass this to provide a query which returns rotations
 UCLASS(Abstract, Blueprintable)
 class USussRotationQueryProvider : public USussQueryProvider
 {
@@ -257,7 +257,7 @@ public:
 
 };
 
-/// Subclass this to provide a query which returns custom context values, and register it with USussGameSubsystem
+/// Subclass this to provide a query which returns custom context values
 UCLASS(Abstract, Blueprintable)
 class USussCustomValueQueryProvider : public USussQueryProvider
 {
