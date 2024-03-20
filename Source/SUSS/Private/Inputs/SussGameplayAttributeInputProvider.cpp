@@ -4,11 +4,11 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 
-float USussGameplayAttributeInputProvider::GetAttributeValue(AActor* FromActor) const
+float USussGameplayAttributeInputProvider::GetAttributeValue(const AActor* FromActor) const
 {
 	if (IsValid(FromActor) && Attribute.IsValid())
 	{
-		if (auto ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(FromActor))
+		if (const auto ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(FromActor))
 		{
 			const float Val = ASC->GetNumericAttribute(Attribute);
 

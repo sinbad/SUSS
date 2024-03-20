@@ -29,7 +29,7 @@ public:
 
 protected:
 
-	float GetAttributeValue(AActor* FromActor) const;
+	float GetAttributeValue(const AActor* FromActor) const;
 };
 
 /**
