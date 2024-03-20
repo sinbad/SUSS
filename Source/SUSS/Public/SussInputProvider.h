@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
 #include "SussContext.h"
 #include "UObject/Object.h"
@@ -26,7 +27,7 @@
  * Input providers themselves are stateless, which is why only the class needs to be registered, SUSS uses the CDO.
  */
 UCLASS(Blueprintable, Abstract)
-class SUSS_API USussInputProvider : public UObject
+class SUSS_API USussInputProvider : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 protected:

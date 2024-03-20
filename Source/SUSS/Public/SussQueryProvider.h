@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
 #include "SussContext.h"
 #include "UObject/Object.h"
@@ -60,7 +61,7 @@ public:
  *   5. Register your provider with USussGameSubsystem, most easily via Project Settings > Plugins > SUSS > Query Providers
  */
 UCLASS(Abstract)
-class SUSS_API USussQueryProvider : public UObject
+class SUSS_API USussQueryProvider : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 protected:
