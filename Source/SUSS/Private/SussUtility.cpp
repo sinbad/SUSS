@@ -76,13 +76,13 @@ float USussUtility::EvalStepCurve(float Input, const FVector4f& Params)
 float USussUtility::EvalLinearCurve(float Input, const FVector4f& Params)
 {
 	// m * (x - c) + b
-	return PARAM_M * (Input = PARAM_C) + PARAM_B;
+	return PARAM_M * (Input - PARAM_C) + PARAM_B;
 }
 
 float USussUtility::EvalQuadraticCurve(float Input, const FVector4f& Params)
 {
 	// m * (x - c)^k + b
-	return PARAM_M * FMath::Pow(Input = PARAM_C, PARAM_K) + PARAM_B;
+	return PARAM_M * FMath::Pow(Input - PARAM_C, PARAM_K) + PARAM_B;
 }
 
 float USussUtility::EvalExponentialCurve(float Input, const FVector4f& Params)
