@@ -31,7 +31,9 @@ public class SUSS : ModuleRules
                 "AIModule",
                 "GameplayTags",
                 "NavigationSystem",
-                "Settings"
+                "Settings",
+                "GameplayAbilities"
+
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -40,7 +42,6 @@ public class SUSS : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"GameplayAbilities"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
