@@ -67,7 +67,7 @@ class SUSS_API USussQueryProvider : public UPrimaryDataAsset
 protected:
 
 	/// The tag which identifies the query which this provider is supplying
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(Categories="Suss.Query"))
 	FGameplayTag QueryTag;
 
 	/// List of parameters which this query uses. MUST be correct to preserve cache info

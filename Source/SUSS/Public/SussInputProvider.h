@@ -32,7 +32,7 @@ class SUSS_API USussInputProvider : public UPrimaryDataAsset
 	GENERATED_BODY()
 protected:
 	/// The tag which identifies the input which this provider is supplying
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(Categories="Suss.Input"))
 	FGameplayTag InputTag;
 	
 public:
