@@ -410,52 +410,16 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 		switch (QueryProvider->GetProvidedContextElement())
 		{
 		case ESussQueryContextElement::Target:
-			{
-				if (auto TQ = Cast<USussTargetQueryProvider>(QueryProvider))
-				{
-					Targets.Get<TWeakObjectPtr<AActor>>()->Append(TQ->GetResults<TWeakObjectPtr<AActor>>(this, Self, Query.MaxFrequency, ResolvedParams));
-				}
-				else
-				{
-					UE_LOG(LogSuss, Error, TEXT("Query provider %s claims to provide target information but isn't subclassed from SussTargetQueryProvider"), *QueryProvider->GetClass()->GetName());
-				}
-			}
+			Targets.Get<TWeakObjectPtr<AActor>>()->Append(QueryProvider->GetResults<TWeakObjectPtr<AActor>>(this, Self, Query.MaxFrequency, ResolvedParams));
 			break;
 		case ESussQueryContextElement::Location:
-			{
-				if (auto LQ = Cast<USussLocationQueryProvider>(QueryProvider))
-				{
-					Locations.Get<FVector>()->Append(LQ->GetResults<FVector>(this, Self, Query.MaxFrequency, ResolvedParams));
-				}
-				else
-				{
-					UE_LOG(LogSuss, Error, TEXT("Query provider %s claims to provide location information but isn't subclassed from USussLocationQueryProvider"), *QueryProvider->GetClass()->GetName());
-				}
-			}
+			Locations.Get<FVector>()->Append(QueryProvider->GetResults<FVector>(this, Self, Query.MaxFrequency, ResolvedParams));
 			break;
 		case ESussQueryContextElement::Rotation:
-			{
-				if (auto RQ = Cast<USussRotationQueryProvider>(QueryProvider))
-				{
-					Rotations.Get<FRotator>()->Append(RQ->GetResults<FRotator>(this, Self, Query.MaxFrequency, ResolvedParams));
-				}
-				else
-				{
-					UE_LOG(LogSuss, Error, TEXT("Query provider %s claims to provide rotation information but isn't subclassed from USussRotationQueryProvider"), *QueryProvider->GetClass()->GetName());
-				}
-			}
+			Rotations.Get<FRotator>()->Append(QueryProvider->GetResults<FRotator>(this, Self, Query.MaxFrequency, ResolvedParams));
 			break;
 		case ESussQueryContextElement::CustomValue:
-			{
-				if (auto CQ = Cast<USussCustomValueQueryProvider>(QueryProvider))
-				{
-					CustomValues.Get<TSussContextValue>()->Append(CQ->GetResults<TSussContextValue>(this, Self, Query.MaxFrequency, ResolvedParams));
-				}
-				else
-				{
-					UE_LOG(LogSuss, Error, TEXT("Query provider %s claims to provide custom value information but isn't subclassed from USussCustomValueQueryProvider"), *QueryProvider->GetClass()->GetName());
-				}
-			}
+			CustomValues.Get<TSussContextValue>()->Append(QueryProvider->GetResults<TSussContextValue>(this, Self, Query.MaxFrequency, ResolvedParams));
 			break;
 		}
 	}
