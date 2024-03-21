@@ -19,7 +19,7 @@ TSharedPtr<FEnvQueryResult> USussEQSQueryProvider::RunEQSQuery(USussBrainCompone
 		// See ExecuteOneStep inside this function, or EQSTestingPawn
 		// Or we could use RunQuery with callback.
 		// For now, run synchronous for simplicity, and limit time between AIs
-		FEnvQueryRequest QueryRequest(EQSQuery, this);
+		FEnvQueryRequest QueryRequest(EQSQuery, Self);
 		for (FAIDynamicParam& Param : QueryConfig)
 		{
 			QueryRequest.SetDynamicParam(Param);
