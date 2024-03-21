@@ -42,6 +42,25 @@ protected:
 	                 const TMap<FName, FSussParameter>& Params);
 };
 
+/// Subclass this to provide a EQS-powered query which returns targets (actors)
+UCLASS(Blueprintable)
+class USussEQSTargetQueryProvider : public USussEQSQueryProvider
+{
+	GENERATED_BODY()
+protected:
+	/// Should be overridden by subclasses
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults);
+
+	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
+	{
+		InitResults<TWeakObjectPtr<AActor>>(OutResults);
+		ExecuteQuery(Brain, Self, Params, GetResultsArray<TWeakObjectPtr<AActor>>(OutResults));
+	}
+
+public:
+	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Target; }
+};
+
 /// Subclass this to provide a EQS-powered query which returns locations
 UCLASS(Blueprintable)
 class USussEQSLocationQueryProvider : public USussEQSQueryProvider
