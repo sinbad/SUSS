@@ -99,7 +99,8 @@ protected:
 	TArray<FSussActionDef> CombinedActionsByPriority;
 
 	/// The current action being executed, if any
-	TOptional<FSussActionScoringResult> CurrentAction;
+	UPROPERTY()	
+	FSussActionScoringResult CurrentAction;
 	float CurrentActionInertiaCooldown = 0;
 
 	TArray<FSussActionScoringResult> CandidateActions;

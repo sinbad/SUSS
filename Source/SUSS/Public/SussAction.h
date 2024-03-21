@@ -14,6 +14,7 @@ DECLARE_DELEGATE_OneParam(FSussOnActionCompleted, class USussAction*);
 /**
  * An Action is one thing that an AI decides to do right now.
  * Actions are instantiated when they're executed, and can therefore store state for the duration of the action.
+ * Action instances are RE-USED, so ensure that you reset any state when PerformAction is called.
  */
 UCLASS(Blueprintable, Abstract)
 class SUSS_API USussAction : public UObject
@@ -47,7 +48,8 @@ public:
 	bool CanBeInterrupted() const;
 
 	/// Called when the action has been decided on, and the brain wishes it to be performed.
-	/// Override this function to perform the actual underlying actions.
+	/// Override this function to perform the actual underlying actions. Note that action instances are RE-USED,
+	/// so be sure to make sure your state is properly re-initialised when this function is called.
 	/// Implementations MUST CALL ActionCompleted() at the natural end of the action.
 	UFUNCTION(BlueprintNativeEvent)
 	void PerformAction();

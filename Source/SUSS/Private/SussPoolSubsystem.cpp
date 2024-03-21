@@ -3,6 +3,7 @@
 
 #include "SussPoolSubsystem.h"
 
+#include "SussAction.h"
 #include "SussCommon.h"
 
 FSussScopeReservedArray::~FSussScopeReservedArray()
@@ -31,6 +32,36 @@ FSussScopeReservedMap::~FSussScopeReservedMap()
 	}
 }
 
+USussAction* USussPoolSubsystem::ReserveAction(const UClass* ActionClass,
+	UObject* OwnerIfCreated,
+	UObject* TemplateIfCreated)
+{
+	FScopeLock Lock(&Guard);
+	
+	if (auto FreeList = FreeActionClassPools.Find(ActionClass))
+	{
+		if (FreeList->Pool.Num() > 0)
+		{
+			return FreeList->Pool.Pop();
+		}
+	}
+
+	return 	NewObject<USussAction>(OwnerIfCreated, ActionClass, NAME_None, RF_NoFlags, TemplateIfCreated);
+
+}
+
+void USussPoolSubsystem::FreeAction(USussAction* Action)
+{
+	FScopeLock Lock(&Guard);
+	
+	auto FreeList = FreeActionClassPools.Find(Action->GetClass());
+	if (!FreeList)
+	{
+		FreeList = &FreeActionClassPools.Emplace(Action->GetClass());
+	}
+	FreeList->Pool.Push(Action);
+}
+
 void USussPoolSubsystem::Deinitialize()
 {
 	Super::Deinitialize();
@@ -49,4 +80,6 @@ void USussPoolSubsystem::Deinitialize()
 		H.Destroy();
 	}
 	FreeMapPools.Empty();
+
+	FreeActionClassPools.Empty();
 }

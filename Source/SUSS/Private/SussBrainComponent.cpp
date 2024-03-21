@@ -192,11 +192,10 @@ void USussBrainComponent::ChooseActionFromCandidates()
 void USussBrainComponent::StopCurrentAction()
 {
 	// Cancel previous action
-	if (CurrentAction.IsSet() && IsValid(CurrentAction->ActionInstance))
+	if (IsValid(CurrentAction.ActionInstance))
 	{
-		CurrentAction->ActionInstance->CancelAction();
-		CurrentAction->ActionInstance = nullptr;
-		CurrentAction.Reset();
+		CurrentAction.ActionInstance->CancelAction();
+		CurrentAction.ActionInstance = nullptr;
 	}
 
 }
@@ -208,25 +207,26 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 
 	StopCurrentAction();
 	CurrentAction = ActionResult;
-	CurrentActionInertiaCooldown = CurrentAction->Def->InertiaCooldown;
+	CurrentActionInertiaCooldown = CurrentAction.Def->InertiaCooldown;
 
 	// Note that to allow BP classes we need to construct using the default object
-	CurrentAction->ActionInstance = NewObject<USussAction>(this, CurrentAction->Def->ActionClass, NAME_None, RF_NoFlags, CurrentAction->Def->ActionClass->GetDefaultObject());
-	CurrentAction->ActionInstance->Init(this, CurrentAction->Context);
-	CurrentAction->ActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
-	
-	CurrentAction->ActionInstance->PerformAction();
-
+	CurrentAction.ActionInstance = GetSussPool(GetWorld())->ReserveAction(CurrentAction.Def->ActionClass, this, CurrentAction.Def->ActionClass->GetDefaultObject());
+	CurrentAction.ActionInstance->Init(this, CurrentAction.Context);
+	CurrentAction.ActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
 	ActionNamesTimeLastPerformed.Add(ActionResult.Def->ActionClass->GetFName(), GetWorld()->GetTimeSeconds());
+	
+	CurrentAction.ActionInstance->PerformAction();
+
 	
 }
 
 void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 {
-	if (CurrentAction.IsSet())
+	if (IsValid(CurrentAction.ActionInstance))
 	{
-		checkf(CurrentAction->ActionInstance == SussAction, TEXT("OnActionCompleted called from action which was not current!"))
-		CurrentAction.Reset();
+		checkf(CurrentAction.ActionInstance == SussAction, TEXT("OnActionCompleted called from action which was not current!"))
+		GetSussPool(GetWorld())->FreeAction(CurrentAction.ActionInstance);
+		CurrentAction.ActionInstance = nullptr;
 		CurrentActionInertiaCooldown = 0;
 	}
 	else
@@ -250,9 +250,9 @@ void USussBrainComponent::Update()
 	AActor* Self = GetSelf();
 
 	float CurrentActionInertia = 0;
-	if (CurrentAction.IsSet() && CurrentAction->Def->Inertia > 0 && CurrentAction->Def->InertiaCooldown > 0)
+	if (IsValid(CurrentAction.ActionInstance) && CurrentAction.Def->Inertia > 0 && CurrentAction.Def->InertiaCooldown > 0)
 	{
-		CurrentActionInertia = CurrentAction->Def->Inertia * (CurrentActionInertiaCooldown / CurrentAction->Def->InertiaCooldown);
+		CurrentActionInertia = CurrentAction.Def->Inertia * (CurrentActionInertiaCooldown / CurrentAction.Def->InertiaCooldown);
 	}
 	
 	int CurrentPriority = CombinedActionsByPriority[0].Priority;
@@ -340,7 +340,7 @@ void USussBrainComponent::Update()
 			if (!FMath::IsNearlyZero(Score))
 			{
 				// This is a possible choice, but check that it exceeds inertia
-				if (!CurrentAction.IsSet() || Score > CurrentAction->Score + CurrentActionInertia)
+				if (!IsValid(CurrentAction.ActionInstance) || Score > CurrentAction.Score + CurrentActionInertia)
 				{
 					CandidateActions.Add(FSussActionScoringResult { &NextAction, Ctx, Score });
 				}

@@ -160,6 +160,15 @@ public:
 	}
 };
 
+// Because we can't have maps of arrays or arrays of arrays
+USTRUCT()
+struct FSussActionPool
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	TArray<class USussAction*> Pool;
+};
 
 /**
  * Helper system to provide re-usable pools of eg arrays between brains so they don't have to maintain their own for temp results.
@@ -174,6 +183,9 @@ protected:
 	TArray<FSussPooledArrayPtr> FreeArrayPools;
 	TArray<FSussPooledMapPtr> FreeMapPools;
 
+	UPROPERTY()
+	TMap<UClass*, FSussActionPool> FreeActionClassPools;
+	
 	template<typename T>
 	FSussScopeReservedArray ReserveArrayImpl()
 	{
@@ -244,6 +256,8 @@ public:
 		FreeMapPools.Add(Holder);
 	}
 
+	USussAction* ReserveAction(const UClass* ActionClass, UObject* OwnerIfCreated, UObject* TemplateIfCreated);
+	void FreeAction(USussAction* Action);
 	virtual void Deinitialize() override;
 };
 
