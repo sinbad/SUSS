@@ -141,6 +141,12 @@ public:
 	double GetTimeSinceActionPerformed(TSubclassOf<USussAction> ActionClass) const;
 
 
+	virtual void StartLogic() override;
+	virtual void RestartLogic() override;
+	virtual void StopLogic(const FString& Reason) override;
+	virtual void PauseLogic(const FString& Reason) override;
+	virtual EAILogicResuming::Type ResumeLogic(const FString& Reason) override;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

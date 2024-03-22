@@ -20,6 +20,9 @@ USussBrainComponent::USussBrainComponent(): bQueuedForUpdate(false),
 	// Brains tick in order to queue themselves for update regularly
 	PrimaryComponentTick.bCanEverTick = true;
 
+	// Disable ticking by default
+	PrimaryComponentTick.SetTickFunctionEnable(false);
+	
 	if (auto Settings = GetDefault<USussSettings>())
 	{
 		CachedUpdateRequestTime = Settings->BrainUpdateRequestIntervalSeconds;
@@ -48,10 +51,18 @@ void USussBrainComponent::BrainConfigChanged()
 }
 
 
+
 // Called when the game starts
 void USussBrainComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	
+}
+
+
+void USussBrainComponent::StartLogic()
+{
+	Super::StartLogic();
 
 	if (IsValid(BrainConfigAsset))
 	{
@@ -61,14 +72,47 @@ void USussBrainComponent::BeginPlay()
 		}
 		SetBrainConfigFromAsset(BrainConfigAsset);
 	}
-
-	BrainConfigChanged();
-	if (!GetOwner()->HasAuthority())
+	else
 	{
-		// No need to tick on non-server
-		SetComponentTickEnabled(false);
+		BrainConfigChanged();
 	}
+	
+	SetComponentTickEnabled(true);
+	
+}
 
+void USussBrainComponent::StopLogic(const FString& Reason)
+{
+	Super::StopLogic(Reason);
+
+	SetComponentTickEnabled(false);
+}
+
+void USussBrainComponent::RestartLogic()
+{
+	Super::RestartLogic();
+
+	StopCurrentAction();
+	TimeSinceLastUpdate = 9999999;
+	SetComponentTickEnabled(true);
+}
+
+void USussBrainComponent::PauseLogic(const FString& Reason)
+{
+	Super::PauseLogic(Reason);
+
+	SetComponentTickEnabled(false);
+}
+
+EAILogicResuming::Type USussBrainComponent::ResumeLogic(const FString& Reason)
+{
+	auto Ret = Super::ResumeLogic(Reason);
+	if (Ret != EAILogicResuming::RestartedInstead)
+	{
+		// restarted calls RestartLogic
+		SetComponentTickEnabled(true);
+	}
+	return Ret;
 }
 
 void USussBrainComponent::InitActions()
