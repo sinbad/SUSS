@@ -570,3 +570,11 @@ FString USussBrainComponent::GetDebugInfoString() const
 	return FString();
 		
 }
+
+void USussBrainComponent::DebugLocations(TArray<FVector>& OutLocations) const
+{
+	if (IsValid(CurrentAction.ActionInstance))
+	{
+		CurrentAction.ActionInstance->DebugLocations(OutLocations);
+	}
+}

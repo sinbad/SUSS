@@ -20,3 +20,8 @@ void USussAction::ActionCompleted()
 {
 	InternalOnActionCompleted.ExecuteIfBound(this);
 }
+
+void USussAction::DebugLocations_Implementation(TArray<FVector>& OutLocations) const
+{
+	// Subclasses should implement
+}

@@ -64,5 +64,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void ActionCompleted();
 
+	/// Implement this to output a series of locations in the gameplay debugger
+	UFUNCTION(BlueprintNativeEvent)
+	void DebugLocations(UPARAM(Ref) TArray<FVector>& OutLocations) const;
+
 	FSussOnActionCompleted InternalOnActionCompleted;
 };

@@ -149,6 +149,8 @@ public:
 	virtual void PauseLogic(const FString& Reason) override;
 	virtual EAILogicResuming::Type ResumeLogic(const FString& Reason) override;
 
+	void DebugLocations(TArray<FVector>& OutLocations) const;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

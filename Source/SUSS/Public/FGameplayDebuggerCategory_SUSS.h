@@ -8,6 +8,7 @@ protected:
 	{
 		// this is where we put all the data we collect
 		FString BrainDebugText;
+		TArray<FVector> BrainDebugLocations;
 		
 		FRepData() 
 		{
