@@ -2,6 +2,8 @@
 
 #include "SUSS.h"
 
+#include "FGameplayDebuggerCategory_SUSS.h"
+#include "GameplayDebugger.h"
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
 #include "SussSettings.h"
@@ -26,12 +28,25 @@ void FSUSSModule::StartupModule()
 			GetMutableDefault<USussSettings>()
 		);
 	}
+
+#if WITH_GAMEPLAY_DEBUGGER
+	IGameplayDebugger& GameplayDebuggerModule = IGameplayDebugger::Get();
+	GameplayDebuggerModule.RegisterCategory("SUSS", IGameplayDebugger::FOnGetCategory::CreateStatic(&FGameplayDebuggerCategory_SUSS::MakeInstance), EGameplayDebuggerCategoryState::EnabledInGame, 2);
+	GameplayDebuggerModule.NotifyCategoriesChanged();
+#endif // WITH_GAMEPLAY_DEBUGGER
+	
 }
 
 void FSUSSModule::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
+#if WITH_GAMEPLAY_DEBUGGER
+	if (IGameplayDebugger::IsAvailable())
+	{
+		IGameplayDebugger& GameplayDebuggerModule = IGameplayDebugger::Get();
+		GameplayDebuggerModule.UnregisterCategory("SUSS");
+		GameplayDebuggerModule.NotifyCategoriesChanged();
+	}
+#endif // WITH_GAMEPLAY_DEBUGGER
 }
 
 #undef LOCTEXT_NAMESPACE

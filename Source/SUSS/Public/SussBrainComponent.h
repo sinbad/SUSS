@@ -101,16 +101,18 @@ protected:
 	/// The current action being executed, if any
 	UPROPERTY()	
 	FSussActionScoringResult CurrentAction;
+	float CurrentActionInertia = 0;
 	float CurrentActionInertiaCooldown = 0;
 
 	TArray<FSussActionScoringResult> CandidateActions;
 	/// Record of when actions were last run, by class name
 	TMap<FName, double> ActionNamesTimeLastPerformed;
 
-
 public:
 	// Sets default values for this component's properties
 	USussBrainComponent();
+
+	virtual FString GetDebugInfoString() const override;
 
 	const FSussBrainConfig& GetBrainConfig() const { return BrainConfig; }
 

@@ -293,10 +293,13 @@ void USussBrainComponent::Update()
 	auto Pool = GetSussPool(GetWorld());
 	AActor* Self = GetSelf();
 
-	float CurrentActionInertia = 0;
 	if (IsValid(CurrentAction.ActionInstance) && CurrentAction.Def->Inertia > 0 && CurrentAction.Def->InertiaCooldown > 0)
 	{
 		CurrentActionInertia = CurrentAction.Def->Inertia * (CurrentActionInertiaCooldown / CurrentAction.Def->InertiaCooldown);
+	}
+	else
+	{
+		CurrentActionInertia = 0;
 	}
 	
 	int CurrentPriority = CombinedActionsByPriority[0].Priority;
@@ -550,3 +553,20 @@ double USussBrainComponent::GetTimeSinceActionPerformed(TSubclassOf<USussAction>
 	return 9999999.9;
 }
 
+FString USussBrainComponent::GetDebugInfoString() const
+{
+	if (IsValid(CurrentAction.ActionInstance))
+	{
+		return FString::Printf(
+			TEXT(
+				"Current Action: {yellow}%s{white} Score: {yellow}%4.2f{white}\n"
+				"Countdown: {yellow}%4.2f{white}\n"
+				"Inertia: {yellow}%4.2f{white}"),
+				*CurrentAction.ActionInstance->GetClass()->GetName(), CurrentAction.Score,
+				CurrentActionInertia,
+				FMath::Max(0.0f, CachedUpdateRequestTime - TimeSinceLastUpdate));
+	}
+
+	return FString();
+		
+}

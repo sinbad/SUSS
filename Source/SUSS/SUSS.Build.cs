@@ -32,9 +32,11 @@ public class SUSS : ModuleRules
                 "GameplayTags",
                 "NavigationSystem",
                 "Settings",
-                "GameplayAbilities"
+                "GameplayAbilities",
+                "GameplayDebugger"
+                
 
-				// ... add other public dependencies that you statically link with here ...
+                // ... add other public dependencies that you statically link with here ...
 			}
 			);
 			
