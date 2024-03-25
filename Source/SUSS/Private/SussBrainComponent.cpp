@@ -9,20 +9,23 @@
 #include "SussSettings.h"
 #include "SussUtility.h"
 #include "SussWorldSubsystem.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 // Sets default values for this component's properties
 USussBrainComponent::USussBrainComponent(): bQueuedForUpdate(false),
                                             TimeSinceLastUpdate(0),
                                             BrainConfigAsset(nullptr),
-                                            CachedUpdateRequestTime(1)
+                                            CachedUpdateRequestTime(1),
+                                            CurrentAction()
 {
 	// Brains tick in order to queue themselves for update regularly
 	PrimaryComponentTick.bCanEverTick = true;
 
 	// Disable ticking by default
 	PrimaryComponentTick.SetTickFunctionEnable(false);
-	
+
 	if (auto Settings = GetDefault<USussSettings>())
 	{
 		CachedUpdateRequestTime = Settings->BrainUpdateRequestIntervalSeconds;
@@ -535,6 +538,17 @@ AAIController* USussBrainComponent::GetAIController() const
 	{
 		AiController = Found;
 		return Found;
+	}
+
+	return nullptr;
+	
+}
+
+UCharacterMovementComponent* USussBrainComponent::GetCharacterMovement() const
+{
+	if (const ACharacter* Char = Cast<ACharacter>(GetOwner()))
+	{
+		return Char->GetCharacterMovement();
 	}
 
 	return nullptr;

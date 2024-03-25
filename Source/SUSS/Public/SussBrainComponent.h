@@ -8,6 +8,7 @@
 #include "Runtime/AIModule/Classes/BrainComponent.h"
 #include "SussBrainComponent.generated.h"
 
+class UCharacterMovementComponent;
 /// How to choose the action to run
 UENUM(BlueprintType)
 enum class ESussActionChoiceMethod : uint8
@@ -134,6 +135,11 @@ public:
 	/// Get the AI controller associated with the actor that owns this brain
 	UFUNCTION(BlueprintCallable)
 	AAIController* GetAIController() const;
+
+	/// Get the character movement component associated with the actor that owns this brain, if any.
+	/// This is for convenience
+	UFUNCTION(BlueprintCallable)
+	UCharacterMovementComponent* GetCharacterMovement() const;
 
 	/// Get the "Self" pawn this brain controls, used in contexts
 	AActor* GetSelf() const;
