@@ -555,6 +555,15 @@ UCharacterMovementComponent* USussBrainComponent::GetCharacterMovement() const
 	
 }
 
+APawn* USussBrainComponent::GetPawn() const
+{
+	if (auto AI = GetAIController())
+	{
+		return AI->GetPawn();
+	}
+	return nullptr;
+}
+
 AActor* USussBrainComponent::GetSelf() const
 {
 	if (auto Ctrl = GetAIController())

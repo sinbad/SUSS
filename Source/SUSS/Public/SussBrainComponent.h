@@ -141,6 +141,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UCharacterMovementComponent* GetCharacterMovement() const;
 
+	/// Get the pawn being controlled by this brain, for convenience
+	/// Function / display name for consistency with AIController
+	UFUNCTION(BlueprintCallable, meta=(DisplayName="Get Controlled Pawn"))
+	APawn* GetPawn() const;
+
 	/// Get the "Self" pawn this brain controls, used in contexts
 	AActor* GetSelf() const;
 
