@@ -85,6 +85,7 @@ void USussBrainComponent::StopLogic(const FString& Reason)
 {
 	Super::StopLogic(Reason);
 
+	StopCurrentAction();
 	SetComponentTickEnabled(false);
 }
 
@@ -235,13 +236,16 @@ void USussBrainComponent::ChooseActionFromCandidates()
 
 void USussBrainComponent::StopCurrentAction()
 {
+	CancelCurrentAction(nullptr);
+}
+void USussBrainComponent::CancelCurrentAction(TSubclassOf<USussAction> Interrupter)
+{
 	// Cancel previous action
 	if (IsValid(CurrentAction.ActionInstance))
 	{
-		CurrentAction.ActionInstance->CancelAction();
+		CurrentAction.ActionInstance->CancelAction(Interrupter);
 		CurrentAction.ActionInstance = nullptr;
 	}
-
 }
 
 void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionResult)
@@ -249,6 +253,11 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	checkf(ActionResult.Def, TEXT("No supplied action def"));
 	checkf(IsValid(ActionResult.Def->ActionClass), TEXT("Action class not valid"));
 
+	TSubclassOf<USussAction> PreviousActionClass = nullptr;
+	if (IsValid(CurrentAction.ActionInstance))
+	{
+		PreviousActionClass = CurrentAction.Def->ActionClass;
+	}
 	StopCurrentAction();
 	CurrentAction = ActionResult;
 	CurrentActionInertiaCooldown = CurrentAction.Def->InertiaCooldown;
@@ -259,7 +268,7 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	CurrentAction.ActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
 	ActionNamesTimeLastPerformed.Add(ActionResult.Def->ActionClass->GetFName(), GetWorld()->GetTimeSeconds());
 	
-	CurrentAction.ActionInstance->PerformAction();
+	CurrentAction.ActionInstance->PerformAction(ActionResult.Context, PreviousActionClass);
 
 	
 }

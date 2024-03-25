@@ -163,6 +163,7 @@ protected:
 	void OnActionCompleted(USussAction* SussAction);
 	void ChooseActionFromCandidates();
 	void ChooseAction(const FSussActionScoringResult& ActionResult);
+	void CancelCurrentAction(TSubclassOf<USussAction> Interrupter);
 
 	template<typename T>
 	static void AppendContexts(AActor* Self, const TArray<T>& InValues, TArray<FSussContext>& OutContexts, TFunctionRef<void(const T&, FSussContext&)> ValueSetter)

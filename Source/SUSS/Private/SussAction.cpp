@@ -1,12 +1,12 @@
 ﻿
 #include "SussAction.h"
 
-void USussAction::PerformAction_Implementation()
+void USussAction::PerformAction_Implementation(const FSussContext& Context, TSubclassOf<USussAction> PrevActionClass)
 {
 	// Subclasses must implement
 }
 
-void USussAction::CancelAction_Implementation()
+void USussAction::CancelAction_Implementation(TSubclassOf<USussAction> InterruptedByActionClass)
 {
 	// Subclasses must implement
 }

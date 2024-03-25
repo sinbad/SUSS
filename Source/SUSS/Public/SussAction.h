@@ -47,18 +47,23 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool CanBeInterrupted() const;
 
-	/// Called when the action has been decided on, and the brain wishes it to be performed.
-	/// Override this function to perform the actual underlying actions. Note that action instances are RE-USED,
-	/// so be sure to make sure your state is properly re-initialised when this function is called.
-	/// Implementations MUST CALL ActionCompleted() at the natural end of the action.
+	/**
+	 * Called when the action has been decided on, and the brain wishes it to be performed.
+	 * Override this function to perform the actual underlying actions. Note that action instances are RE-USED,
+	 * so be sure to make sure your state is properly re-initialised when this function is called.
+	 * Implementations MUST CALL ActionCompleted() at the natural end of the action.
+	 * @param Context The context in which the action should be performed.
+	 * @param PreviousActionClass If non-null, contains the action class which was previously being performed when this action interrupted it.
+	 */
 	UFUNCTION(BlueprintNativeEvent)
-	void PerformAction();
+	void PerformAction(const FSussContext& Context, TSubclassOf<USussAction> PreviousActionClass);
 
-	/// Called when the action has been interrupted because the brain has changed its mind, before completion.
+	/// Called when the action has been interrupted because the brain has changed its mind, before completion, or has otherwise been interrupted.
 	/// Will only be called if CanBeInterrupted() returns true, otherwise no other action can be performed until
 	/// ActionCompleted() is called.
+	/// The incoming parameter contains the class of the action which is interrupting this action, if any.
 	UFUNCTION(BlueprintNativeEvent)
-	void CancelAction();
+	void CancelAction(TSubclassOf<USussAction> InterruptedByActionClass);
 
 	/// Subclasses must call this function when they complete their action normally, but not when cancelled.
 	UFUNCTION(BlueprintCallable)
