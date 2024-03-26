@@ -9,6 +9,7 @@ protected:
 		// this is where we put all the data we collect
 		FString BrainDebugText;
 		TArray<FVector> BrainDebugLocations;
+		TArray<FString> DetailTextLines;
 		
 		FRepData() 
 		{
@@ -17,6 +18,10 @@ protected:
 		void Serialize(FArchive& Ar);
 	};
 	FRepData DataPack;
+	bool bShowDetails = false;
+	
+	void ToggleDetailView();
+	
 public:
 	FGameplayDebuggerCategory_SUSS();
 	

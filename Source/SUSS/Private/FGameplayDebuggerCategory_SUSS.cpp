@@ -7,6 +7,16 @@
 FGameplayDebuggerCategory_SUSS::FGameplayDebuggerCategory_SUSS()
 {
 	SetDataPackReplication<FRepData>(&DataPack);
+
+	const FGameplayDebuggerInputHandlerConfig DetailsConfig(TEXT("ToggleDetails"), TEXT("Divide"));
+
+	BindKeyPress(DetailsConfig, this, &FGameplayDebuggerCategory_SUSS::ToggleDetailView);
+}
+
+void FGameplayDebuggerCategory_SUSS::ToggleDetailView()
+{
+	bShowDetails = !bShowDetails;
+	ForceImmediateCollect();
 }
 
 void FGameplayDebuggerCategory_SUSS::CollectData(APlayerController* OwnerPC, AActor* DebugActor)
@@ -20,6 +30,11 @@ void FGameplayDebuggerCategory_SUSS::CollectData(APlayerController* OwnerPC, AAc
 		DataPack.BrainDebugText = BrainComp->GetDebugInfoString();
 		DataPack.BrainDebugLocations.Empty();
 		BrainComp->DebugLocations(DataPack.BrainDebugLocations);
+
+		if (bShowDetails)
+		{
+			BrainComp->GetDebugDetailLines(DataPack.DetailTextLines);
+		}
 	}
 }
 
@@ -29,6 +44,14 @@ void FGameplayDebuggerCategory_SUSS::DrawData(APlayerController* OwnerPC, FGamep
 	{
 		UWorld* World = CanvasContext.GetWorld();
 		CanvasContext.Print(DataPack.BrainDebugText);
+
+		if (bShowDetails)
+		{
+			for (auto& Str : DataPack.DetailTextLines)
+			{
+				CanvasContext.Print(Str);
+			}
+		}
 
 		for (auto& Loc : DataPack.BrainDebugLocations)
 		{

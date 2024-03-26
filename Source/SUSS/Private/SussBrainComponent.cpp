@@ -620,3 +620,21 @@ void USussBrainComponent::DebugLocations(TArray<FVector>& OutLocations) const
 		CurrentAction.ActionInstance->DebugLocations(OutLocations);
 	}
 }
+
+void USussBrainComponent::GetDebugDetailLines(TArray<FString>& OutLines) const
+{
+	OutLines.Reset();
+	OutLines.Add(TEXT("Candidate Actions:"));
+	for (const auto& Action : CandidateActions)
+	{
+		OutLines.Add(FString::Printf(
+			TEXT(" - {yellow}%s  {white}%4.2f"),
+			Action.Def->Description.IsEmpty()
+				? *Action.ActionInstance->GetClass()->GetName()
+				: *Action.Def->Description,
+			Action.Score
+			));
+
+		// If we want to list consideration scores here, we have to store them
+	}
+}

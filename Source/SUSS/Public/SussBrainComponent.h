@@ -161,6 +161,7 @@ public:
 	virtual EAILogicResuming::Type ResumeLogic(const FString& Reason) override;
 
 	void DebugLocations(TArray<FVector>& OutLocations) const;
+	void GetDebugDetailLines(TArray<FString>& OutLines) const;
 
 protected:
 	// Called when the game starts
