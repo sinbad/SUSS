@@ -61,6 +61,10 @@ public:
 	UPROPERTY()
 	USussAction* ActionInstance = nullptr;
 
+	bool IsSameAs(const FSussActionScoringResult& Proposed) const
+	{
+		return Def == Proposed.Def && Context == Proposed.Context;
+	}
 };
 
 

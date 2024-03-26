@@ -262,6 +262,14 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	TSubclassOf<USussAction> PreviousActionClass = nullptr;
 	if (IsValid(CurrentAction.ActionInstance))
 	{
+		// Check that we haven't just decided to do the same thing with a slightly higher score
+		// Without this we'd call PerformAction again on a new version of the same action
+		// Changes to winning context with the same action will still call Perform again 
+		if (CurrentAction.IsSameAs(ActionResult))
+		{
+			return;
+		}
+
 		PreviousActionClass = CurrentAction.Def->ActionClass;
 	}
 	StopCurrentAction();

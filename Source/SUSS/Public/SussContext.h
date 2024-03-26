@@ -41,5 +41,12 @@ public:
 
 	/// Any other custom context value you'd like to use (C++ only)
 	TSussContextValue Custom;
-	
+
+	bool operator==(const FSussContext& Other) const
+	{
+		return ControlledActor == Other.ControlledActor &&
+			Target == Other.Target &&
+			Location.Equals(Other.Location) &&
+			Rotation.Equals(Other.Rotation);
+	}
 };
