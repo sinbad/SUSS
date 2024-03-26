@@ -27,7 +27,7 @@ void FGameplayDebuggerCategory_SUSS::CollectData(APlayerController* OwnerPC, AAc
 	
 	if (BrainComp)
 	{
-		DataPack.BrainDebugText = BrainComp->GetDebugInfoString();
+		DataPack.BrainDebugText = BrainComp->GetDebugSummaryString();
 		DataPack.BrainDebugLocations.Empty();
 		BrainComp->DebugLocations(DataPack.BrainDebugLocations);
 

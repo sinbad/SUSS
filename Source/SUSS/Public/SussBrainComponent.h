@@ -117,8 +117,6 @@ public:
 	// Sets default values for this component's properties
 	USussBrainComponent();
 
-	virtual FString GetDebugInfoString() const override;
-
 	const FSussBrainConfig& GetBrainConfig() const { return BrainConfig; }
 
 	UFUNCTION(BlueprintCallable)
@@ -164,6 +162,8 @@ public:
 	virtual void PauseLogic(const FString& Reason) override;
 	virtual EAILogicResuming::Type ResumeLogic(const FString& Reason) override;
 
+	// NOT GetDebugInfoString, since that makes it duplicate in BehaviourTree category
+	FString GetDebugSummaryString() const;
 	void DebugLocations(TArray<FVector>& OutLocations) const;
 	void GetDebugDetailLines(TArray<FString>& OutLines) const;
 

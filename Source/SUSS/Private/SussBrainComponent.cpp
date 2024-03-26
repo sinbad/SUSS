@@ -597,7 +597,7 @@ double USussBrainComponent::GetTimeSinceActionPerformed(TSubclassOf<USussAction>
 	return 9999999.9;
 }
 
-FString USussBrainComponent::GetDebugInfoString() const
+FString USussBrainComponent::GetDebugSummaryString() const
 {
 	if (IsValid(CurrentAction.ActionInstance))
 	{
