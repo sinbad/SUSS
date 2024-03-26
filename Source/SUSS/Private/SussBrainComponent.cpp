@@ -67,6 +67,9 @@ void USussBrainComponent::StartLogic()
 {
 	Super::StartLogic();
 
+	// Randomise the time that brains update to spread them out
+	TimeSinceLastUpdate = FMath::RandRange(0.0f, CachedUpdateRequestTime);
+
 	if (IsValid(BrainConfigAsset))
 	{
 		if (BrainConfig.ActionDefs.Num() || BrainConfig.ActionSets.Num())
@@ -295,6 +298,9 @@ void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 
 void USussBrainComponent::Update()
 {
+	bQueuedForUpdate = false;
+	TimeSinceLastUpdate = 0;
+	
 	if (!GetOwner()->HasAuthority())
 		return;
 
@@ -410,8 +416,6 @@ void USussBrainComponent::Update()
 
 	ChooseActionFromCandidates();
 	
-	bQueuedForUpdate = false;
-	TimeSinceLastUpdate = 0;
 }
 
 void USussBrainComponent::ResolveParameters(AActor* Self,
@@ -589,12 +593,18 @@ FString USussBrainComponent::GetDebugInfoString() const
 {
 	if (IsValid(CurrentAction.ActionInstance))
 	{
+		// Log all actions
+		// Log all considerations?
+		
 		return FString::Printf(
 			TEXT(
 				"Current Action: {yellow}%s{white} Score: {yellow}%4.2f{white}\n"
 				"Countdown: {yellow}%4.2f{white}\n"
 				"Inertia: {yellow}%4.2f{white}"),
-				*CurrentAction.ActionInstance->GetClass()->GetName(), CurrentAction.Score,
+				CurrentAction.Def->Description.IsEmpty() ? 
+					*CurrentAction.ActionInstance->GetClass()->GetName() :
+					*CurrentAction.Def->Description,
+				CurrentAction.Score,
 				CurrentActionInertia,
 				FMath::Max(0.0f, CachedUpdateRequestTime - TimeSinceLastUpdate));
 	}
