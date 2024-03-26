@@ -80,6 +80,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	bool bSelfIsRelevant = true;
 
+	/// Whether or not this query should re-use cached results within the max requested frequency
+	/// You might want to set this to false if your query just reads already prepared data from elsewhere, which is
+	/// updated only when needed, and thus when the query fires you always want the latest from that. E.g. perception.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bUseCachedResults = true;
+
 	// Cached results for each params combination
 	TMap<uint32, FSussCachedQueryResults> CachedResultsByParamsHash;
 
@@ -144,8 +150,12 @@ protected:
 	uint32 HashQueryRequest(AActor* Self, const TMap<FName, FSussParameter>& Params);
 	bool ParamsMatch(const TMap<FName, FSussParameter>& Params1, const TMap<FName, FSussParameter>& Params2) const;
 
-	bool ShouldUseCachedResults(const FSussCachedQueryResults& Results, USussBrainComponent* Brain, AActor* Self, float MaxFrequency, const TMap<FName, FSussParameter>& Params) const
+	virtual bool ShouldUseCachedResults(const FSussCachedQueryResults& Results, USussBrainComponent* Brain, AActor* Self, float MaxFrequency, const TMap<FName, FSussParameter>& Params) const
 	{
+		// If we're not caching, we don't use (we still use cache as a store since we return by ref)
+		if (!bUseCachedResults)
+			return false;
+		
 		// Always re-run if time has run out for cached results
 		if (Results.TimeSinceLastRun >= MaxFrequency)
 			return false;
