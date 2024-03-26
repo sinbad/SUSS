@@ -11,6 +11,7 @@
 #include "SussWorldSubsystem.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Perception/AIPerceptionComponent.h"
 
 
 // Sets default values for this component's properties
@@ -18,7 +19,8 @@ USussBrainComponent::USussBrainComponent(): bQueuedForUpdate(false),
                                             TimeSinceLastUpdate(0),
                                             BrainConfigAsset(nullptr),
                                             CachedUpdateRequestTime(1),
-                                            CurrentAction()
+                                            CurrentAction(),
+                                            PerceptionComp(nullptr)
 {
 	// Brains tick in order to queue themselves for update regularly
 	PrimaryComponentTick.bCanEverTick = true;
@@ -59,7 +61,20 @@ void USussBrainComponent::BrainConfigChanged()
 void USussBrainComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if (auto AIController = GetAIController())
+	{
+		PerceptionComp = GetOwner()->FindComponentByClass<UAIPerceptionComponent>();
+	}
+
+
+	if (auto Settings = GetDefault<USussSettings>())
+	{
+		if (PerceptionComp && Settings->BrainUpdateOnPerceptionChanges)
+		{
+			PerceptionComp->OnPerceptionUpdated.AddDynamic(this, &USussBrainComponent::OnPerceptionUpdated);
+		}
+	}
 }
 
 
@@ -167,7 +182,7 @@ void USussBrainComponent::TickComponent(float DeltaTime,
 	}
 }
 
-void USussBrainComponent::CheckForNeededUpdate(float DeltaTime)
+void USussBrainComponent::CheckForNeededUpdate(float DeltaTime, bool bForceUpdate)
 {
 	TimeSinceLastUpdate += DeltaTime;
 	if (!bQueuedForUpdate && TimeSinceLastUpdate > CachedUpdateRequestTime)
@@ -595,6 +610,11 @@ double USussBrainComponent::GetTimeSinceActionPerformed(TSubclassOf<USussAction>
 	}
 
 	return 9999999.9;
+}
+
+void USussBrainComponent::OnPerceptionUpdated(const TArray<AActor*>& Actors)
+{
+	CheckForNeededUpdate(0, true);
 }
 
 FString USussBrainComponent::GetDebugSummaryString() const

@@ -5,6 +5,7 @@
 #include "SussDummyProviders.h"
 #include "SussSettings.h"
 #include "Engine/ObjectLibrary.h"
+#include "Queries/SussPerceptionQueries.h"
 
 void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -12,6 +13,10 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	DefaultInputProvider = NewObject<USussDummyInputProvider>();
 
+	// Register any concrete query/input providers (rather than subclasses as dealt with later)
+	RegisterQueryProviderClass(USussPerceptionKnownTargetsQueryProvider::StaticClass());
+	RegisterQueryProviderClass(USussPerceptionKnownHostilesQueryProvider::StaticClass());
+	RegisterQueryProviderClass(USussPerceptionKnownNonHostilesQueryProvider::StaticClass());
 
 	// Set up libraries for input / query providers, for scanning for assets
 	InputProviderLib = UObjectLibrary::CreateLibrary(USussInputProvider::StaticClass(), true, GIsEditor && !IsRunningCommandlet());

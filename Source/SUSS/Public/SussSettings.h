@@ -35,5 +35,7 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "The interval at which a brain requests an update to its decision making, unless some other event forces them to request an update faster"))
 	float BrainUpdateRequestIntervalSeconds = 1.0f;
 
+	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "Whether perception changes trigger an immediate decision update of brains (e.g. spotting an enemy)"))
+	bool BrainUpdateOnPerceptionChanges = true;
 	
 };

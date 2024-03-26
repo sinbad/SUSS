@@ -15,6 +15,8 @@ enum class ESussParamType : uint8
 	Float,
 	/// The parameter is a literal int
 	Int,
+	/// The parameter is a literal Name
+	Name,
 	/// The parameter is a gameplay tag
 	Tag,
 	/// The parameter comes from an input with the current context (input must be able to extract ONE float value from the current context)
@@ -36,9 +38,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Float", EditConditionHides))
 	float FloatValue = 0;
 
-	/// Literal value of the parameter
+	/// Literal integer value of the parameter
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Int", EditConditionHides))
 	int IntValue = 0;
+
+	/// Literal name value of the parameter
+	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Name", EditConditionHides))
+	FName NameValue = NAME_None;
 
 	/// Literal value of the parameter
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Tag", EditConditionHides))
@@ -55,7 +61,8 @@ public:
 
 	FSussParameter() {}
 	FSussParameter(float Val) : Type(ESussParamType::Float), FloatValue(Val) {}
-	FSussParameter(int Val) : Type(ESussParamType::Int), FloatValue(Val) {}
+	FSussParameter(int Val) : Type(ESussParamType::Int), IntValue(Val) {}
+	FSussParameter(FName Val) : Type(ESussParamType::Name), NameValue(Val) {}
 	FSussParameter(FGameplayTag Val) : Type(ESussParamType::Tag), Tag(Val) {}
 
 	friend bool operator==(const FSussParameter& Lhs, const FSussParameter& Rhs)
@@ -63,18 +70,22 @@ public:
 		if (Lhs.Type != Rhs.Type)
 			return false;
 
-		if (Lhs.Type == ESussParamType::Float)
+		switch (Lhs.Type)
+		{
+		case ESussParamType::Float:
 			return FMath::IsNearlyEqual(Lhs.FloatValue, Rhs.FloatValue);
-
-		if (Lhs.Type == ESussParamType::Int)
+		case ESussParamType::Int:
 			return Lhs.IntValue == Rhs.IntValue;
-		
-		if (Lhs.Type == ESussParamType::Tag)
+		case ESussParamType::Name:
+			return Lhs.NameValue == Rhs.NameValue;
+		case ESussParamType::Tag:
 			return Lhs.Tag == Rhs.Tag;
+		case ESussParamType::Input:
+			return Lhs.InputTag == Rhs.InputTag;
+		}
 
-		// for input, return the same tag
-		return Lhs.InputTag == Rhs.InputTag;
-		
+
+		return false;
 	}
 
 	friend bool operator!=(const FSussParameter& Lhs, const FSussParameter& Rhs)

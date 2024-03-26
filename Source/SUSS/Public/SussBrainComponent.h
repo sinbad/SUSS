@@ -5,6 +5,7 @@
 #include "SussActionSetAsset.h"
 #include "SussContext.h"
 #include "SussPoolSubsystem.h"
+#include "Perception/AIPerceptionComponent.h"
 #include "Runtime/AIModule/Classes/BrainComponent.h"
 #include "SussBrainComponent.generated.h"
 
@@ -113,6 +114,9 @@ protected:
 	/// Record of when actions were last run, by class name
 	TMap<FName, double> ActionNamesTimeLastPerformed;
 
+	UPROPERTY(Transient)
+	UAIPerceptionComponent* PerceptionComp;
+
 public:
 	// Sets default values for this component's properties
 	USussBrainComponent();
@@ -151,6 +155,9 @@ public:
 	/// Get the "Self" pawn this brain controls, used in contexts
 	AActor* GetSelf() const;
 
+	/// Retrieve the perception component, mostly used by queries
+	UAIPerceptionComponent* GetPerceptionComponent() const { return PerceptionComp; }
+
 	/// Get the time in seconds since an action was last performed
 	UFUNCTION(BlueprintCallable)
 	double GetTimeSinceActionPerformed(TSubclassOf<USussAction> ActionClass) const;
@@ -172,7 +179,7 @@ protected:
 	virtual void BeginPlay() override;
 	void BrainConfigChanged();
 	void InitActions();
-	void CheckForNeededUpdate(float DeltaTime);
+	void CheckForNeededUpdate(float DeltaTime, bool bForceUpdate = false);
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
 
 	UFUNCTION()
@@ -180,6 +187,8 @@ protected:
 	void ChooseActionFromCandidates();
 	void ChooseAction(const FSussActionScoringResult& ActionResult);
 	void CancelCurrentAction(TSubclassOf<USussAction> Interrupter);
+	UFUNCTION()
+	void OnPerceptionUpdated(const TArray<AActor*>& Actors);
 
 	template<typename T>
 	static void AppendContexts(AActor* Self, const TArray<T>& InValues, TArray<FSussContext>& OutContexts, TFunctionRef<void(const T&, FSussContext&)> ValueSetter)
