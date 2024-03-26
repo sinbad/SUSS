@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "SussAIControllerBase.generated.h"
 
+struct FSussBrainConfig;
 /// Simple base AI controller which includes a SUSS brain component
 /// You don't have to use this AIController, you can add USussBrainComponent to your own AI controllers if you want.
 /// This is just for convenience.
