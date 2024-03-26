@@ -613,8 +613,8 @@ FString USussBrainComponent::GetDebugInfoString() const
 					*CurrentAction.ActionInstance->GetClass()->GetName() :
 					*CurrentAction.Def->Description,
 				CurrentAction.Score,
-				CurrentActionInertia,
-				FMath::Max(0.0f, CachedUpdateRequestTime - TimeSinceLastUpdate));
+				FMath::Max(0.0f, CachedUpdateRequestTime - TimeSinceLastUpdate),
+				CurrentActionInertia);
 	}
 
 	return FString();
