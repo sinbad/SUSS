@@ -16,10 +16,15 @@ TSharedPtr<FEnvQueryResult> USussEQSQueryProvider::RunEQSQuery(USussBrainCompone
 	return USussUtility::RunEQSQuery(Self, EQSQuery, QueryParams, QueryMode);
 }
 
+bool USussEQSQueryProvider::ShouldIncludeResult(const FEnvQueryItem& Item) const
+{
+	return MinScore <= 0 || Item.Score >= MinScore;
+}
+
 void USussEQSTargetQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
-	AActor* Self,
-	const TMap<FName, FSussParameter>& Params,
-	TArray<TWeakObjectPtr<AActor>>& OutResults)
+                                               AActor* Self,
+                                               const TMap<FName, FSussParameter>& Params,
+                                               TArray<TWeakObjectPtr<AActor>>& OutResults)
 {
 	const auto Result = RunEQSQuery(Brain, Self, Params);
 	if (Result->ItemType->IsChildOf(UEnvQueryItemType_ActorBase::StaticClass()))
@@ -27,7 +32,10 @@ void USussEQSTargetQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 		const UEnvQueryItemType_ActorBase* DefTypeOb =  Result->ItemType->GetDefaultObject<UEnvQueryItemType_ActorBase>();
 		for (const auto& Item : Result->Items)
 		{
-			OutResults.Add(DefTypeOb->GetActor(Result->RawData.GetData() + Item.DataOffset));
+			if (ShouldIncludeResult(Item))
+			{
+				OutResults.Add(DefTypeOb->GetActor(Result->RawData.GetData() + Item.DataOffset));
+			}
 		}
 	}
 }
@@ -43,7 +51,10 @@ void USussEQSLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 		const UEnvQueryItemType_VectorBase* DefTypeOb =  Result->ItemType->GetDefaultObject<UEnvQueryItemType_VectorBase>();
 		for (const auto& Item : Result->Items)
 		{
-			OutResults.Add(DefTypeOb->GetItemLocation(Result->RawData.GetData() + Item.DataOffset));
+			if (ShouldIncludeResult(Item))
+			{
+				OutResults.Add(DefTypeOb->GetItemLocation(Result->RawData.GetData() + Item.DataOffset));
+			}
 		}
 	}
 }

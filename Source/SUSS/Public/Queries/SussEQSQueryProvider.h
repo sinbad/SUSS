@@ -27,6 +27,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category=Query)
 	TArray<FEnvNamedValue> QueryConfig;
 
+	/// The minimum score that the item from the EQS query must score to be included in the results. Usually you'd score
+	/// your results in Considerations, but in case your EQS query does some scoring of its own and you want to use that
+	/// as a threshold, include it here.
+	UPROPERTY(EditDefaultsOnly, Category=Query)
+	float MinScore = 0;
 
 public:
 	
@@ -40,6 +45,7 @@ protected:
 	TSharedPtr<FEnvQueryResult> RunEQSQuery(USussBrainComponent* Brain,
 	                 AActor* Self,
 	                 const TMap<FName, FSussParameter>& Params);
+	bool ShouldIncludeResult(const FEnvQueryItem& Item) const;
 };
 
 /// Subclass this to provide a EQS-powered query which returns targets (actors)
