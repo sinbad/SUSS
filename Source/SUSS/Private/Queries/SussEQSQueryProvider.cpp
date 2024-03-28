@@ -1,6 +1,7 @@
 ﻿
 #include "Queries/SussEQSQueryProvider.h"
 
+#include "SussUtility.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_ActorBase.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_VectorBase.h"
@@ -10,51 +11,9 @@ TSharedPtr<FEnvQueryResult> USussEQSQueryProvider::RunEQSQuery(USussBrainCompone
                                         AActor* Self,
                                         const TMap<FName, FSussParameter>& Params)
 {
-	if (!EQSQuery)
-		return nullptr;
-
-	if (UEnvQueryManager* EQS = UEnvQueryManager::GetCurrent(Self->GetWorld()))
-	{
-		// We *could* allow EQS to be run in steps over many frames here
-		// See ExecuteOneStep inside this function, or EQSTestingPawn
-		// Or we could use RunQuery with callback.
-		// For now, run synchronous for simplicity, and limit time between AIs
-		FEnvQueryRequest QueryRequest(EQSQuery, Self);
-		for (FAIDynamicParam& Param : QueryConfig)
-		{
-			QueryRequest.SetDynamicParam(Param);
-		}
-		// Also set params from incoming instance request
-		for (const auto& Param : Params)
-		{
-			// Only set params which are registered to this query, so shared params can be used
-			if (ParamNames.Contains(Param.Key))
-			{
-				const FSussParameter& InParam = Param.Value;
-				FAIDynamicParam DParam;
-				DParam.ParamName = Param.Key;
-				switch (Param.Value.Type)
-				{
-				case ESussParamType::Float:
-					DParam.ParamType = EAIParamType::Float;
-					DParam.Value = InParam.FloatValue;
-					break;
-				case ESussParamType::Int:
-					DParam.ParamType = EAIParamType::Int;
-					DParam.Value = InParam.IntValue;
-					break;
-				case ESussParamType::Tag:
-				case ESussParamType::Input:
-					// Not supported
-					continue;
-				}
-				QueryRequest.SetDynamicParam(DParam);
-			}
-		}
-		return EQS->RunInstantQuery(QueryRequest, QueryMode);
-	}
-
-	return nullptr;
+	TArray<FEnvNamedValue> QueryParams = QueryConfig;
+	USussUtility::AddEQSParams(Params, QueryParams);
+	return USussUtility::RunEQSQuery(Self, EQSQuery, QueryParams, QueryMode);
 }
 
 void USussEQSTargetQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
@@ -128,7 +87,18 @@ void USussEQSQueryProvider::OnPropertyChanged(const FName PropName)
 	{
 		if (EQSQuery)
 		{
-			EQSQuery->CollectQueryParams(*this, QueryConfig);
+			TArray<FAIDynamicParam> DParams;
+			EQSQuery->CollectQueryParams(*this, DParams);
+
+			QueryConfig.Empty();
+			for (auto& DParam : DParams)
+			{
+				FEnvNamedValue NamedValue;
+				NamedValue.ParamName = DParam.ParamName;
+				NamedValue.ParamType = DParam.ParamType;
+				NamedValue.Value = DParam.Value;
+				QueryConfig.Add( NamedValue);
+			}
 		}
 	}
 }

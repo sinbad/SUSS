@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "SussCommon.h"
+#include "EnvironmentQuery/EnvQueryTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SussUtility.generated.h"
 
@@ -28,6 +29,13 @@ public:
 	/// Check whether an actor has ALL of the supplied tags
 	UFUNCTION(BlueprintCallable)
 	static bool ActorHasAllTags(AActor* Actor, const FGameplayTagContainer& Tags);
+
+	static TSharedPtr<FEnvQueryResult> RunEQSQuery(UObject* WorldContextObject,
+	                                               UEnvQuery* EQSQuery,
+	                                               const TArray<FEnvNamedValue>& QueryParams,
+	                                               EEnvQueryRunMode::Type QueryMode = EEnvQueryRunMode::AllMatching);
+
+	static void AddEQSParams(const TMap<FName, FSussParameter>& Params, TArray<FEnvNamedValue>& OutQueryParams);
 
 	static float EvalStepCurve(float Input, const FVector4f& Params);
 	static float EvalLinearCurve(float Input, const FVector4f& Params);

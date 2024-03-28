@@ -43,6 +43,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RegisterInputProvider(USussInputProvider* Provider);
 
+	UFUNCTION(BlueprintCallable)
 	USussInputProvider* GetInputProvider(const FGameplayTag& Tag);
 
 	/// Register a query provider by class
@@ -60,6 +61,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnregisterQueryProvider(USussQueryProvider* Provider);
 
+	UFUNCTION(BlueprintCallable)
 	USussQueryProvider* GetQueryProvider(const FGameplayTag& Tag);
 
 	virtual TStatId GetStatId() const override;

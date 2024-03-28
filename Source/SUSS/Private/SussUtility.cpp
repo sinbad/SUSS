@@ -3,6 +3,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "SussSettings.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 
 
 bool USussUtility::IsActionEnabled(TSubclassOf<USussAction> ActionClass)
@@ -62,6 +63,59 @@ bool USussUtility::ActorHasAllTags(AActor* Actor, const FGameplayTagContainer& T
 
 	return false;
 }
+
+void USussUtility::AddEQSParams(const TMap<FName, FSussParameter>& Params, TArray<FEnvNamedValue>& OutQueryParams)
+{
+	for (const auto& Param : Params)
+	{
+		const FSussParameter& InParam = Param.Value;
+		FEnvNamedValue QParam;
+		QParam.ParamName = Param.Key;
+		switch (Param.Value.Type)
+		{
+		case ESussParamType::Float:
+			QParam.ParamType = EAIParamType::Float;
+			QParam.Value = InParam.FloatValue;
+			break;
+		case ESussParamType::Int:
+			QParam.ParamType = EAIParamType::Int;
+			QParam.Value = InParam.IntValue;
+			break;
+		case ESussParamType::Tag:
+		case ESussParamType::Name:
+		case ESussParamType::Input:
+			// Not supported
+			continue;
+		}
+		OutQueryParams.Add(QParam);
+	}
+}
+
+TSharedPtr<FEnvQueryResult> USussUtility::RunEQSQuery(UObject* WorldContextObject,
+                                                      UEnvQuery* EQSQuery,
+                                                      const TArray<FEnvNamedValue>& QueryParams,
+                                                      EEnvQueryRunMode::Type QueryMode)
+{
+	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+
+	if (!EQSQuery || !World)
+		return nullptr;
+
+	if (UEnvQueryManager* EQS = UEnvQueryManager::GetCurrent(World))
+	{
+		// We *could* allow EQS to be run in steps over many frames here
+		// See ExecuteOneStep inside this function, or EQSTestingPawn
+		// Or we could use RunQuery with callback.
+		// For now, run synchronous for simplicity, and limit time between AIs
+		FEnvQueryRequest QueryRequest(EQSQuery, WorldContextObject);
+		QueryRequest.SetNamedParams(QueryParams);
+		
+		return EQS->RunInstantQuery(QueryRequest, QueryMode);
+	}
+
+	return nullptr;
+}
+
 #define PARAM_M Params.X
 #define PARAM_K Params.Y
 #define PARAM_B Params.Z

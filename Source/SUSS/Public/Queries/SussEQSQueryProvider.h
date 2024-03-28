@@ -25,7 +25,7 @@ protected:
 
 	/// EQS parameter values which are static. Note that instance params can still be supplied when this query is used
 	UPROPERTY(EditDefaultsOnly, Category=Query)
-	TArray<FAIDynamicParam> QueryConfig;
+	TArray<FEnvNamedValue> QueryConfig;
 
 
 public:
