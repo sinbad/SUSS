@@ -2,9 +2,11 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "SussGameSubsystem.h"
 #include "SussSettings.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 
+UE_DISABLE_OPTIMIZATION
 
 bool USussUtility::IsActionEnabled(TSubclassOf<USussAction> ActionClass)
 {
@@ -116,6 +118,63 @@ TSharedPtr<FEnvQueryResult> USussUtility::RunEQSQuery(UObject* WorldContextObjec
 	return nullptr;
 }
 
+
+const TArray<FVector>& USussUtility::RunLocationQuery(AActor* Querier, FGameplayTag Tag, const TMap<FName, FSussParameter>& Params, float UseCachedResultsFor)
+{
+	if (IsValid(Querier))
+	{
+		if (auto SUSS = GetSUSS(Querier->GetWorld()))
+		{
+			if (const auto Provider = SUSS->GetQueryProvider(Tag))
+			{
+				if (Provider && Provider->GetProvidedContextElement() == ESussQueryContextElement::Location)
+				{
+					return Provider->GetResults<FVector>(nullptr, Querier, UseCachedResultsFor, Params);
+				}
+			}
+		}
+	}
+
+	static TArray<FVector> DummyResults;
+	return DummyResults;
+}
+
+TArray<AActor*> USussUtility::RunTargetQuery(AActor* Querier,
+                                             FGameplayTag Tag,
+                                             const TMap<FName, FSussParameter>& Params,
+                                             float UseCachedResultsFor)
+{
+	// Sadly we can't expose weak pointers to BPs, will have to copy
+	TArray<AActor*> Results;
+	
+	if (IsValid(Querier))
+	{
+		if (auto SUSS = GetSUSS(Querier->GetWorld()))
+		{
+			if (const auto Provider = SUSS->GetQueryProvider(Tag))
+			{
+				if (Provider && Provider->GetProvidedContextElement() == ESussQueryContextElement::Target)
+				{
+					const auto& WeakResults = Provider->GetResults<TWeakObjectPtr<AActor>>(
+						nullptr,
+						Querier,
+						UseCachedResultsFor,
+						Params);
+					for (auto WeakActor : WeakResults)
+					{
+						if (WeakActor.IsValid())
+						{
+							Results.Add(WeakActor.Get());
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return Results;
+}
+
 #define PARAM_M Params.X
 #define PARAM_K Params.Y
 #define PARAM_B Params.Z
@@ -171,3 +230,5 @@ float USussUtility::EvalCurve(ESussCurveType CurveType, float Input, const FVect
 	}
 	return 0;
 }
+
+UE_ENABLE_OPTIMIZATION

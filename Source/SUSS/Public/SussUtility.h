@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "SussCommon.h"
+#include "SussParameter.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SussUtility.generated.h"
@@ -34,6 +35,43 @@ public:
 	                                               UEnvQuery* EQSQuery,
 	                                               const TArray<FEnvNamedValue>& QueryParams,
 	                                               EEnvQueryRunMode::Type QueryMode = EEnvQueryRunMode::AllMatching);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FSussParameter MakeSussFloatParameter(float Val) { return FSussParameter(Val); }
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FSussParameter MakeSussIntParameter(int Val) { return FSussParameter(Val); }
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FSussParameter MakeSussNameParameter(FName Val) { return FSussParameter(Val); }
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FSussParameter MakeSussTagParameter(FGameplayTag Val) { return FSussParameter(Val); }
+
+	/**
+	 * Manually run a query that returns locations, rather than use it to generate context for a brain decision.
+	 * You might want to do this if you want some query results to manually choose inside an action, rather than evaluating
+	 * all the results individually as contexts.
+	 * @param Querier The actor which is the "Querier", usually the controlled actor, or self.
+	 * @param Tag The tag identifying the query provider, should begin with "Suss.Query"
+	 * @param Params Any parameters you wish to supply to the query
+	 * @param UseCachedResultsFor If > 0, this query will return previous results for the same parameters rather than
+	 *    running the query again, if it was already run within the last N seconds
+	 * @return A list of locations from the query
+	 */
+	UFUNCTION(BlueprintCallable)
+	static const TArray<FVector>& RunLocationQuery(AActor* Querier, FGameplayTag Tag, const TMap<FName, FSussParameter>& Params, float UseCachedResultsFor = 0);
+	/**
+	 * Manually run a query that returns target actors, rather than use it to generate context for a brain decision.
+	 * You might want to do this if you want some query results to manually choose inside an action, rather than evaluating
+	 * all the results individually as contexts.
+	 * @param Querier The actor which is the "Querier", usually the controlled actor, or self.
+	 * @param Tag The tag identifying the query provider, should begin with "Suss.Query"
+	 * @param Params Any parameters you wish to supply to the query
+	 * @param UseCachedResultsFor If > 0, this query will return previous results for the same parameters rather than
+	 *    running the query again, if it was already run within the last N seconds
+	 * @return A list of targets from the query
+	 */
+	UFUNCTION(BlueprintCallable)
+	static TArray<AActor*> RunTargetQuery(AActor* Querier, FGameplayTag Tag, const TMap<FName, FSussParameter>& Params, float UseCachedResultsFor = 0);
+
 
 	static void AddEQSParams(const TMap<FName, FSussParameter>& Params, TArray<FEnvNamedValue>& OutQueryParams);
 
