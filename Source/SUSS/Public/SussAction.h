@@ -33,7 +33,9 @@ protected:
 public:
 
 	void Init(USussBrainComponent* InBrain, const FSussContext& InContext) { Brain = InBrain; CurrentContext = InContext; }
-	
+
+	virtual UWorld* GetWorld() const override;
+
 	USussBrainComponent* GetBrain() const
 	{
 		return Brain;

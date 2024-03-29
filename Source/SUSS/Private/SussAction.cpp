@@ -1,6 +1,8 @@
 ﻿
 #include "SussAction.h"
 
+#include "SussBrainComponent.h"
+
 void USussAction::PerformAction_Implementation(const FSussContext& Context, TSubclassOf<USussAction> PrevActionClass)
 {
 	// Subclasses must implement
@@ -14,6 +16,17 @@ void USussAction::CancelAction_Implementation(TSubclassOf<USussAction> Interrupt
 bool USussAction::CanBeInterrupted_Implementation() const
 {
 	return bAllowInterruptions;
+}
+
+UWorld* USussAction::GetWorld() const
+{
+	if (IsValid(Brain))
+	{
+		return Brain->GetWorld();
+	}
+
+	/// This is to allow this to function in the BP event graph and allow access to Delay() etc
+	return Cast<UWorld>(GetOuter());
 }
 
 void USussAction::ActionCompleted()
