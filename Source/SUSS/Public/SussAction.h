@@ -71,7 +71,7 @@ public:
 
 	/// Implement this to output a series of locations in the gameplay debugger
 	UFUNCTION(BlueprintNativeEvent)
-	void DebugLocations(UPARAM(Ref) TArray<FVector>& OutLocations) const;
+	void DebugLocations(UPARAM(Ref) TArray<FVector>& OutLocations, bool bIncludeDetails) const;
 
 	FSussOnActionCompleted InternalOnActionCompleted;
 };

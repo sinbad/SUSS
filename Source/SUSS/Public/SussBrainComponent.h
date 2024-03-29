@@ -171,7 +171,7 @@ public:
 
 	// NOT GetDebugInfoString, since that makes it duplicate in BehaviourTree category
 	FString GetDebugSummaryString() const;
-	void DebugLocations(TArray<FVector>& OutLocations) const;
+	void DebugLocations(TArray<FVector>& OutLocations, bool bIncludeDetails) const;
 	void GetDebugDetailLines(TArray<FString>& OutLines) const;
 
 protected:

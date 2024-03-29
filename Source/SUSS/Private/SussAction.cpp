@@ -21,7 +21,7 @@ void USussAction::ActionCompleted()
 	InternalOnActionCompleted.ExecuteIfBound(this);
 }
 
-void USussAction::DebugLocations_Implementation(TArray<FVector>& OutLocations) const
+void USussAction::DebugLocations_Implementation(TArray<FVector>& OutLocations, bool bIncludeDetails) const
 {
 	// Subclasses should implement
 }

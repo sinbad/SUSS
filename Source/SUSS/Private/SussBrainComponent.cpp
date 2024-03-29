@@ -644,11 +644,11 @@ FString USussBrainComponent::GetDebugSummaryString() const
 		
 }
 
-void USussBrainComponent::DebugLocations(TArray<FVector>& OutLocations) const
+void USussBrainComponent::DebugLocations(TArray<FVector>& OutLocations, bool bIncludeDetails) const
 {
 	if (IsValid(CurrentAction.ActionInstance))
 	{
-		CurrentAction.ActionInstance->DebugLocations(OutLocations);
+		CurrentAction.ActionInstance->DebugLocations(OutLocations, bIncludeDetails);
 	}
 }
 
