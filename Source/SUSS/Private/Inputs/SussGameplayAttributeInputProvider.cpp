@@ -27,14 +27,16 @@ float USussGameplayAttributeInputProvider::GetAttributeValue(const AActor* FromA
 	return 0;
 }
 
-float USussGameplayAttributeSelfInputProvider::Evaluate_Implementation(const FSussContext& Context,
-	const TMap<FName, FSussParameter>& Parameters) const
+float USussGameplayAttributeSelfInputProvider::Evaluate_Implementation(const USussBrainComponent* Brain,
+                                                                       const FSussContext& Context,
+                                                                       const TMap<FName, FSussParameter>& Parameters) const
 {
 	return GetAttributeValue(Context.ControlledActor);
 }
 
-float USussGameplayAttributeTargetInputProvider::Evaluate_Implementation(const FSussContext& Context,
-	const TMap<FName, FSussParameter>& Parameters) const
+float USussGameplayAttributeTargetInputProvider::Evaluate_Implementation(const class USussBrainComponent* Brain,
+                                                                         const FSussContext& Context,
+                                                                         const TMap<FName, FSussParameter>& Parameters) const
 {
 	if (Context.Target.IsValid())
 		return GetAttributeValue(Context.Target.Get());

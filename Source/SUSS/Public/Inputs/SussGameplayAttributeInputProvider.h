@@ -40,7 +40,7 @@ class SUSS_API USussGameplayAttributeSelfInputProvider : public USussGameplayAtt
 {
 	GENERATED_BODY()
 public:
-	virtual float Evaluate_Implementation(const FSussContext& Context,
+	virtual float Evaluate_Implementation(const class USussBrainComponent* Brain, const FSussContext& Context,
 		const TMap<FName, FSussParameter>& Parameters) const override;
 };
 /**
@@ -51,6 +51,6 @@ class SUSS_API USussGameplayAttributeTargetInputProvider : public USussGameplayA
 {
 	GENERATED_BODY()
 public:
-	virtual float Evaluate_Implementation(const FSussContext& Context,
+	virtual float Evaluate_Implementation(const class USussBrainComponent* Brain, const FSussContext& Context,
 		const TMap<FName, FSussParameter>& Parameters) const override;
 };

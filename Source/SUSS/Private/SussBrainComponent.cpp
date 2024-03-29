@@ -396,7 +396,7 @@ void USussBrainComponent::Update()
 					TMap<FName, FSussParameter>& ResolvedParams = *ResolvedQueryParamsScope.Get<FName, FSussParameter>();
 					ResolveParameters(Self, Consideration.Parameters, ResolvedParams);
 
-					const float RawInputValue = InputProvider->Evaluate(Ctx, ResolvedParams);
+					const float RawInputValue = InputProvider->Evaluate(this, Ctx, ResolvedParams);
 
 					// Normalise to bookends and clamp
 					const float NormalisedInput = FMath::Clamp(FMath::GetRangePct(
@@ -462,7 +462,7 @@ float USussBrainComponent::ResolveParameterToFloat(const FSussContext& SelfConte
 		auto SUSS = GetSUSS(GetWorld());
 		if (auto InputProvider = SUSS->GetInputProvider(Value.InputTag))
 		{
-			return InputProvider->Evaluate(SelfContext, DummyParams);
+			return InputProvider->Evaluate(this, SelfContext, DummyParams);
 		}
 	}
 	return Value.FloatValue;

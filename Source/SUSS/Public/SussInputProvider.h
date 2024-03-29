@@ -45,5 +45,5 @@ public:
 	/// Evaluate the input given a context
 	/// Also used to resolve parameters to queries and other inputs, in which case context is solely the Self reference
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)	
-	float Evaluate(const FSussContext& Context, const TMap<FName, FSussParameter>& Parameters) const;
+	float Evaluate(const class USussBrainComponent* Brain, const FSussContext& Context, const TMap<FName, FSussParameter>& Parameters) const;
 };
