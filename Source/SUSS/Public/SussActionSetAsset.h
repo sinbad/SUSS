@@ -49,6 +49,7 @@ public:
 	/// multiplied together.
 	/// You can have multiple queries for the same piece of context (e.g. 2 target queries) and the results will be combined.
 	/// If there are no queries, then the considerations will be executed only once with the "Self" context reference only
+	/// If you request queries and no results are returned, then this action will be discounted
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FSussQuery> Queries;
 

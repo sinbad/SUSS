@@ -478,67 +478,70 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 	auto SUSS = GetSUSS(GetWorld());
 
 	auto Pool = GetSussPool(GetWorld());
-	FSussScopeReservedArray Targets = Pool->ReserveArray<TWeakObjectPtr<AActor>>();
-	FSussScopeReservedArray Locations = Pool->ReserveArray<FVector>();
-	FSussScopeReservedArray Rotations = Pool->ReserveArray<FRotator>();
-	FSussScopeReservedArray CustomValues = Pool->ReserveArray<TSussContextValue>();
 
-	for (const auto& Query : Action.Queries)
+	if (Action.Queries.Num() > 0)
 	{
-		auto QueryProvider = SUSS->GetQueryProvider(Query.QueryTag);
-		if (!QueryProvider)
-			continue;
+		FSussScopeReservedArray Targets = Pool->ReserveArray<TWeakObjectPtr<AActor>>();
+		FSussScopeReservedArray Locations = Pool->ReserveArray<FVector>();
+		FSussScopeReservedArray Rotations = Pool->ReserveArray<FRotator>();
+		FSussScopeReservedArray CustomValues = Pool->ReserveArray<TSussContextValue>();
 
-		FSussScopeReservedMap ResolvedQueryParamsScope = Pool->ReserveMap<FName, FSussParameter>();
-		TMap<FName, FSussParameter>& ResolvedParams = *ResolvedQueryParamsScope.Get<FName, FSussParameter>();
-		ResolveParameters(Self, Query.Params, ResolvedParams);
-		
-		switch (QueryProvider->GetProvidedContextElement())
+		for (const auto& Query : Action.Queries)
 		{
-		case ESussQueryContextElement::Target:
-			Targets.Get<TWeakObjectPtr<AActor>>()->Append(QueryProvider->GetResults<TWeakObjectPtr<AActor>>(this, Self, Query.MaxFrequency, ResolvedParams));
-			break;
-		case ESussQueryContextElement::Location:
-			Locations.Get<FVector>()->Append(QueryProvider->GetResults<FVector>(this, Self, Query.MaxFrequency, ResolvedParams));
-			break;
-		case ESussQueryContextElement::Rotation:
-			Rotations.Get<FRotator>()->Append(QueryProvider->GetResults<FRotator>(this, Self, Query.MaxFrequency, ResolvedParams));
-			break;
-		case ESussQueryContextElement::CustomValue:
-			CustomValues.Get<TSussContextValue>()->Append(QueryProvider->GetResults<TSussContextValue>(this, Self, Query.MaxFrequency, ResolvedParams));
-			break;
+			auto QueryProvider = SUSS->GetQueryProvider(Query.QueryTag);
+			if (!QueryProvider)
+				continue;
+
+			FSussScopeReservedMap ResolvedQueryParamsScope = Pool->ReserveMap<FName, FSussParameter>();
+			TMap<FName, FSussParameter>& ResolvedParams = *ResolvedQueryParamsScope.Get<FName, FSussParameter>();
+			ResolveParameters(Self, Query.Params, ResolvedParams);
+		
+			switch (QueryProvider->GetProvidedContextElement())
+			{
+			case ESussQueryContextElement::Target:
+				Targets.Get<TWeakObjectPtr<AActor>>()->Append(QueryProvider->GetResults<TWeakObjectPtr<AActor>>(this, Self, Query.MaxFrequency, ResolvedParams));
+				break;
+			case ESussQueryContextElement::Location:
+				Locations.Get<FVector>()->Append(QueryProvider->GetResults<FVector>(this, Self, Query.MaxFrequency, ResolvedParams));
+				break;
+			case ESussQueryContextElement::Rotation:
+				Rotations.Get<FRotator>()->Append(QueryProvider->GetResults<FRotator>(this, Self, Query.MaxFrequency, ResolvedParams));
+				break;
+			case ESussQueryContextElement::CustomValue:
+				CustomValues.Get<TSussContextValue>()->Append(QueryProvider->GetResults<TSussContextValue>(this, Self, Query.MaxFrequency, ResolvedParams));
+				break;
+			}
 		}
+
+		// Now we have all the dimensions, produce a context for every combination
+		AppendContexts<TWeakObjectPtr<AActor>>(Self, Targets,
+											   OutContexts,
+											   [](const TWeakObjectPtr<AActor>& Target, FSussContext& Ctx)
+											   {
+												   Ctx.Target = Target;
+											   });
+		AppendContexts<FVector>(Self, Locations,
+								OutContexts,
+								[](const FVector& Loc, FSussContext& Ctx)
+								{
+									Ctx.Location = Loc;
+								});
+		AppendContexts<FRotator>(Self, Rotations,
+								 OutContexts,
+								 [](const FRotator& Rot, FSussContext& Ctx)
+								 {
+									 Ctx.Rotation = Rot;
+								 });
+		AppendContexts<TSussContextValue>(Self, CustomValues,
+										  OutContexts,
+										  [](const TSussContextValue& CV, FSussContext& Ctx)
+										  {
+											  Ctx.Custom = CV;
+										  });
 	}
-
-	// Now we have all the dimensions, produce a context for every combination
-	AppendContexts<TWeakObjectPtr<AActor>>(Self, Targets,
-	                                       OutContexts,
-	                                       [](const TWeakObjectPtr<AActor>& Target, FSussContext& Ctx)
-	                                       {
-		                                       Ctx.Target = Target;
-	                                       });
-	AppendContexts<FVector>(Self, Locations,
-	                        OutContexts,
-	                        [](const FVector& Loc, FSussContext& Ctx)
-	                        {
-		                        Ctx.Location = Loc;
-	                        });
-	AppendContexts<FRotator>(Self, Rotations,
-	                         OutContexts,
-	                         [](const FRotator& Rot, FSussContext& Ctx)
-	                         {
-		                         Ctx.Rotation = Rot;
-	                         });
-	AppendContexts<TSussContextValue>(Self, CustomValues,
-	                                  OutContexts,
-	                                  [](const TSussContextValue& CV, FSussContext& Ctx)
-	                                  {
-		                                  Ctx.Custom = CV;
-	                                  });
-
-	if(OutContexts.IsEmpty())
+	else
 	{
-		// We had no dimensions, just self
+		// No queries, just self
 		OutContexts.Add(FSussContext { Self });
 	}
 	
