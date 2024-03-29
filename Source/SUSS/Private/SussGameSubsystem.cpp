@@ -5,6 +5,8 @@
 #include "SussDummyProviders.h"
 #include "SussSettings.h"
 #include "Engine/ObjectLibrary.h"
+#include "..\Public\Inputs\SussPerceptionInputProviders.h"
+#include "Inputs/SussDistanceInputProviders.h"
 #include "Queries/SussPerceptionQueries.h"
 
 void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -13,10 +15,7 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	DefaultInputProvider = NewObject<USussDummyInputProvider>();
 
-	// Register any concrete query/input providers (rather than subclasses as dealt with later)
-	RegisterQueryProviderClass(USussPerceptionKnownTargetsQueryProvider::StaticClass());
-	RegisterQueryProviderClass(USussPerceptionKnownHostilesQueryProvider::StaticClass());
-	RegisterQueryProviderClass(USussPerceptionKnownNonHostilesQueryProvider::StaticClass());
+	RegisterNativeProviders();
 
 	// Set up libraries for input / query providers, for scanning for assets
 	InputProviderLib = UObjectLibrary::CreateLibrary(USussInputProvider::StaticClass(), true, GIsEditor && !IsRunningCommandlet());
@@ -67,6 +66,22 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		}
 		
 	}
+}
+
+void USussGameSubsystem::RegisterNativeProviders()
+{
+	// Register any concrete query/input providers we supply in this lib (rather than as assets or things in settings)
+	RegisterInputProviderClass(USussTargetDistanceInputProvider::StaticClass());
+	RegisterInputProviderClass(USussLocationDistanceInputProvider::StaticClass());
+	RegisterInputProviderClass(USussTargetDistance2DInputProvider::StaticClass());
+	RegisterInputProviderClass(USussLocationDistance2DInputProvider::StaticClass());
+	RegisterInputProviderClass(USussSelfSightRangeInputProvider::StaticClass());
+	RegisterInputProviderClass(USussSelfHearingRangeInputProvider::StaticClass());
+	
+	RegisterQueryProviderClass(USussPerceptionKnownTargetsQueryProvider::StaticClass());
+	RegisterQueryProviderClass(USussPerceptionKnownHostilesQueryProvider::StaticClass());
+	RegisterQueryProviderClass(USussPerceptionKnownNonHostilesQueryProvider::StaticClass());
+
 }
 
 void USussGameSubsystem::RegisterInputProvider(USussInputProvider* Provider)

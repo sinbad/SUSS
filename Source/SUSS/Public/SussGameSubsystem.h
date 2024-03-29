@@ -71,6 +71,7 @@ public:
 protected:
 	void LoadClassesFromLibrary(const TArray<FDirectoryPath>& Paths, UObjectLibrary* ObjectLibrary, TArray<FSoftObjectPath>& OutSoftPaths);
 	void LoadClassesFromLibrary(const TArray<FString>& Paths, UObjectLibrary* ObjectLibrary, TArray<FSoftObjectPath>& OutSoftPaths);
+	void RegisterNativeProviders();
 
 
 };
