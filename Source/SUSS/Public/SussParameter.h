@@ -50,10 +50,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Tag", EditConditionHides))
 	FGameplayTag Tag;
 
-	/// Tag identifying the input value we should pull into this parameter. Can only reference "Self" ie the brain actor,
-	/// because the value is used in other queries which have yet to provide any more information. Therefore the
-	/// tags are limited to subtags of "Suss.Input.Self"
-	UPROPERTY(EditDefaultsOnly, meta=(Categories="Suss.Input.Self", EditCondition="Type==ESussParamType::Input", EditConditionHides))
+	/// Tag identifying the input value we should pull into this parameter. NOTE: consider the context that you're
+	/// using this parameter in and ensure the input you're using is valid / representative
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="Suss.Input", EditCondition="Type==ESussParamType::Input", EditConditionHides))
 	FGameplayTag InputTag;
 
 	static FSussParameter ZeroLiteral;
