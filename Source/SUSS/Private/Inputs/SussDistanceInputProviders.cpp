@@ -43,9 +43,16 @@ float USussTargetDistance2DInputProvider::Evaluate_Implementation(const class US
                                                                   const FSussContext& Ctx,
                                                                   const TMap<FName, FSussParameter>& Parameters) const
 {
-	return FVector::Dist2D(
-		Ctx.ControlledActor ? Ctx.ControlledActor->GetActorLocation() : FVector::ZeroVector,
-		Ctx.Target.IsValid() ? Ctx.Target->GetActorLocation() : FVector::ZeroVector);
+	if (Ctx.Target.IsValid())
+	{
+		return FVector::Dist2D(
+			Ctx.ControlledActor ? Ctx.ControlledActor->GetActorLocation() : FVector::ZeroVector,
+			Ctx.Target->GetActorLocation());
+	}
+	else
+	{
+		return UE_BIG_NUMBER;
+	}
 }
 
 USussLocationDistance2DInputProvider::USussLocationDistance2DInputProvider()
