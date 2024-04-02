@@ -19,7 +19,7 @@ USussBrainComponent::USussBrainComponent(): bQueuedForUpdate(false),
                                             TimeSinceLastUpdate(0),
                                             BrainConfigAsset(nullptr),
                                             CachedUpdateRequestTime(1),
-                                            CurrentAction(),
+                                            CurrentActionResult(),
                                             PerceptionComp(nullptr)
 {
 	// Brains tick in order to queue themselves for update regularly
@@ -270,46 +270,51 @@ void USussBrainComponent::StopCurrentAction()
 void USussBrainComponent::CancelCurrentAction(TSubclassOf<USussAction> Interrupter)
 {
 	// Cancel previous action
-	if (IsValid(CurrentAction.ActionInstance))
+	if (IsValid(CurrentActionInstance))
 	{
-		CurrentAction.ActionInstance->CancelAction(Interrupter);
-		CurrentAction.ActionInstance = nullptr;
+		CurrentActionInstance->CancelAction(Interrupter);
+		CurrentActionInstance = nullptr;
+		CurrentActionResult.ActionDefIndex = -1;
 	}
+}
+
+bool USussBrainComponent::IsActionInProgress()
+{
+	return CurrentActionInstance != nullptr;
 }
 
 void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionResult)
 {
-	checkf(ActionResult.Def, TEXT("No supplied action def"));
+	checkf(ActionResult.ActionDefIndex >= 0, TEXT("No supplied action def"));
+
+	if (ActionResult.ActionDefIndex == CurrentActionResult.ActionDefIndex)
+	{
+		// We're already running it, do nothing
+		return;
+	}
 
 	auto SUSS = GetSUSS(GetWorld());
-	TSubclassOf<USussAction> ActionClass = SUSS->GetActionClass(ActionResult.Def->ActionTag);
+	const FSussActionDef& Def = CombinedActionsByPriority[ActionResult.ActionDefIndex];
+	TSubclassOf<USussAction> ActionClass = SUSS->GetActionClass(Def.ActionTag);
 
 	if (ActionClass)
 	{
 		TSubclassOf<USussAction> PreviousActionClass = nullptr;
-		if (IsValid(CurrentAction.ActionInstance))
+		if (IsValid(CurrentActionInstance))
 		{
-			// Check that we haven't just decided to do the same thing with a slightly higher score
-			// Without this we'd call PerformAction again on a new version of the same action
-			// Changes to winning context with the same action will still call Perform again 
-			if (CurrentAction.IsSameAs(ActionResult))
-			{
-				return;
-			}
-
-			PreviousActionClass = CurrentAction.ActionInstance->GetClass();
+			PreviousActionClass = CurrentActionInstance->GetClass();
 		}
 		StopCurrentAction();
-		CurrentAction = ActionResult;
-		CurrentActionInertiaCooldown = CurrentAction.Def->InertiaCooldown;
+		CurrentActionResult = ActionResult;
+		CurrentActionInertiaCooldown = Def.InertiaCooldown;
 
 		// Note that to allow BP classes we need to construct using the default object
-		CurrentAction.ActionInstance = GetSussPool(GetWorld())->ReserveAction(ActionClass, this, ActionClass->GetDefaultObject());
-		CurrentAction.ActionInstance->Init(this, CurrentAction.Context);
-		CurrentAction.ActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
+		CurrentActionInstance = GetSussPool(GetWorld())->ReserveAction(ActionClass, this, ActionClass->GetDefaultObject());
+		CurrentActionInstance->Init(this, ActionResult.Context);
+		CurrentActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
 		ActionNamesTimeLastPerformed.Add(ActionClass->GetFName(), GetWorld()->GetTimeSeconds());
 	
-		CurrentAction.ActionInstance->PerformAction(ActionResult.Context, PreviousActionClass);
+		CurrentActionInstance->PerformAction(ActionResult.Context, PreviousActionClass);
 	}
 
 	
@@ -317,11 +322,13 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 
 void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 {
-	if (IsValid(CurrentAction.ActionInstance))
+	// Sometimes possible for actions to call us back late when we've already abandoned them, ignore that
+	if (IsValid(CurrentActionInstance) && CurrentActionInstance == SussAction)
 	{
-		checkf(CurrentAction.ActionInstance == SussAction, TEXT("OnActionCompleted called from action which was not current!"))
-		GetSussPool(GetWorld())->FreeAction(CurrentAction.ActionInstance);
-		CurrentAction.ActionInstance = nullptr;
+		GetSussPool(GetWorld())->FreeAction(CurrentActionInstance);
+		CurrentActionInstance = nullptr;
+		CurrentActionResult.ActionDefIndex = -1;
+		CurrentActionResult.Score = 0;
 		CurrentActionInertiaCooldown = 0;
 		// Immediately queue for update so no hesitation after completion
 		QueueForUpdate();
@@ -346,16 +353,18 @@ void USussBrainComponent::Update()
 		return;
 
 	/// If we can't be interrupted, no need to check what else we could be doing
-	if (IsValid(CurrentAction.ActionInstance) && !CurrentAction.ActionInstance->CanBeInterrupted())
+	if (IsValid(CurrentActionInstance) && !CurrentActionInstance->CanBeInterrupted())
 		return;
 
 	auto SUSS = GetSUSS(GetWorld());
 	auto Pool = GetSussPool(GetWorld());
 	AActor* Self = GetSelf();
 
-	if (IsValid(CurrentAction.ActionInstance) && CurrentAction.Def->Inertia > 0 && CurrentAction.Def->InertiaCooldown > 0)
+	const FSussActionDef* CurrentActionDef = IsActionInProgress() ? &CombinedActionsByPriority[CurrentActionResult.ActionDefIndex] : nullptr;
+	
+	if (CurrentActionDef && CurrentActionDef->Inertia > 0 && CurrentActionDef->InertiaCooldown > 0)
 	{
-		CurrentActionInertia = CurrentAction.Def->Inertia * (CurrentActionInertiaCooldown / CurrentAction.Def->InertiaCooldown);
+		CurrentActionInertia = CurrentActionDef->Inertia * (CurrentActionInertiaCooldown / CurrentActionDef->InertiaCooldown);
 	}
 	else
 	{
@@ -444,13 +453,15 @@ void USussBrainComponent::Update()
 				}
 			}
 
+			// Add inertia if this is the current action
+			if (IsActionInProgress() && i == CurrentActionResult.ActionDefIndex)
+			{
+				Score += CurrentActionInertia;
+			}
+
 			if (!FMath::IsNearlyZero(Score))
 			{
-				// This is a possible choice, but check that it exceeds inertia
-				if (!IsValid(CurrentAction.ActionInstance) || Score > CurrentAction.Score + CurrentActionInertia)
-				{
-					CandidateActions.Add(FSussActionScoringResult { &NextAction, Ctx, Score });
-				}
+				CandidateActions.Add(FSussActionScoringResult { i, Ctx, Score });
 			}
 		}
 		
@@ -641,20 +652,20 @@ void USussBrainComponent::OnPerceptionUpdated(const TArray<AActor*>& Actors)
 
 FString USussBrainComponent::GetDebugSummaryString() const
 {
-	if (IsValid(CurrentAction.ActionInstance))
+	if (CombinedActionsByPriority.IsValidIndex(CurrentActionResult.ActionDefIndex))
 	{
 		// Log all actions
 		// Log all considerations?
-		
+		const FSussActionDef& Def = CombinedActionsByPriority[CurrentActionResult.ActionDefIndex];
 		return FString::Printf(
 			TEXT(
 				"Current Action: {yellow}%s{white} Score: {yellow}%4.2f{white}\n"
 				"Countdown: {yellow}%4.2f{white}\n"
 				"Inertia: {yellow}%4.2f{white}"),
-				CurrentAction.Def->Description.IsEmpty() ? 
-					*CurrentAction.ActionInstance->GetClass()->GetName() :
-					*CurrentAction.Def->Description,
-				CurrentAction.Score,
+				Def.Description.IsEmpty() ? 
+					*CurrentActionInstance->GetClass()->GetName() :
+					*Def.Description,
+				CurrentActionResult.Score,
 				FMath::Max(0.0f, CachedUpdateRequestTime - TimeSinceLastUpdate),
 				CurrentActionInertia);
 	}
@@ -665,9 +676,9 @@ FString USussBrainComponent::GetDebugSummaryString() const
 
 void USussBrainComponent::DebugLocations(TArray<FVector>& OutLocations, bool bIncludeDetails) const
 {
-	if (IsValid(CurrentAction.ActionInstance))
+	if (IsValid(CurrentActionInstance))
 	{
-		CurrentAction.ActionInstance->DebugLocations(OutLocations, bIncludeDetails);
+		CurrentActionInstance->DebugLocations(OutLocations, bIncludeDetails);
 	}
 }
 
@@ -677,11 +688,12 @@ void USussBrainComponent::GetDebugDetailLines(TArray<FString>& OutLines) const
 	OutLines.Add(TEXT("Candidate Actions:"));
 	for (const auto& Action : CandidateActions)
 	{
+		const FSussActionDef& Def = CombinedActionsByPriority[Action.ActionDefIndex];
 		OutLines.Add(FString::Printf(
 			TEXT(" - {yellow}%s  {white}%4.2f"),
-			Action.Def->Description.IsEmpty()
-				? *Action.ActionInstance->GetClass()->GetName()
-				: *Action.Def->Description,
+			Def.Description.IsEmpty()
+				? *Def.ActionTag.ToString()
+				: *Def.Description,
 			Action.Score
 			));
 

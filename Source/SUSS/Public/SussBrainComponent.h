@@ -54,18 +54,9 @@ struct FSussActionScoringResult
 	GENERATED_BODY()
 
 public:
-	const FSussActionDef* Def;
+	int ActionDefIndex;
 	FSussContext Context;
 	float Score = 0;
-
-	/// Action instance, only used for actions which are run
-	UPROPERTY()
-	USussAction* ActionInstance = nullptr;
-
-	bool IsSameAs(const FSussActionScoringResult& Proposed) const
-	{
-		return Def == Proposed.Def && Context == Proposed.Context;
-	}
 };
 
 
@@ -104,9 +95,11 @@ protected:
 	/// Combination of ActionSets and ActionDefs, sorted by descending priority group
 	TArray<FSussActionDef> CombinedActionsByPriority;
 
-	/// The current action being executed, if any
-	UPROPERTY()	
-	FSussActionScoringResult CurrentAction;
+	/// The scoring result of the current action definition being executed, if any
+	FSussActionScoringResult CurrentActionResult;
+	/// The instance of the action being executed
+	UPROPERTY()
+	USussAction* CurrentActionInstance = nullptr;
 	float CurrentActionInertia = 0;
 	float CurrentActionInertiaCooldown = 0;
 
@@ -173,6 +166,10 @@ public:
 	FString GetDebugSummaryString() const;
 	void DebugLocations(TArray<FVector>& OutLocations, bool bIncludeDetails) const;
 	void GetDebugDetailLines(TArray<FString>& OutLines) const;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsActionInProgress();
+
 
 protected:
 	// Called when the game starts
