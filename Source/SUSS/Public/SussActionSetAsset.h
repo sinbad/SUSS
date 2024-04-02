@@ -39,9 +39,9 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	FString Description;
 
-	/// The action which is going to be called
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<USussAction> ActionClass;
+	/// Tag identifying the action which is going to be called
+	UPROPERTY(EditDefaultsOnly, meta=(Categories="Suss.Action"))
+	FGameplayTag ActionTag;
 
 	/// Queries to run to provide values for the Considerations. Beware: multiple queries that return different
 	/// information will geometrically multiply the number of variations that will need to be considered. E.g. if you

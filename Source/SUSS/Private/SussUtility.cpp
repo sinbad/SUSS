@@ -8,11 +8,11 @@
 
 UE_DISABLE_OPTIMIZATION
 
-bool USussUtility::IsActionEnabled(TSubclassOf<USussAction> ActionClass)
+bool USussUtility::IsActionEnabled(FGameplayTag ActionTag)
 {
 	if (auto Settings = GetDefault<USussSettings>())
 	{
-		return !Settings->DisabledActions.Contains(ActionClass);
+		return !Settings->DisabledActionTags.HasTag(ActionTag);
 	}
 
 	return true;

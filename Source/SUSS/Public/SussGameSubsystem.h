@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "SussAction.h"
+#include "SussActionSetAsset.h"
 #include "SussInputProvider.h"
 #include "SussQueryProvider.h"
 #include "Engine/ObjectLibrary.h"
@@ -19,6 +21,9 @@ class SUSS_API USussGameSubsystem : public UGameInstanceSubsystem, public FTicka
 	GENERATED_BODY()
 protected:
 	UPROPERTY()
+	TMap<FGameplayTag, TSubclassOf<USussAction>> ActionClasses;
+
+	UPROPERTY()
 	TMap<FGameplayTag, USussInputProvider*> InputProviders;
 
 	UPROPERTY()
@@ -28,6 +33,8 @@ protected:
 	USussInputProvider* DefaultInputProvider;
 
 	UPROPERTY()
+	UObjectLibrary* ActionClassLib;
+	UPROPERTY()
 	UObjectLibrary* InputProviderLib;
 	UPROPERTY()
 	UObjectLibrary* QueryProviderLib;
@@ -36,6 +43,17 @@ protected:
 
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+	/// Register an action class
+	UFUNCTION(BlueprintCallable)
+	void RegisterActionClass(TSubclassOf<USussAction> ActionClass);
+
+	/// Unregister an action class
+	UFUNCTION(BlueprintCallable)
+	void UnregisterActionClass(TSubclassOf<USussAction> ActionClass);
+
+	TSubclassOf<USussAction> GetActionClass(FGameplayTag ActionTag);
+
 	/// Register an input provider by class
 	UFUNCTION(BlueprintCallable)
 	void RegisterInputProviderClass(TSubclassOf<USussInputProvider> ProviderClass);

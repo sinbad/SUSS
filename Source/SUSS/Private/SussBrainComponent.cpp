@@ -272,32 +272,37 @@ void USussBrainComponent::CancelCurrentAction(TSubclassOf<USussAction> Interrupt
 void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionResult)
 {
 	checkf(ActionResult.Def, TEXT("No supplied action def"));
-	checkf(IsValid(ActionResult.Def->ActionClass), TEXT("Action class not valid"));
 
-	TSubclassOf<USussAction> PreviousActionClass = nullptr;
-	if (IsValid(CurrentAction.ActionInstance))
+	auto SUSS = GetSUSS(GetWorld());
+	TSubclassOf<USussAction> ActionClass = SUSS->GetActionClass(ActionResult.Def->ActionTag);
+
+	if (ActionClass)
 	{
-		// Check that we haven't just decided to do the same thing with a slightly higher score
-		// Without this we'd call PerformAction again on a new version of the same action
-		// Changes to winning context with the same action will still call Perform again 
-		if (CurrentAction.IsSameAs(ActionResult))
+		TSubclassOf<USussAction> PreviousActionClass = nullptr;
+		if (IsValid(CurrentAction.ActionInstance))
 		{
-			return;
+			// Check that we haven't just decided to do the same thing with a slightly higher score
+			// Without this we'd call PerformAction again on a new version of the same action
+			// Changes to winning context with the same action will still call Perform again 
+			if (CurrentAction.IsSameAs(ActionResult))
+			{
+				return;
+			}
+
+			PreviousActionClass = CurrentAction.ActionInstance->GetClass();
 		}
+		StopCurrentAction();
+		CurrentAction = ActionResult;
+		CurrentActionInertiaCooldown = CurrentAction.Def->InertiaCooldown;
 
-		PreviousActionClass = CurrentAction.Def->ActionClass;
-	}
-	StopCurrentAction();
-	CurrentAction = ActionResult;
-	CurrentActionInertiaCooldown = CurrentAction.Def->InertiaCooldown;
-
-	// Note that to allow BP classes we need to construct using the default object
-	CurrentAction.ActionInstance = GetSussPool(GetWorld())->ReserveAction(CurrentAction.Def->ActionClass, this, CurrentAction.Def->ActionClass->GetDefaultObject());
-	CurrentAction.ActionInstance->Init(this, CurrentAction.Context);
-	CurrentAction.ActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
-	ActionNamesTimeLastPerformed.Add(ActionResult.Def->ActionClass->GetFName(), GetWorld()->GetTimeSeconds());
+		// Note that to allow BP classes we need to construct using the default object
+		CurrentAction.ActionInstance = GetSussPool(GetWorld())->ReserveAction(ActionClass, this, ActionClass->GetDefaultObject());
+		CurrentAction.ActionInstance->Init(this, CurrentAction.Context);
+		CurrentAction.ActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
+		ActionNamesTimeLastPerformed.Add(ActionClass->GetFName(), GetWorld()->GetTimeSeconds());
 	
-	CurrentAction.ActionInstance->PerformAction(ActionResult.Context, PreviousActionClass);
+		CurrentAction.ActionInstance->PerformAction(ActionResult.Context, PreviousActionClass);
+	}
 
 	
 }
@@ -368,7 +373,7 @@ void USussBrainComponent::Update()
 			continue;
 
 		// Ignore bad config or globally disabled actions
-		if (!IsValid(NextAction.ActionClass) || !USussUtility::IsActionEnabled(NextAction.ActionClass))
+		if (!NextAction.ActionTag.IsValid() || !USussUtility::IsActionEnabled(NextAction.ActionTag))
 			continue;
 
 		// Check required/blocking tags on self

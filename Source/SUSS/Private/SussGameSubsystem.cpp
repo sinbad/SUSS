@@ -17,7 +17,13 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	RegisterNativeProviders();
 
-	// Set up libraries for input / query providers, for scanning for assets
+	// Set up libraries for actions / input / query providers, for scanning for assets
+	ActionClassLib = UObjectLibrary::CreateLibrary(USussAction::StaticClass(), true, GIsEditor && !IsRunningCommandlet());
+	if (GIsEditor)
+	{
+		ActionClassLib->bIncludeOnlyOnDiskAssets = false;
+	}
+
 	InputProviderLib = UObjectLibrary::CreateLibrary(USussInputProvider::StaticClass(), true, GIsEditor && !IsRunningCommandlet());
 	if (GIsEditor)
 	{
@@ -34,6 +40,10 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	if (auto Settings = GetDefault<USussSettings>())
 	{
 		// Explicitly registered classes
+		for (auto& ActionClass : Settings->ActionClasses)
+		{
+			RegisterActionClass(ActionClass);
+		}
 		for (auto& InputProv : Settings->InputProviders)
 		{
 			RegisterInputProviderClass(InputProv);
@@ -45,16 +55,25 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 		// Asset-based providers
 
+		TArray<FSoftObjectPath> ActionClassBPs;
 		TArray<FSoftObjectPath> InputProviderBPs;
 		TArray<FSoftObjectPath> QueryProviderBPs;
+		LoadClassesFromLibrary(Settings->ActionClassPaths, ActionClassLib, ActionClassBPs);
 		LoadClassesFromLibrary(Settings->InputProviderPaths, InputProviderLib, InputProviderBPs);
 		LoadClassesFromLibrary(Settings->QueryProviderPaths, QueryProviderLib, QueryProviderBPs);
 
+		for (auto& SoftRef : ActionClassBPs)
+		{
+			if (UClass* ActionClass = Cast<UClass>(SoftRef.ResolveObject()))
+			{
+				RegisterActionClass(ActionClass);
+			}
+		}
 		for (auto& SoftRef : InputProviderBPs)
 		{
-			if (UClass* QClass = Cast<UClass>(SoftRef.ResolveObject()))
+			if (UClass* IpClass = Cast<UClass>(SoftRef.ResolveObject()))
 			{
-				RegisterInputProviderClass(QClass);
+				RegisterInputProviderClass(IpClass);
 			}
 		}
 		for (auto& SoftRef : QueryProviderBPs)
@@ -81,6 +100,74 @@ void USussGameSubsystem::RegisterNativeProviders()
 	RegisterQueryProviderClass(USussPerceptionKnownTargetsQueryProvider::StaticClass());
 	RegisterQueryProviderClass(USussPerceptionKnownHostilesQueryProvider::StaticClass());
 	RegisterQueryProviderClass(USussPerceptionKnownNonHostilesQueryProvider::StaticClass());
+
+}
+
+
+void USussGameSubsystem::RegisterActionClass(TSubclassOf<USussAction> ActionClass)
+{
+	if (auto CDO = GetDefault<USussAction>(ActionClass.Get()))
+	{
+		auto& Tag = CDO->GetActionTag();
+		if (Tag.IsValid())
+		{
+			if (auto pExisting = ActionClasses.Find(Tag))
+			{
+				UE_LOG(LogSuss,
+					   Error,
+					   TEXT("Unable to register Action Class %s, tag %s already registered (%s)"),
+					   *ActionClass->GetName(),
+					   *Tag.GetTagName().ToString(),
+					   *(*pExisting)->GetName())
+			}
+			else
+			{
+				ActionClasses.Add(Tag, ActionClass);
+				UE_LOG(LogSuss, Log, TEXT("Registered Action Class %s for tag %s"), *ActionClass->GetName(), *Tag.GetTagName().ToString());
+			}
+		}
+		else
+		{
+			UE_LOG(LogSuss, Error, TEXT("Unable to register Action Class %s, gameplay tag is invalid, did you remember to set it in your action class defaults?"), *ActionClass->GetName())
+		}
+	}
+}
+
+void USussGameSubsystem::UnregisterActionClass(TSubclassOf<USussAction> ActionClass)
+{
+	if (auto CDO = GetDefault<USussAction>(ActionClass.Get()))
+	{
+		auto& Tag = CDO->GetActionTag();
+		if (Tag.IsValid())
+		{
+			if (auto pExisting = ActionClasses.Find(Tag))
+			{
+				if (*pExisting == ActionClass)
+				{
+					QueryProviders.Remove(Tag);
+					return;
+				}
+			}
+		}
+
+		UE_LOG(LogSuss, Warning, TEXT("Possibly bad call to UnregisterActionClass, %s was not registered"), *ActionClass->GetName());
+	}
+}
+
+TSubclassOf<USussAction> USussGameSubsystem::GetActionClass(FGameplayTag ActionTag)
+{
+	if (auto pClass = ActionClasses.Find(ActionTag))
+	{
+		return *pClass;
+	}
+
+	if (!MissingTagsAlreadyWarnedAbout.Contains(ActionTag.GetTagName()))
+	{
+		UE_LOG(LogSuss, Warning, TEXT("Requested non-existent Action Class for tag %s"), *ActionTag.GetTagName().ToString())
+		MissingTagsAlreadyWarnedAbout.Add(ActionTag.GetTagName());
+	}
+
+	return nullptr;
 
 }
 

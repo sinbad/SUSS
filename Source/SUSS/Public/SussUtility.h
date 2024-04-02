@@ -20,7 +20,7 @@ class SUSS_API USussUtility : public UBlueprintFunctionLibrary
 public:
 	/// Global config can enable / disable just certain actions, so check this
 	UFUNCTION(BlueprintCallable)
-	static bool IsActionEnabled(TSubclassOf<USussAction> ActionClass);
+	static bool IsActionEnabled(FGameplayTag ActionTag);
 	/// Check whether an actor has a specific tag
 	UFUNCTION(BlueprintCallable)
 	static bool ActorHasTag(AActor* Actor, const FGameplayTag& Tag);

@@ -14,6 +14,12 @@ class SUSS_API USussSettings : public UObject
 	GENERATED_BODY()
 public:
 
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of action classes to automatically register at startup"))
+	TArray<TSubclassOf<USussAction>> ActionClasses;
+
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of paths that Blueprint action classes will be searched for in", RelativeToGameContentDir, LongPackageName))
+	TArray<FDirectoryPath> ActionClassPaths;
+
 	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of input provider classes to automatically register at startup"))
 	TArray<TSubclassOf<USussInputProvider>> InputProviders;
 
@@ -26,8 +32,8 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of paths that Blueprint query providers will be searched for in", RelativeToGameContentDir, LongPackageName))
 	TArray<FDirectoryPath> QueryProviderPaths;
 
-	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "List of action classes which are globally disabled; useful for debugging, or disabling experimental behaviours"))
-	TArray<TSubclassOf<USussAction>> DisabledActions;
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "List of action tags which are globally disabled; useful for debugging, or disabling experimental behaviours"))
+	FGameplayTagContainer DisabledActionTags;
 	
 	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "The frame time budget in milliseconds for running updates on AI brains"))
 	float BrainUpdateFrameTimeBudgetMilliseconds = 0.5f;

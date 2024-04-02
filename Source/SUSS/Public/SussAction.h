@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "SussContext.h"
 #include "UObject/Object.h"
 #include "SussAction.generated.h"
@@ -21,6 +22,11 @@ class SUSS_API USussAction : public UObject
 {
 	GENERATED_BODY()
 protected:
+
+	/// The tag which identifies the action which this provider is supplying
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(Categories="Suss.Action"))
+	FGameplayTag ActionTag;
+	
 	/// Override this in subclasses if you want this action to not allow interruptions.
 	UPROPERTY(EditDefaultsOnly)
 	bool bAllowInterruptions = true;
@@ -34,6 +40,8 @@ public:
 
 	void Init(USussBrainComponent* InBrain, const FSussContext& InContext) { Brain = InBrain; CurrentContext = InContext; }
 
+	const FGameplayTag& GetActionTag() const { return ActionTag; }
+	
 	virtual UWorld* GetWorld() const override;
 
 	USussBrainComponent* GetBrain() const
