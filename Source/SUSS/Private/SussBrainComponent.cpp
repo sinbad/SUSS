@@ -272,6 +272,7 @@ void USussBrainComponent::CancelCurrentAction(TSubclassOf<USussAction> Interrupt
 	// Cancel previous action
 	if (IsValid(CurrentActionInstance))
 	{
+		CurrentActionInstance->InternalOnActionCompleted.Unbind();
 		CurrentActionInstance->CancelAction(Interrupter);
 		CurrentActionInstance = nullptr;
 		CurrentActionResult.ActionDefIndex = -1;
@@ -332,9 +333,10 @@ void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 		CurrentActionInertiaCooldown = 0;
 		// Immediately queue for update so no hesitation after completion
 		QueueForUpdate();
+
+		SussAction->InternalOnActionCompleted.Unbind();
 	}
 
-	SussAction->InternalOnActionCompleted.Unbind();
 }
 
 void USussBrainComponent::Update()
