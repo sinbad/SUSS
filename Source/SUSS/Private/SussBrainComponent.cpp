@@ -333,10 +333,6 @@ void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 		// Immediately queue for update so no hesitation after completion
 		QueueForUpdate();
 	}
-	else
-	{
-		UE_LOG(LogSuss, Error, TEXT("Received an OnActionCompleted callback on %s from action type %s when no current action is set"), *GetName(), *SussAction->GetClass()->GetName());
-	}
 
 	SussAction->InternalOnActionCompleted.Unbind();
 }
