@@ -89,6 +89,8 @@ protected:
 	// Cached results for each params combination
 	TMap<uint32, FSussCachedQueryResults> CachedResultsByParamsHash;
 
+	mutable FCriticalSection Guard;
+
 	template<typename T>
 	static void InitResults(TSussResultsArray& OutResults)
 	{
@@ -131,9 +133,25 @@ public:
 
 	virtual void Tick(float DeltaTime)
 	{
+		FScopeLock Lock(&Guard);
+		
+		TArray<uint32> KeysToRemove;
 		for (auto& Result : CachedResultsByParamsHash)
 		{
-			Result.Value.TimeSinceLastRun += DeltaTime;
+			// If the AI that used to use this has gone stale, remove
+			if (Result.Value.ControlledActor.IsStale() || !Result.Value.ControlledActor.IsValid())
+			{
+				KeysToRemove.Add(Result.Key);
+			}
+			else
+			{
+				Result.Value.TimeSinceLastRun += DeltaTime;
+			}
+		}
+
+		for (uint32 Key : KeysToRemove)
+		{
+			CachedResultsByParamsHash.Remove(Key);
 		}
 	}
 
@@ -141,6 +159,8 @@ public:
 	template<typename T>
 	const TArray<T>& GetResults(USussBrainComponent* Brain, AActor* Self, float MaxFrequency, const TMap<FName, FSussParameter>& Params)
 	{
+		FScopeLock Lock(&Guard);
+		
 		auto& Results = MaybeExecuteQuery(Brain, Self, MaxFrequency, Params, CachedResultsByParamsHash);
 		return GetResultsArray<T>(Results.Results);
 	}
