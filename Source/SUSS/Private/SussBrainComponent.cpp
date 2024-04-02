@@ -182,10 +182,18 @@ void USussBrainComponent::TickComponent(float DeltaTime,
 	}
 }
 
-void USussBrainComponent::CheckForNeededUpdate(float DeltaTime, bool bForceUpdate)
+void USussBrainComponent::CheckForNeededUpdate(float DeltaTime)
 {
 	TimeSinceLastUpdate += DeltaTime;
-	if (!bQueuedForUpdate && TimeSinceLastUpdate > CachedUpdateRequestTime)
+	if (TimeSinceLastUpdate > CachedUpdateRequestTime)
+	{
+		QueueForUpdate();
+	}
+}
+
+void USussBrainComponent::QueueForUpdate()
+{
+	if (!bQueuedForUpdate)
 	{
 		if (auto SS = GetSussWorldSubsystem(GetWorld()))
 		{
@@ -315,6 +323,8 @@ void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 		GetSussPool(GetWorld())->FreeAction(CurrentAction.ActionInstance);
 		CurrentAction.ActionInstance = nullptr;
 		CurrentActionInertiaCooldown = 0;
+		// Immediately queue for update so no hesitation after completion
+		QueueForUpdate();
 	}
 	else
 	{
@@ -626,7 +636,7 @@ double USussBrainComponent::GetTimeSinceActionPerformed(TSubclassOf<USussAction>
 
 void USussBrainComponent::OnPerceptionUpdated(const TArray<AActor*>& Actors)
 {
-	CheckForNeededUpdate(0, true);
+	QueueForUpdate();
 }
 
 FString USussBrainComponent::GetDebugSummaryString() const

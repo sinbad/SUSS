@@ -179,7 +179,8 @@ protected:
 	virtual void BeginPlay() override;
 	void BrainConfigChanged();
 	void InitActions();
-	void CheckForNeededUpdate(float DeltaTime, bool bForceUpdate = false);
+	void CheckForNeededUpdate(float DeltaTime);
+	void QueueForUpdate();
 	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
 
 	UFUNCTION()
