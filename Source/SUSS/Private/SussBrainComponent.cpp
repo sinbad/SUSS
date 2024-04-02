@@ -335,6 +335,10 @@ void USussBrainComponent::Update()
 	if (CombinedActionsByPriority.IsEmpty())
 		return;
 
+	/// If we can't be interrupted, no need to check what else we could be doing
+	if (IsValid(CurrentAction.ActionInstance) && !CurrentAction.ActionInstance->CanBeInterrupted())
+		return;
+
 	auto SUSS = GetSUSS(GetWorld());
 	auto Pool = GetSussPool(GetWorld());
 	AActor* Self = GetSelf();
