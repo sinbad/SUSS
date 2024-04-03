@@ -6,6 +6,7 @@
 #include "SussSettings.h"
 #include "Engine/ObjectLibrary.h"
 #include "..\Public\Inputs\SussPerceptionInputProviders.h"
+#include "Inputs/SussBlackboardInputProviders.h"
 #include "Inputs/SussDistanceInputProviders.h"
 #include "Queries/SussPerceptionQueries.h"
 
@@ -96,6 +97,9 @@ void USussGameSubsystem::RegisterNativeProviders()
 	RegisterInputProviderClass(USussLocationDistance2DInputProvider::StaticClass());
 	RegisterInputProviderClass(USussSelfSightRangeInputProvider::StaticClass());
 	RegisterInputProviderClass(USussSelfHearingRangeInputProvider::StaticClass());
+	RegisterInputProviderClass(USussBlackboardAutoInputProvider::StaticClass());
+	RegisterInputProviderClass(USussBlackboardBoolInputProvider::StaticClass());
+	RegisterInputProviderClass(USussBlackboardFloatInputProvider::StaticClass());
 	
 	RegisterQueryProviderClass(USussPerceptionKnownTargetsQueryProvider::StaticClass());
 	RegisterQueryProviderClass(USussPerceptionKnownHostilesQueryProvider::StaticClass());
