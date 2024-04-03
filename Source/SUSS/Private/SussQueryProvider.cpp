@@ -38,3 +38,40 @@ bool USussQueryProvider::ParamsMatch(const TMap<FName, FSussParameter>& Params1,
 	}
 	return true;
 }
+
+void USussTargetQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
+	AActor* Self,
+	const TMap<FName, FSussParameter>& Params,
+	TArray<TWeakObjectPtr<AActor>>& OutResults)
+{
+	// Subclasses can override; this one needs to proxy to BP-compatible (non-weak pointer) version
+	TArray<AActor*> BPArray;
+	ExecuteQueryBP(Brain, Self, Params, BPArray);
+	OutResults.Append(BPArray);
+}
+
+void USussLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
+	AActor* Self,
+	const TMap<FName, FSussParameter>& Params,
+	TArray<FVector>& OutResults)
+{
+	// Subclasses can override this, call BP version by default
+	ExecuteQueryBP(Brain, Self, Params, OutResults);
+}
+
+void USussRotationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
+	AActor* Self,
+	const TMap<FName, FSussParameter>& Params,
+	TArray<FRotator>& OutResults)
+{
+	// Subclasses can override this, call BP version by default
+	ExecuteQueryBP(Brain, Self, Params, OutResults);
+}
+
+void USussCustomValueQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
+	AActor* Self,
+	const TMap<FName, FSussParameter>& Params,
+	TArray<TSussContextValue>& OutResults)
+{
+	// Subclasses can override this, no BP version (unsupported type)
+}

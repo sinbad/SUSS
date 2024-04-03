@@ -229,7 +229,12 @@ class USussTargetQueryProvider : public USussQueryProvider
 protected:
 	
 	/// Should be overridden by subclasses
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults) {}
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults);
+
+	/// Blueprint-implementable version
+	// BPs cannot use weak object pointers so this has to proxy
+	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
+	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, TArray<AActor*>& OutResults);
 
 	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
@@ -250,7 +255,11 @@ class USussLocationQueryProvider : public USussQueryProvider
 protected:
 
 	/// Should be overridden by subclasses
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults) {}
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults);
+
+	// For consistency, call the BP version something different
+	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
+	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults);
 
 	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
@@ -269,7 +278,11 @@ class USussRotationQueryProvider : public USussQueryProvider
 	GENERATED_BODY()
 protected:
 	/// Should be overridden by subclasses
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FRotator>& OutResults) {}
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FRotator>& OutResults);
+
+	// For consistency, call the BP version something different
+	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
+	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, TArray<FRotator>& OutResults);
 
 	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
@@ -290,7 +303,7 @@ class USussCustomValueQueryProvider : public USussQueryProvider
 protected:
 
 	/// Should be overridden by subclasses
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<TSussContextValue>& OutResults) {}
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<TSussContextValue>& OutResults);
 
 	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
