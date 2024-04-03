@@ -151,7 +151,7 @@ void USussGameSubsystem::RegisterActionClass(TSubclassOf<USussAction> ActionClas
 		}
 		else
 		{
-			UE_LOG(LogSuss, Error, TEXT("Unable to register Action Class %s, gameplay tag is invalid, did you remember to set it in your action class defaults?"), *ActionClass->GetName())
+			UE_LOG(LogSuss, Warning, TEXT("Unable to register Action Class %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, ignore this."), *ActionClass->GetName())
 		}
 	}
 }
@@ -216,7 +216,7 @@ void USussGameSubsystem::RegisterInputProvider(USussInputProvider* Provider)
 	}
 	else
 	{
-		UE_LOG(LogSuss, Error, TEXT("Unable to register Input Provider %s, gameplay tag is invalid, did you remember to set it in your input provider?"), *Provider->GetName())
+		UE_LOG(LogSuss, Error, TEXT("Unable to register Input Provider %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, ignore this."), *Provider->GetName())
 	}
 }
 
@@ -269,7 +269,7 @@ void USussGameSubsystem::RegisterQueryProvider(USussQueryProvider* Provider)
 	}
 	else
 	{
-		UE_LOG(LogSuss, Error, TEXT("Unable to register Query Provider %s, gameplay tag is invalid, did you remember to set it in your query provider?"), *Provider->GetName())
+		UE_LOG(LogSuss, Error, TEXT("Unable to register Query Provider %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, ignore this."), *Provider->GetName())
 	}
 }
 
@@ -352,7 +352,7 @@ void USussGameSubsystem::RegisterParameterProvider(USussParameterProvider* Provi
 	}
 	else
 	{
-		UE_LOG(LogSuss, Error, TEXT("Unable to register Parameter Provider %s, gameplay tag is invalid, did you remember to set it in your query provider?"), *Provider->GetName())
+		UE_LOG(LogSuss, Error, TEXT("Unable to register Parameter Provider %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, ignore this."), *Provider->GetName())
 	}
 }
 
