@@ -46,7 +46,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Name", EditConditionHides))
 	FName NameValue = NAME_None;
 
-	/// Literal value of the parameter
+	/// Literal tag value of the parameter
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Tag", EditConditionHides))
 	FGameplayTag Tag;
 

@@ -44,6 +44,40 @@ public:
 	static FSussParameter MakeSussNameParameter(FName Val) { return FSussParameter(Val); }
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FSussParameter MakeSussTagParameter(FGameplayTag Val) { return FSussParameter(Val); }
+	/**
+	 * Try to extract a float value from a parameter.
+	 * @param Parameter The parameter, which may contain many types of value
+	 * @param Value The float value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussParameterValueAsFloat(const FSussParameter& Parameter, float& Value);
+	/**
+	 * Try to extract an integer value from a parameter.
+	 * @param Parameter The parameter, which may contain many types of value
+	 * @param Value The integer value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussParameterValueAsInt(const FSussParameter& Parameter, int& Value);
+	/**
+	 * Try to extract a name value from a parameter.
+	 * @param Parameter The parameter, which may contain many types of value
+	 * @param Value The name value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussParameterValueAsName(const FSussParameter& Parameter, FName& Value);
+	/**
+	 * Try to extract a tag value from a parameter.
+	 * @param Parameter The parameter, which may contain many types of value
+	 * @param Value The name value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussParameterValueAsTag(const FSussParameter& Parameter, FGameplayTag& Value);
+
+	
 
 	/**
 	 * Manually run a query that returns locations, rather than use it to generate context for a brain decision.

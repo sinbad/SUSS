@@ -119,6 +119,84 @@ TSharedPtr<FEnvQueryResult> USussUtility::RunEQSQuery(UObject* WorldContextObjec
 }
 
 
+bool USussUtility::GetSussParameterValueAsFloat(const FSussParameter& Parameter, float& Value)
+{
+	switch (Parameter.Type)
+	{
+	case ESussParamType::Float:
+		Value = Parameter.FloatValue;
+		return true;
+	case ESussParamType::Int:
+		// Allow conversion
+		Value = Parameter.IntValue;
+		return true;
+	case ESussParamType::Name:
+	case ESussParamType::Tag:
+	case ESussParamType::Input:
+		return false;
+	};
+
+	return false;
+	
+}
+
+bool USussUtility::GetSussParameterValueAsInt(const FSussParameter& Parameter, int& Value)
+{
+	switch (Parameter.Type)
+	{
+	case ESussParamType::Float:
+		// Allow conversion
+		Value = Parameter.FloatValue;
+		return true;
+	case ESussParamType::Int:
+		Value = Parameter.IntValue;
+		return true;
+	case ESussParamType::Name:
+	case ESussParamType::Tag:
+	case ESussParamType::Input:
+		return false;
+	};
+
+	return false;
+}
+
+bool USussUtility::GetSussParameterValueAsName(const FSussParameter& Parameter, FName& Value)
+{
+	switch (Parameter.Type)
+	{
+	case ESussParamType::Name:
+		Value = Parameter.NameValue;
+		return true;
+	case ESussParamType::Float:
+	case ESussParamType::Int:
+	case ESussParamType::Tag:
+	case ESussParamType::Input:
+		return false;
+	};
+
+	return false;
+}
+
+bool USussUtility::GetSussParameterValueAsTag(const FSussParameter& Parameter, FGameplayTag& Value)
+{
+	switch (Parameter.Type)
+	{
+	case ESussParamType::Name:
+		Value = Parameter.Tag;
+		return true;
+	case ESussParamType::Input:
+		// Allow conversion
+		Value = Parameter.InputTag;
+		return true;
+	case ESussParamType::Float:
+	case ESussParamType::Int:
+	case ESussParamType::Tag:
+		return false;
+	};
+
+	return false;
+}
+
 const TArray<FVector>& USussUtility::RunLocationQuery(AActor* Querier, FGameplayTag Tag, const TMap<FName, FSussParameter>& Params, float UseCachedResultsFor)
 {
 	if (IsValid(Querier))
