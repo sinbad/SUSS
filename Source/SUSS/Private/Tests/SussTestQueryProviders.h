@@ -17,10 +17,6 @@ public:
 	USussTestSingleLocationQueryProvider()
 	{
 		QueryTag = TAG_TestSingleLocationQuery;
-
-		// Add optional params
-		ParamNames.Add("OverrideX");
-		ParamNames.Add("OverrideY");
 	}
 
 	int NumTimesRun = 0;

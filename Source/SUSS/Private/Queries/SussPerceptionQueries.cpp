@@ -50,7 +50,6 @@ TSubclassOf<UAISense> GetSenseClassFromParams(const TMap<FName, FSussParameter>&
 USussPerceptionKnownTargetsQueryProvider::USussPerceptionKnownTargetsQueryProvider()
 {
 	QueryTag = TAG_SussQueryPerceptionKnownTargets;
-	ParamNames.Add("Sense");
 }
 
 void USussPerceptionKnownTargetsQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
@@ -86,7 +85,6 @@ void USussPerceptionKnownTargetsQueryProvider::ExecuteQuery(USussBrainComponent*
 USussPerceptionKnownHostilesQueryProvider::USussPerceptionKnownHostilesQueryProvider()
 {
 	QueryTag = TAG_SussQueryPerceptionKnownHostiles;
-	ParamNames.Add("Sense");
 }
 
 void USussPerceptionKnownHostilesQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
@@ -118,7 +116,6 @@ void USussPerceptionKnownHostilesQueryProvider::ExecuteQuery(USussBrainComponent
 USussPerceptionKnownNonHostilesQueryProvider::USussPerceptionKnownNonHostilesQueryProvider()
 {
 	QueryTag = TAG_SussQueryPerceptionKnownNonHostiles;
-	ParamNames.Add("Sense");
 }
 
 void USussPerceptionKnownNonHostilesQueryProvider::ExecuteQuery(USussBrainComponent* Brain,

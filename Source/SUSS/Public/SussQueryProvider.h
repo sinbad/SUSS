@@ -70,10 +70,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(Categories="Suss.Query"))
 	FGameplayTag QueryTag;
 
-	/// List of parameters which this query uses. MUST be correct to preserve cache info
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FName> ParamNames;
-
 	/// Whether or not the value of "Self" (controlled actor) changes the results of this query
 	/// You can set this to false as an optimisation if your query only accesses global information (or parameters),
 	/// so that asking for results from any AI agent returns the same cached result instead of running the query again.
@@ -124,7 +120,6 @@ public:
 	USussQueryProvider() {}
 	
 	const FGameplayTag& GetQueryTag() const { return QueryTag; }
-	const TArray<FName>& GetParamNames() const { return ParamNames; }
 
 	bool GetSelfIsRelevant() const { return bSelfIsRelevant; }
 

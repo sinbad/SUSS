@@ -10,10 +10,6 @@ uint32 USussQueryProvider::HashQueryRequest(AActor* Self, const TMap<FName, FSus
 	
 	for (const auto& Pair : Params)
 	{
-		// Ignore parameters that are not used by this query provider
-		if (!ParamNames.Contains(Pair.Key))
-			continue;
-		
 		Hash = HashCombine(Hash, GetTypeHash(Pair.Key));
 		Hash = HashCombine(Hash, GetTypeHash(Pair.Value));
 	}
@@ -23,22 +19,21 @@ uint32 USussQueryProvider::HashQueryRequest(AActor* Self, const TMap<FName, FSus
 bool USussQueryProvider::ParamsMatch(const TMap<FName, FSussParameter>& Params1,
                                      const TMap<FName, FSussParameter>& Params2) const
 {
-	// We *only* consider relevant params, to allow shared parameter lists with extra entries, without invalidating
-	for (FName ParamName: ParamNames)
+	if (Params1.Num() != Params2.Num())
+		return false;
+	
+	for (auto ParamEntry: Params1)
 	{
-		// missing on one side means invalidation
-		if (Params1.Contains(ParamName) != Params2.Contains(ParamName))
+		if (auto pParam2 = Params2.Find(ParamEntry.Key))
 		{
-			return false;
-		}
-
-		// If both contain, check values match
-		if (Params1.Contains(ParamName))
-		{
-			if (Params1[ParamName] != Params2[ParamName])
+			if (ParamEntry.Value != *pParam2)
 			{
 				return false;
 			}
+		}
+		else
+		{
+			return false;
 		}
 	}
 	return true;
