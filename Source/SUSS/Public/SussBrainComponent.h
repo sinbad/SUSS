@@ -148,9 +148,14 @@ public:
 	/// Get the "Self" pawn this brain controls, used in contexts
 	AActor* GetSelf() const;
 
-	/// Retrieve the perception component, mostly used by queries
+	/// Retrieve the perception component
+	UFUNCTION(BlueprintCallable)
 	UAIPerceptionComponent* GetPerceptionComponent() const { return PerceptionComp; }
 
+	/// Retrieve the blackboard
+	UFUNCTION(BlueprintCallable)
+	UBlackboardComponent* GetBlackboard() const { return BlackboardComp; }
+	
 	/// Get the time in seconds since an action was last performed
 	UFUNCTION(BlueprintCallable)
 	double GetTimeSinceActionPerformed(TSubclassOf<USussAction> ActionClass) const;
