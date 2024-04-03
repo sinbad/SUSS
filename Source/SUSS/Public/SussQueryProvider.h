@@ -234,7 +234,7 @@ protected:
 	/// Blueprint-implementable version
 	// BPs cannot use weak object pointers so this has to proxy
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
-	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, TArray<AActor*>& OutResults);
+	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<AActor*>& OutResults);
 
 	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
@@ -259,7 +259,7 @@ protected:
 
 	// For consistency, call the BP version something different
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
-	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults);
+	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<FVector>& OutResults);
 
 	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
@@ -282,7 +282,7 @@ protected:
 
 	// For consistency, call the BP version something different
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
-	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, TArray<FRotator>& OutResults);
+	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<FRotator>& OutResults);
 
 	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
