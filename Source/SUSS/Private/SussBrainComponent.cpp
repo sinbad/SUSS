@@ -288,7 +288,8 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 {
 	checkf(ActionResult.ActionDefIndex >= 0, TEXT("No supplied action def"));
 
-	if (ActionResult.ActionDefIndex == CurrentActionResult.ActionDefIndex)
+	if (ActionResult.ActionDefIndex == CurrentActionResult.ActionDefIndex &&
+		ActionResult.Context == CurrentActionResult.Context)
 	{
 		// We're already running it, do nothing
 		return;
