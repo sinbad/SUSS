@@ -315,7 +315,7 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 		CurrentActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
 		ActionNamesTimeLastPerformed.Add(ActionClass->GetFName(), GetWorld()->GetTimeSeconds());
 	
-		CurrentActionInstance->PerformAction(ActionResult.Context, PreviousActionClass);
+		CurrentActionInstance->PerformAction(ActionResult.Context, Def.ActionParams, PreviousActionClass);
 	}
 
 	

@@ -63,10 +63,11 @@ public:
 	 * so be sure to make sure your state is properly re-initialised when this function is called.
 	 * Implementations MUST CALL ActionCompleted() at the natural end of the action.
 	 * @param Context The context in which the action should be performed.
+	 * @param Params Optional parameters passed to this action for invocation
 	 * @param PreviousActionClass If non-null, contains the action class which was previously being performed when this action interrupted it.
 	 */
 	UFUNCTION(BlueprintNativeEvent)
-	void PerformAction(const FSussContext& Context, TSubclassOf<USussAction> PreviousActionClass);
+	void PerformAction(const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TSubclassOf<USussAction> PreviousActionClass);
 
 	/// Called when the action has been interrupted because the brain has changed its mind, before completion, or has otherwise been interrupted.
 	/// Will only be called if CanBeInterrupted() returns true, otherwise no other action can be performed until

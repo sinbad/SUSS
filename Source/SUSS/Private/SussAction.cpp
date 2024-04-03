@@ -3,7 +3,7 @@
 
 #include "SussBrainComponent.h"
 
-void USussAction::PerformAction_Implementation(const FSussContext& Context, TSubclassOf<USussAction> PrevActionClass)
+void USussAction::PerformAction_Implementation(const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TSubclassOf<USussAction> PrevActionClass)
 {
 	// Subclasses must implement
 }
