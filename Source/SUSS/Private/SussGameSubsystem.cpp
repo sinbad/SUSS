@@ -37,6 +37,12 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		QueryProviderLib->bIncludeOnlyOnDiskAssets = false;
 	}
 
+	ParamProviderLib = UObjectLibrary::CreateLibrary(USussParameterProvider::StaticClass(), true, GIsEditor && !IsRunningCommandlet());
+	if (GIsEditor)
+	{
+		ParamProviderLib->bIncludeOnlyOnDiskAssets = false;
+	}
+
 	// Auto set up based on settings
 	if (auto Settings = GetDefault<USussSettings>())
 	{
@@ -53,15 +59,21 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		{
 			RegisterQueryProviderClass(QProv);
 		}
+		for (auto& PProv : Settings->ParameterProviders)
+		{
+			RegisterParameterProviderClass(PProv);
+		}
 
 		// Asset-based providers
 
 		TArray<FSoftObjectPath> ActionClassBPs;
 		TArray<FSoftObjectPath> InputProviderBPs;
 		TArray<FSoftObjectPath> QueryProviderBPs;
+		TArray<FSoftObjectPath> ParamProviderBPs;
 		LoadClassesFromLibrary(Settings->ActionClassPaths, ActionClassLib, ActionClassBPs);
 		LoadClassesFromLibrary(Settings->InputProviderPaths, InputProviderLib, InputProviderBPs);
 		LoadClassesFromLibrary(Settings->QueryProviderPaths, QueryProviderLib, QueryProviderBPs);
+		LoadClassesFromLibrary(Settings->ParameterProviderPaths, ParamProviderLib, ParamProviderBPs);
 
 		for (auto& SoftRef : ActionClassBPs)
 		{
@@ -82,6 +94,13 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 			if (UClass* QClass = Cast<UClass>(SoftRef.ResolveObject()))
 			{
 				RegisterQueryProviderClass(QClass);
+			}
+		}
+		for (auto& SoftRef : ParamProviderBPs)
+		{
+			if (UClass* PClass = Cast<UClass>(SoftRef.ResolveObject()))
+			{
+				RegisterParameterProviderClass(PClass);
 			}
 		}
 		
@@ -310,6 +329,90 @@ USussQueryProvider* USussGameSubsystem::GetQueryProvider(const FGameplayTag& Tag
 	}
 	return nullptr;
 }
+
+void USussGameSubsystem::RegisterParameterProvider(USussParameterProvider* Provider)
+{
+	auto& Tag = Provider->GetParameterTag();
+	if (Tag.IsValid())
+	{
+		if (auto pExisting = ParameterProviders.Find(Tag))
+		{
+			UE_LOG(LogSuss,
+				   Error,
+				   TEXT("Unable to register Parameter Provider %s, tag %s already registered (%s)"),
+				   *Provider->GetName(),
+				   *Tag.GetTagName().ToString(),
+				   *(*pExisting)->GetName())
+		}
+		else
+		{
+			ParameterProviders.Add(Tag, Provider);
+			UE_LOG(LogSuss, Log, TEXT("Registered Parameter Provider %s for tag %s"), *Provider->GetName(), *Tag.GetTagName().ToString());
+		}
+	}
+	else
+	{
+		UE_LOG(LogSuss, Error, TEXT("Unable to register Parameter Provider %s, gameplay tag is invalid, did you remember to set it in your query provider?"), *Provider->GetName())
+	}
+}
+
+void USussGameSubsystem::RegisterParameterProviderClass(TSubclassOf<USussParameterProvider> ProviderClass)
+{
+	const auto CDO = ProviderClass.GetDefaultObject();
+
+	if (!CDO)
+	{
+		UE_LOG(LogSuss, Error, TEXT("Bad call to RegisterParameterProvider, invalid class (no CDO)"))
+	}
+	RegisterParameterProvider(CDO);
+	
+}
+
+void USussGameSubsystem::UnregisterParameterProvider(USussParameterProvider* Provider)
+{
+	auto& Tag = Provider->GetParameterTag();
+	if (Tag.IsValid())
+	{
+		if (auto pExisting = ParameterProviders.Find(Tag))
+		{
+			if (*pExisting == Provider)
+			{
+				ParameterProviders.Remove(Tag);
+				return;
+			}
+		}
+	}
+
+	UE_LOG(LogSuss, Warning, TEXT("Possibly bad call to UnregisterParameterProvider, %s was not registered"), *Provider->GetName());
+
+}
+
+void USussGameSubsystem::UnregisterParameterProviderClass(TSubclassOf<USussParameterProvider> ProviderClass)
+{
+	const auto CDO = ProviderClass.GetDefaultObject();
+
+	if (!CDO)
+	{
+		UE_LOG(LogSuss, Error, TEXT("Bad call to UnregisterParameterProvider, invalid class %s (no CDO)"), *ProviderClass->GetName())
+	}
+	UnregisterParameterProvider(CDO);
+}
+
+USussParameterProvider* USussGameSubsystem::GetParameterProvider(const FGameplayTag& Tag)
+{
+	if (auto pProvider = ParameterProviders.Find(Tag))
+	{
+		return *pProvider;
+	}
+
+	if (!MissingTagsAlreadyWarnedAbout.Contains(Tag.GetTagName()))
+	{
+		UE_LOG(LogSuss, Warning, TEXT("Requested non-existent Parameter Provider for tag %s"), *Tag.GetTagName().ToString())
+		MissingTagsAlreadyWarnedAbout.Add(Tag.GetTagName());
+	}
+	return nullptr;
+}
+
 
 TStatId USussGameSubsystem::GetStatId() const
 {

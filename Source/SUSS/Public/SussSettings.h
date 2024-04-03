@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "SussInputProvider.h"
+#include "SussParameterProvider.h"
 #include "SussQueryProvider.h"
 #include "SussSettings.generated.h"
 
@@ -31,6 +32,12 @@ public:
 
 	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of paths that Blueprint query providers will be searched for in", RelativeToGameContentDir, LongPackageName))
 	TArray<FDirectoryPath> QueryProviderPaths;
+
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of parameter provider classes to automatically register at startup"))
+	TArray<TSubclassOf<USussParameterProvider>> ParameterProviders;
+
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of paths that Blueprint parameter providers will be searched for in", RelativeToGameContentDir, LongPackageName))
+	TArray<FDirectoryPath> ParameterProviderPaths;
 
 	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "List of action tags which are globally disabled; useful for debugging, or disabling experimental behaviours"))
 	FGameplayTagContainer DisabledActionTags;

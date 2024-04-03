@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "SussAction.h"
-#include "SussActionSetAsset.h"
 #include "SussInputProvider.h"
 #include "SussQueryProvider.h"
+#include "SussParameterProvider.h"
 #include "Engine/ObjectLibrary.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "SussGameSubsystem.generated.h"
@@ -30,6 +30,9 @@ protected:
 	TMap<FGameplayTag, USussQueryProvider*> QueryProviders;
 
 	UPROPERTY()
+	TMap<FGameplayTag, USussParameterProvider*> ParameterProviders;
+
+	UPROPERTY()
 	USussInputProvider* DefaultInputProvider;
 
 	UPROPERTY()
@@ -38,6 +41,8 @@ protected:
 	UObjectLibrary* InputProviderLib;
 	UPROPERTY()
 	UObjectLibrary* QueryProviderLib;
+	UPROPERTY()
+	UObjectLibrary* ParamProviderLib;
 
 	TSet<FName> MissingTagsAlreadyWarnedAbout;
 
@@ -78,9 +83,27 @@ public:
 	/// Unregister a query provider instance
 	UFUNCTION(BlueprintCallable)
 	void UnregisterQueryProvider(USussQueryProvider* Provider);
-
+	
 	UFUNCTION(BlueprintCallable)
 	USussQueryProvider* GetQueryProvider(const FGameplayTag& Tag);
+
+	/// Register a parameter provider by class
+	UFUNCTION(BlueprintCallable)
+	void RegisterParameterProviderClass(TSubclassOf<USussParameterProvider> ProviderClass);
+	/// Register an parameter provider instance
+	UFUNCTION(BlueprintCallable)
+	void RegisterParameterProvider(USussParameterProvider* Provider);
+
+	/// Unregister a parameter provider by class
+	UFUNCTION(BlueprintCallable)
+	void UnregisterParameterProviderClass(TSubclassOf<USussParameterProvider> ProviderClass);
+
+	/// Unregister a parameter provider instance
+	UFUNCTION(BlueprintCallable)
+	void UnregisterParameterProvider(USussParameterProvider* Provider);
+
+	UFUNCTION(BlueprintCallable)
+	USussParameterProvider* GetParameterProvider(const FGameplayTag& Tag);
 
 	virtual TStatId GetStatId() const override;
 	virtual UWorld* GetTickableGameObjectWorld() const override;

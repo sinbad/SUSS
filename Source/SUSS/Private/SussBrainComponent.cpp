@@ -427,12 +427,12 @@ void USussBrainComponent::Update()
 
 					// Normalise to bookends and clamp
 					const float NormalisedInput = FMath::Clamp(FMath::GetRangePct(
-						                                           ResolveParameterToFloat(
+						                                           ResolveParameter(
 							                                           Ctx,
-							                                           Consideration.BookendMin),
-						                                           ResolveParameterToFloat(
+							                                           Consideration.BookendMin).FloatValue,
+						                                           ResolveParameter(
 							                                           Ctx,
-							                                           Consideration.BookendMax),
+							                                           Consideration.BookendMax).FloatValue,
 						                                           RawInputValue),
 					                                           0.f,
 					                                           1.f);
@@ -481,25 +481,32 @@ void USussBrainComponent::ResolveParameters(AActor* Self,
 	}
 }
 
-float USussBrainComponent::ResolveParameterToFloat(const FSussContext& SelfContext, const FSussParameter& Value) const
-{
-	// No additional parameters
-	static TMap<FName, FSussParameter> DummyParams;
-	
-	if (Value.Type == ESussParamType::Input)
-	{
-		auto SUSS = GetSUSS(GetWorld());
-		if (auto InputProvider = SUSS->GetInputProvider(Value.InputTag))
-		{
-			return InputProvider->Evaluate(this, SelfContext, DummyParams);
-		}
-	}
-	return Value.FloatValue;
-}
-
 FSussParameter USussBrainComponent::ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const
 {
-	return FSussParameter(ResolveParameterToFloat(SelfContext, Value));
+	static TMap<FName, FSussParameter> DummyParams;
+
+	if (Value.Type == ESussParamType::AutoParameter)
+	{
+		auto SUSS = GetSUSS(GetWorld());
+		if (Value.InputOrParameterTag.MatchesTag(TAG_SussInputParentTag))
+		{
+			// Inputs always resolve to float
+			if (auto InputProvider = SUSS->GetInputProvider(Value.InputOrParameterTag))
+			{
+				return InputProvider->Evaluate(this, SelfContext, DummyParams);
+			}
+		}
+		else if (Value.InputOrParameterTag.MatchesTag(TAG_SussParamParentTag))
+		{
+			// Other auto params can return any value
+			if (auto ParamProvider = SUSS->GetParameterProvider(Value.InputOrParameterTag))
+			{
+				return ParamProvider->Evaluate(this, SelfContext, DummyParams);
+			}
+		}
+	}
+	// Fallback
+	return Value;
 }
 
 void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& Action, TArray<FSussContext>& OutContexts)

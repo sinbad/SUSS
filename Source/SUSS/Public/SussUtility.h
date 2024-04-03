@@ -53,6 +53,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="SUSS")
 	static UPARAM(DisplayName="Success") bool GetSussParameterValueAsFloat(const FSussParameter& Parameter, float& Value);
 	/**
+	 * Try to extract a vector value from a parameter.
+	 * @param Parameter The parameter, which may contain many types of value
+	 * @param Value The name value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussParameterValueAsVector(const FSussParameter& Parameter, FVector& Value);	
+	/**
 	 * Try to extract an integer value from a parameter.
 	 * @param Parameter The parameter, which may contain many types of value
 	 * @param Value The integer value
