@@ -292,12 +292,19 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 		ActionResult.Context == CurrentActionResult.Context)
 	{
 		// We're already running it, do nothing
+#if ENABLE_VISUAL_LOG
+		UE_VLOG(this, LogSuss, Log, TEXT("No Action Change, same as current"));
+#endif
 		return;
 	}
 
 	auto SUSS = GetSUSS(GetWorld());
 	const FSussActionDef& Def = CombinedActionsByPriority[ActionResult.ActionDefIndex];
 	TSubclassOf<USussAction> ActionClass = SUSS->GetActionClass(Def.ActionTag);
+
+#if ENABLE_VISUAL_LOG
+	UE_VLOG(this, LogSuss, Log, TEXT("Chose NEW action: %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description);
+#endif
 
 	if (ActionClass)
 	{
@@ -355,6 +362,10 @@ void USussBrainComponent::Update()
 	if (IsValid(CurrentActionInstance) && !CurrentActionInstance->CanBeInterrupted())
 		return;
 
+#if ENABLE_VISUAL_LOG
+	UE_VLOG(this, LogSuss, Log, TEXT("Brain Update"));
+#endif
+
 	auto SUSS = GetSUSS(GetWorld());
 	auto Pool = GetSussPool(GetWorld());
 	AActor* Self = GetSelf();
@@ -409,10 +420,21 @@ void USussBrainComponent::Update()
 		FSussScopeReservedArray ContextsScope = ArrayPool->ReserveArray<FSussContext>();
 		TArray<FSussContext>& Contexts = *ContextsScope.Get<FSussContext>();
 		GenerateContexts(Self, NextAction, Contexts);
+
+#if ENABLE_VISUAL_LOG
+		UE_VLOG(this, LogSuss, Log, TEXT("Action: %s  Priority: %d Weight: %4.2f Contexts: %d"),
+			NextAction.Description.IsEmpty() ? *NextAction.ActionTag.ToString() : *NextAction.Description,
+			NextAction.Priority,
+			NextAction.Weight,
+			Contexts.Num());
+#endif
 		
 		// Evaluate this action for every applicable context
 		for (const auto& Ctx : Contexts)
 		{
+#if ENABLE_VISUAL_LOG
+			UE_VLOG(this, LogSuss, Log, TEXT(" - Context: %s"), *Ctx.ToString());
+#endif
 			float Score = NextAction.Weight;
 			for (auto& Consideration : NextAction.Considerations)
 			{
@@ -440,6 +462,12 @@ void USussBrainComponent::Update()
 					// Transform through curve
 					const float ConScore = Consideration.EvaluateCurve(NormalisedInput);
 
+#if ENABLE_VISUAL_LOG
+					UE_VLOG(this, LogSuss, Log, TEXT("  * Consideration: %s  Input: %4.2f  Normalised: %4.2f  Final: %4.2f"),
+						Consideration.Description.IsEmpty() ? *Consideration.InputTag.ToString() : *Consideration.Description,
+						RawInputValue, NormalisedInput, ConScore);
+#endif
+
 					// Accumulate with overall score
 					Score *= ConScore;
 
@@ -456,7 +484,14 @@ void USussBrainComponent::Update()
 			if (IsActionInProgress() && i == CurrentActionResult.ActionDefIndex)
 			{
 				Score += CurrentActionInertia;
+#if ENABLE_VISUAL_LOG
+				UE_VLOG(this, LogSuss, Log, TEXT("  * Current Action Inertia: %4.2f"), CurrentActionInertia);
+#endif
 			}
+
+#if ENABLE_VISUAL_LOG
+			UE_VLOG(this, LogSuss, Log, TEXT(" - TOTAL: %4.2f"), Score);
+#endif
 
 			if (!FMath::IsNearlyZero(Score))
 			{

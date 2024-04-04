@@ -49,4 +49,11 @@ public:
 			Location.Equals(Other.Location) &&
 			Rotation.Equals(Other.Rotation);
 	}
+
+	FString ToString() const
+	{
+		return FString::Printf(TEXT("FSussContext { Target: %s, Location: %s, Rotation: %s }"),
+			Target.IsValid() ? *Target->GetHumanReadableName() : TEXT("null"),
+			*Location.ToString(), *Rotation.ToString());
+	}
 };
