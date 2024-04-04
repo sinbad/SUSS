@@ -83,6 +83,7 @@ void USussUtility::AddEQSParams(const TMap<FName, FSussParameter>& Params, TArra
 			QParam.ParamType = EAIParamType::Int;
 			QParam.Value = InParam.IntValue;
 			break;
+		case ESussParamType::Bool:
 		case ESussParamType::Vector:
 		case ESussParamType::Tag:
 		case ESussParamType::Name:
@@ -131,6 +132,10 @@ bool USussUtility::GetSussParameterValueAsFloat(const FSussParameter& Parameter,
 		// Allow conversion
 		Value = Parameter.IntValue;
 		return true;
+	case ESussParamType::Bool:
+		// Allow conversion
+		Value = Parameter.BoolValue ? 1.0f : 0.0f;
+		return true;
 	case ESussParamType::Name:
 	case ESussParamType::Tag:
 	case ESussParamType::AutoParameter:
@@ -149,8 +154,34 @@ bool USussUtility::GetSussParameterValueAsVector(const FSussParameter& Parameter
 	case ESussParamType::Vector:
 		Value = Parameter.VectorValue;
 		return true;
+	case ESussParamType::Bool:
 	case ESussParamType::Float:
 	case ESussParamType::Int:
+	case ESussParamType::Name:
+	case ESussParamType::Tag:
+	case ESussParamType::AutoParameter:
+		return false;
+	};
+
+	return false;
+}
+
+bool USussUtility::GetSussParameterValueAsBool(const FSussParameter& Parameter, bool& Value)
+{
+	switch (Parameter.Type)
+	{
+	case ESussParamType::Bool:
+		Value = Parameter.BoolValue;
+		return true;
+	case ESussParamType::Float:
+		// Allow conversion
+		Value = !FMath::IsNearlyZero(Parameter.FloatValue);
+		return true;
+	case ESussParamType::Int:
+		// Allow conversion
+		Value = Parameter.IntValue != 0;
+		return true;
+	case ESussParamType::Vector:
 	case ESussParamType::Name:
 	case ESussParamType::Tag:
 	case ESussParamType::AutoParameter:
@@ -171,9 +202,14 @@ bool USussUtility::GetSussParameterValueAsInt(const FSussParameter& Parameter, i
 	case ESussParamType::Int:
 		Value = Parameter.IntValue;
 		return true;
+	case ESussParamType::Bool:
+		// Allow conversion
+		Value = Parameter.BoolValue ? 1 : 0;
+		return true;
 	case ESussParamType::Name:
 	case ESussParamType::Tag:
 	case ESussParamType::AutoParameter:
+	case ESussParamType::Vector:
 		return false;
 	};
 
@@ -191,6 +227,8 @@ bool USussUtility::GetSussParameterValueAsName(const FSussParameter& Parameter, 
 	case ESussParamType::Int:
 	case ESussParamType::Tag:
 	case ESussParamType::AutoParameter:
+	case ESussParamType::Vector:
+	case ESussParamType::Bool:
 		return false;
 	};
 
@@ -211,6 +249,8 @@ bool USussUtility::GetSussParameterValueAsTag(const FSussParameter& Parameter, F
 	case ESussParamType::Float:
 	case ESussParamType::Int:
 	case ESussParamType::Tag:
+	case ESussParamType::Vector:
+	case ESussParamType::Bool:
 		return false;
 	};
 

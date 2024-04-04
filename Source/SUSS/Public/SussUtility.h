@@ -55,11 +55,19 @@ public:
 	/**
 	 * Try to extract a vector value from a parameter.
 	 * @param Parameter The parameter, which may contain many types of value
-	 * @param Value The name value
+	 * @param Value The vector value
 	 * @return True if the value was extracted correctly. False if not.
 	 */
 	UFUNCTION(BlueprintCallable, Category="SUSS")
 	static UPARAM(DisplayName="Success") bool GetSussParameterValueAsVector(const FSussParameter& Parameter, FVector& Value);	
+	/**
+	 * Try to extract a boolean value from a parameter.
+	 * @param Parameter The parameter, which may contain many types of value
+	 * @param Value The boolean value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussParameterValueAsBool(const FSussParameter& Parameter, bool& Value);	
 	/**
 	 * Try to extract an integer value from a parameter.
 	 * @param Parameter The parameter, which may contain many types of value

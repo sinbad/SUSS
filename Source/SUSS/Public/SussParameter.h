@@ -17,6 +17,8 @@ enum class ESussParamType : uint8
 	Int,
 	/// The parameter is a vector
 	Vector,
+	/// The parameter is a boolean
+	Bool,
 	/// The parameter is a literal Name
 	Name,
 	/// The parameter is a literal gameplay tag
@@ -36,6 +38,8 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	ESussParamType Type = ESussParamType::Float;
 
+	// We *could* save space by using a TVariant here, but that wouldn't be editable in the UI, so we live with the inefficiency
+	
 	/// Literal float value of the parameter
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Float", EditConditionHides))
 	float FloatValue = 0;
@@ -47,6 +51,10 @@ public:
 	/// Literal integer value of the parameter
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Int", EditConditionHides))
 	int IntValue = 0;
+
+	/// Literal boolean value of the parameter
+	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Bool", EditConditionHides))
+	bool BoolValue = false;
 
 	/// Literal name value of the parameter
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Name", EditConditionHides))
@@ -67,6 +75,7 @@ public:
 	FSussParameter(float Val) : Type(ESussParamType::Float), FloatValue(Val) {}
 	FSussParameter(const FVector& Val) : Type(ESussParamType::Vector), VectorValue(Val) {}
 	FSussParameter(int Val) : Type(ESussParamType::Int), IntValue(Val) {}
+	explicit FSussParameter(bool Val) : Type(ESussParamType::Bool), BoolValue(Val) {}
 	FSussParameter(FName Val) : Type(ESussParamType::Name), NameValue(Val) {}
 	FSussParameter(FGameplayTag Val) : Type(ESussParamType::Tag), Tag(Val) {}
 
@@ -89,6 +98,8 @@ public:
 			return Lhs.Tag == Rhs.Tag;
 		case ESussParamType::AutoParameter:
 			return Lhs.InputOrParameterTag == Rhs.InputOrParameterTag;
+		case ESussParamType::Bool:
+			return Lhs.BoolValue == Rhs.BoolValue;
 		}
 
 
@@ -120,6 +131,11 @@ public:
 			break;
 		case ESussParamType::AutoParameter:
 			Hash = HashCombine(Hash, GetTypeHash(Arg.InputOrParameterTag));
+			break;
+		case ESussParamType::Bool:
+			Hash = HashCombine(Hash, GetTypeHash(Arg.BoolValue));
+			break;
+		case ESussParamType::Name:
 			break;
 		};
 		return Hash;
