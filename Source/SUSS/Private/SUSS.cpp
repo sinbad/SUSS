@@ -2,7 +2,7 @@
 
 #include "SUSS.h"
 
-#include "FGameplayDebuggerCategory_SUSS.h"
+#include "Debug\GameplayDebuggerCategorySUSS.h"
 #include "GameplayDebugger.h"
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
