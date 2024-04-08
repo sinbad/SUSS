@@ -39,7 +39,7 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "A list of paths that Blueprint parameter providers will be searched for in", RelativeToGameContentDir, LongPackageName))
 	TArray<FDirectoryPath> ParameterProviderPaths;
 
-	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (ToolTip = "List of action tags which are globally disabled; useful for debugging, or disabling experimental behaviours"))
+	UPROPERTY(config, EditAnywhere, Category = BaseConfiguration, meta = (Categories="Suss.Action", ToolTip = "List of action tags which are globally disabled; useful for debugging, or disabling experimental behaviours"))
 	FGameplayTagContainer DisabledActionTags;
 	
 	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "The frame time budget in milliseconds for running updates on AI brains"))
