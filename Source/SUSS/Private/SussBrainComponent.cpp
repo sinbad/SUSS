@@ -562,6 +562,7 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 		FSussScopeReservedArray Targets = Pool->ReserveArray<TWeakObjectPtr<AActor>>();
 		FSussScopeReservedArray Locations = Pool->ReserveArray<FVector>();
 		FSussScopeReservedArray Rotations = Pool->ReserveArray<FRotator>();
+		FSussScopeReservedArray Tags = Pool->ReserveArray<FGameplayTag>();
 		FSussScopeReservedArray CustomValues = Pool->ReserveArray<TSussContextValue>();
 
 		for (const auto& Query : Action.Queries)
@@ -584,6 +585,9 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 				break;
 			case ESussQueryContextElement::Rotation:
 				Rotations.Get<FRotator>()->Append(QueryProvider->GetResults<FRotator>(this, Self, Query.MaxFrequency, ResolvedParams));
+				break;
+			case ESussQueryContextElement::Tag:
+				Tags.Get<FGameplayTag>()->Append(QueryProvider->GetResults<FGameplayTag>(this, Self, Query.MaxFrequency, ResolvedParams));
 				break;
 			case ESussQueryContextElement::CustomValue:
 				CustomValues.Get<TSussContextValue>()->Append(QueryProvider->GetResults<TSussContextValue>(this, Self, Query.MaxFrequency, ResolvedParams));
@@ -609,6 +613,12 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 								 [](const FRotator& Rot, FSussContext& Ctx)
 								 {
 									 Ctx.Rotation = Rot;
+								 });
+		AppendContexts<FGameplayTag>(Self, Tags,
+								 OutContexts,
+								 [](const FGameplayTag& Tag, FSussContext& Ctx)
+								 {
+									 Ctx.Tag = Tag;
 								 });
 		AppendContexts<TSussContextValue>(Self, CustomValues,
 										  OutContexts,

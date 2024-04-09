@@ -68,10 +68,19 @@ void USussRotationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 	ExecuteQueryBP(Brain, Self, Params, OutResults);
 }
 
-void USussCustomValueQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
+void USussTagQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 	AActor* Self,
 	const TMap<FName, FSussParameter>& Params,
-	TArray<TSussContextValue>& OutResults)
+	TArray<FGameplayTag>& OutResults)
+{
+	// Subclasses can override this, call BP version by default
+	ExecuteQueryBP(Brain, Self, Params, OutResults);
+}
+
+void USussCustomValueQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
+                                                 AActor* Self,
+                                                 const TMap<FName, FSussParameter>& Params,
+                                                 TArray<TSussContextValue>& OutResults)
 {
 	// Subclasses can override this, no BP version (unsupported type)
 }

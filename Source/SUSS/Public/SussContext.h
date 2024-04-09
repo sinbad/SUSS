@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "UObject/Object.h"
 #include "SussContext.generated.h"
 
@@ -14,10 +15,9 @@ typedef TVariant<int,float,FVector> TSussContextValue;
  *
  * In more complicated cases, the action might be "Attack Enemy". In that case, there could be more than one enemy that
  * the AI could attack as part of that action, so there will be at least one context per enemy, with different values of
- * "Target". Now imagine that this is a ranged character attacking, and for each of those potential targets, there are
- * multiple vantage points to which the AI might want to move to take the shot. So now we have a multiplying effect on
- * the contexts that need to be evaluated to pick the highest scoring action; Target A from Location 1,
- * Target A from Location 2, Target B from Location 3, Target B from Location 4, and so on.
+ * "Target". Now imagine that AI has multiple types of attack, each with its own characteristics. So now you have
+ * a matrix of potential contexts: different targets, and different attack types, the resulting set of contexts being
+ * potentially all combinations of those, each of which can be scored individually.
  */
 USTRUCT(BlueprintType)
 struct FSussContext
@@ -38,6 +38,11 @@ public:
 	/// Rotation which could vary per context (use determined by input provider)
 	UPROPERTY(BlueprintReadOnly)
 	FRotator Rotation = FRotator::ZeroRotator;
+	/// A gameplay tag which could represent any kind of identifying information (use determined by query & input provider)
+	/// This can be useful for all kinds of things where a set of "something" needs to be queried & identified. For example,
+	/// "get the set of attacks for this creature" could produce 1 context per attack tag for consideration
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayTag Tag;
 
 	/// Any other custom context value you'd like to use (C++ only)
 	TSussContextValue Custom;
@@ -53,7 +58,7 @@ public:
 	FString ToString() const
 	{
 		return FString::Printf(TEXT("FSussContext { Target: %s, Location: %s, Rotation: %s }"),
-			Target.IsValid() ? *Target->GetHumanReadableName() : TEXT("null"),
+			Target.IsValid() ? *Target->GetActorNameOrLabel() : TEXT("null"),
 			*Location.ToString(), *Rotation.ToString());
 	}
 };

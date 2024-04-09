@@ -17,6 +17,7 @@ public:
 		TArray<TWeakObjectPtr<AActor>>*,
 		TArray<FVector>*,
 		TArray<FRotator>*,
+		TArray<FGameplayTag>*,
 		TArray<TSussContextValue>*,
 		TArray<FSussContext>*> ArrayPointer;
 
@@ -31,6 +32,10 @@ public:
 	FSussPooledArrayPtr(TArray<FRotator>* InRots)
 	{
 		ArrayPointer.Set<TArray<FRotator>*>(InRots);
+	}
+	FSussPooledArrayPtr(TArray<FGameplayTag>* InTags)
+	{
+		ArrayPointer.Set<TArray<FGameplayTag>*>(InTags);
 	}
 	FSussPooledArrayPtr(TArray<TSussContextValue>* InVals)
 	{
@@ -55,6 +60,10 @@ public:
 		else if (ArrayPointer.IsType<TArray<FRotator>*>())
 		{
 			delete ArrayPointer.Get<TArray<FRotator>*>();
+		}
+		else if (ArrayPointer.IsType<TArray<FGameplayTag>*>())
+		{
+			delete ArrayPointer.Get<TArray<FGameplayTag>*>();
 		}
 		else if (ArrayPointer.IsType<TArray<TSussContextValue>*>())
 		{
@@ -81,6 +90,10 @@ public:
 		else if (ArrayPointer.IsType<TArray<FRotator>*>())
 		{
 			ArrayPointer.Get<TArray<FRotator>*>()->Reset();
+		}
+		else if (ArrayPointer.IsType<TArray<FGameplayTag>*>())
+		{
+			ArrayPointer.Get<TArray<FGameplayTag>*>()->Reset();
 		}
 		else if (ArrayPointer.IsType<TArray<TSussContextValue>*>())
 		{
