@@ -105,7 +105,7 @@ protected:
 
 	TArray<FSussActionScoringResult> CandidateActions;
 	/// Record of when actions were last run, by class name
-	TMap<FName, double> ActionNamesTimeLastPerformed;
+	TMap<FGameplayTag, double> ActionsTimeLastPerformed;
 
 	UPROPERTY(Transient)
 	UAIPerceptionComponent* PerceptionComp;
@@ -158,7 +158,7 @@ public:
 	
 	/// Get the time in seconds since an action was last performed
 	UFUNCTION(BlueprintCallable)
-	double GetTimeSinceActionPerformed(TSubclassOf<USussAction> ActionClass) const;
+	double GetTimeSinceActionPerformed(FGameplayTag ActionTag) const;
 
 
 	virtual void StartLogic() override;

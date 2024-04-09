@@ -300,30 +300,37 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 
 	auto SUSS = GetSUSS(GetWorld());
 	const FSussActionDef& Def = CombinedActionsByPriority[ActionResult.ActionDefIndex];
-	TSubclassOf<USussAction> ActionClass = SUSS->GetActionClass(Def.ActionTag);
+	const TSubclassOf<USussAction> ActionClass = SUSS->GetActionClass(Def.ActionTag);
 
 #if ENABLE_VISUAL_LOG
 	UE_VLOG(this, LogSuss, Log, TEXT("Chose NEW action: %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description);
 #endif
 
+	TSubclassOf<USussAction> PreviousActionClass = nullptr;
+	if (IsValid(CurrentActionInstance))
+	{
+		PreviousActionClass = CurrentActionInstance->GetClass();
+	}
+	StopCurrentAction();
+	CurrentActionResult = ActionResult;
+	CurrentActionInertiaCooldown = Def.InertiaCooldown;
+	ActionsTimeLastPerformed.Add(Def.ActionTag, GetWorld()->GetTimeSeconds());
+
 	if (ActionClass)
 	{
-		TSubclassOf<USussAction> PreviousActionClass = nullptr;
-		if (IsValid(CurrentActionInstance))
-		{
-			PreviousActionClass = CurrentActionInstance->GetClass();
-		}
-		StopCurrentAction();
-		CurrentActionResult = ActionResult;
-		CurrentActionInertiaCooldown = Def.InertiaCooldown;
-
 		// Note that to allow BP classes we need to construct using the default object
 		CurrentActionInstance = GetSussPool(GetWorld())->ReserveAction(ActionClass, this, ActionClass->GetDefaultObject());
 		CurrentActionInstance->Init(this, ActionResult.Context);
 		CurrentActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
-		ActionNamesTimeLastPerformed.Add(ActionClass->GetFName(), GetWorld()->GetTimeSeconds());
-	
 		CurrentActionInstance->PerformAction(ActionResult.Context, Def.ActionParams, PreviousActionClass);
+	}
+	else
+	{
+		// No action class provided for this tag, do nothing
+		CurrentActionInstance = nullptr;
+
+		UE_LOG(LogSuss, Warning, TEXT("No action class for tag %s, so doing nothing"), *Def.ActionTag.ToString());
+		
 	}
 
 	
@@ -676,9 +683,9 @@ AActor* USussBrainComponent::GetSelf() const
 	return GetOwner();
 }
 
-double USussBrainComponent::GetTimeSinceActionPerformed(TSubclassOf<USussAction> ActionClass) const
+double USussBrainComponent::GetTimeSinceActionPerformed(FGameplayTag ActionTag) const
 {
-	if (auto pTime = ActionNamesTimeLastPerformed.Find(ActionClass->GetFName()))
+	if (auto pTime = ActionsTimeLastPerformed.Find(ActionTag))
 	{
 		return GetWorld()->GetTimeSeconds() - *pTime;
 	}
