@@ -80,7 +80,7 @@ void USussTagQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 void USussCustomValueQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                                  AActor* Self,
                                                  const TMap<FName, FSussParameter>& Params,
-                                                 TArray<TSussContextValue>& OutResults)
+                                                 TArray<TSussCustomContextValue>& OutResults)
 {
 	// Subclasses can override this, no BP version (unsupported type)
 }

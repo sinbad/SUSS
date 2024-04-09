@@ -7,7 +7,7 @@
 #include "UObject/Object.h"
 #include "SussContext.generated.h"
 
-typedef TVariant<int,float,FVector> TSussContextValue;
+typedef TVariant<int,float,double,FName> TSussCustomContextValue;
 /**
  * This object provides all the context required for many other SUSS classes to make their decisions and execute actions.
  * In the simplest case, there is only one context in which an action is evaluated, e.g. if an AI is considering what to
@@ -45,7 +45,7 @@ public:
 	FGameplayTag Tag;
 
 	/// Any other custom context value you'd like to use (C++ only)
-	TSussContextValue Custom;
+	TSussCustomContextValue Custom;
 
 	bool operator==(const FSussContext& Other) const
 	{

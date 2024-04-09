@@ -36,7 +36,7 @@ typedef TVariant<
 		TArray<FVector>,
 		TArray<FRotator>,
 		TArray<FGameplayTag>,
-		TArray<TSussContextValue>
+		TArray<TSussCustomContextValue>
 	> TSussResultsArray;
 
 struct FSussCachedQueryResults
@@ -331,12 +331,12 @@ class USussCustomValueQueryProvider : public USussQueryProvider
 protected:
 
 	/// Should be overridden by subclasses
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<TSussContextValue>& OutResults);
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<TSussCustomContextValue>& OutResults);
 
 	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
-		InitResults<TSussContextValue>(OutResults);
-		ExecuteQuery(Brain, Self, Params, GetResultsArray<TSussContextValue>(OutResults));
+		InitResults<TSussCustomContextValue>(OutResults);
+		ExecuteQuery(Brain, Self, Params, GetResultsArray<TSussCustomContextValue>(OutResults));
 	}
 
 public:
