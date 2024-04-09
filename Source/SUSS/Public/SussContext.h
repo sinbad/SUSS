@@ -7,7 +7,7 @@
 #include "UObject/Object.h"
 #include "SussContext.generated.h"
 
-typedef TVariant<int,float,double,FName> TSussCustomContextValue;
+typedef TVariant<FName,int,float,double> TSussCustomContextValue;
 /**
  * This object provides all the context required for many other SUSS classes to make their decisions and execute actions.
  * In the simplest case, there is only one context in which an action is evaluated, e.g. if an AI is considering what to
@@ -57,8 +57,51 @@ public:
 
 	FString ToString() const
 	{
-		return FString::Printf(TEXT("FSussContext { Target: %s, Location: %s, Rotation: %s }"),
-			Target.IsValid() ? *Target->GetActorNameOrLabel() : TEXT("null"),
-			*Location.ToString(), *Rotation.ToString());
+		TStringBuilder<256> Builder;
+		Builder.Append("Context {");
+		if (Target.IsValid())
+		{
+			Builder.Append(" Target: ");
+			Builder.Append(Target->GetActorNameOrLabel());
+		}
+		if (!Location.IsNearlyZero())
+		{
+			Builder.Append(" Location: ");
+			Builder.Append(Location.ToString());
+		}
+		if (!Rotation.IsNearlyZero())
+		{
+			Builder.Append(" Rotation: ");
+			Builder.Append(Rotation.ToString());
+		}
+		if (Tag.IsValid())
+		{
+			Builder.Append(" Tag: ");
+			Builder.Append(Tag.ToString());
+		}
+		if (Custom.IsType<FName>())
+		{
+			// name is the default so we can filter out unset values
+			if (Custom.Get<FName>() != NAME_None)
+			{
+				Builder.Appendf(TEXT(" Custom: %s"), *Custom.Get<FName>().ToString());
+			}
+		}
+		else if (Custom.IsType<float>())
+		{
+			Builder.Appendf(TEXT(" Custom: %f"), Custom.Get<float>());
+		}
+		else if (Custom.IsType<int>())
+		{
+			Builder.Appendf(TEXT(" Custom: %d"), Custom.Get<int>());
+		}
+		else if (Custom.IsType<double>())
+		{
+			Builder.Appendf(TEXT(" Custom: %f"), Custom.Get<double>());
+		}
+
+		Builder.Append(" }");
+		return Builder.ToString();
+		
 	}
 };

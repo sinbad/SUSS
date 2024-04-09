@@ -440,7 +440,7 @@ void USussBrainComponent::Update()
 		for (const auto& Ctx : Contexts)
 		{
 #if ENABLE_VISUAL_LOG
-			UE_VLOG(this, LogSuss, Log, TEXT(" - Context: %s"), *Ctx.ToString());
+			UE_VLOG(this, LogSuss, Log, TEXT(" - %s"), *Ctx.ToString());
 #endif
 			float Score = NextAction.Weight;
 			for (auto& Consideration : NextAction.Considerations)
