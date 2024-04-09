@@ -12,8 +12,6 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputBlackboardBool, "Suss.Input.Blackboa
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputBlackboardAuto, "Suss.Input.Blackboard.Auto", "Get a value from the blackboard, automatically converting integers and booleans to a float value. Requires Name parameter 'Key'.")
 
 
-static const FName SussBBKeyParamName("Key");
-
 USussBlackboardFloatInputProvider::USussBlackboardFloatInputProvider()
 {
 	InputTag = TAG_SussInputBlackboardFloat;
@@ -25,7 +23,7 @@ float USussBlackboardFloatInputProvider::Evaluate_Implementation(const USussBrai
 {
 	if (auto BB = Brain->GetBlackboard())
 	{
-		if (auto pParam = Parameters.Find(SussBBKeyParamName))
+		if (auto pParam = Parameters.Find(SUSS::KeyParamName))
 		{
 			return BB->GetValueAsFloat(pParam->NameValue);
 		}
@@ -45,7 +43,7 @@ float USussBlackboardBoolInputProvider::Evaluate_Implementation(const USussBrain
 {
 	if (auto BB = Brain->GetBlackboard())
 	{
-		if (auto pParam = Parameters.Find(SussBBKeyParamName))
+		if (auto pParam = Parameters.Find(SUSS::KeyParamName))
 		{
 			return BB->GetValueAsBool(pParam->NameValue) ? 1.0f : 0.0f;
 		}
@@ -65,7 +63,7 @@ float USussBlackboardAutoInputProvider::Evaluate_Implementation(const USussBrain
 {
 	if (auto BB = Brain->GetBlackboard())
 	{
-		if (auto pParam = Parameters.Find(SussBBKeyParamName))
+		if (auto pParam = Parameters.Find(SUSS::KeyParamName))
 		{
 			const FBlackboard::FKey KeyID = BB->GetKeyID(pParam->NameValue);
 			auto KeyType = BB->GetKeyType(KeyID);

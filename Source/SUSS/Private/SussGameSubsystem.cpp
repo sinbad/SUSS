@@ -6,6 +6,8 @@
 #include "SussSettings.h"
 #include "Engine/ObjectLibrary.h"
 #include "..\Public\Inputs\SussPerceptionInputProviders.h"
+#include "Actions/SussAbilityActions.h"
+#include "Inputs/SussAbilityInputProviders.h"
 #include "Inputs/SussBlackboardInputProviders.h"
 #include "Inputs/SussDistanceInputProviders.h"
 #include "Queries/SussPerceptionQueries.h"
@@ -109,7 +111,9 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void USussGameSubsystem::RegisterNativeProviders()
 {
-	// Register any concrete query/input providers we supply in this lib (rather than as assets or things in settings)
+	// Register any concrete action/query/input providers we supply in this lib (rather than as assets or things in settings)
+	RegisterActionClass(USussActivateAbilityAction::StaticClass());
+	
 	RegisterInputProviderClass(USussTargetDistanceInputProvider::StaticClass());
 	RegisterInputProviderClass(USussLocationDistanceInputProvider::StaticClass());
 	RegisterInputProviderClass(USussTargetDistance2DInputProvider::StaticClass());
@@ -119,6 +123,7 @@ void USussGameSubsystem::RegisterNativeProviders()
 	RegisterInputProviderClass(USussBlackboardAutoInputProvider::StaticClass());
 	RegisterInputProviderClass(USussBlackboardBoolInputProvider::StaticClass());
 	RegisterInputProviderClass(USussBlackboardFloatInputProvider::StaticClass());
+	RegisterInputProviderClass(USussCanActivateAbilityInputProvider::StaticClass());
 	
 	RegisterQueryProviderClass(USussPerceptionKnownTargetsQueryProvider::StaticClass());
 	RegisterQueryProviderClass(USussPerceptionKnownHostilesQueryProvider::StaticClass());

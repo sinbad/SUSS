@@ -10,7 +10,6 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussInputParentTag);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussQueryParentTag);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussParamParentTag);
 
-
 UENUM(BlueprintType)
 enum class ESussCurveType : uint8
 {
@@ -24,4 +23,11 @@ enum class ESussCurveType : uint8
 	Custom
 };
 
+namespace SUSS
+{
+	extern const FName KeyParamName;
+	extern const FName TagParamName;
+	extern const FName AllowRemoteParamName;
+	extern const FName CompletionDelayParamName;
+}
 
