@@ -5,7 +5,7 @@
 #include "SussCommon.h"
 #include "SussParameter.h"
 
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussActionActivateAbility, "Suss.Action.Ability.Activate", "Activate a gameplay ability by tag (requires parameter 'Tag')")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussActionActivateAbility, "Suss.Action.Ability.Activate", "Activate a gameplay ability by tag. Requires parameter 'Tag', optional parameters 'CompletionDelay' and 'AllowRemote')")
 
 void USussActivateAbilityByClassAction::PerformAction_Implementation(const FSussContext& Context,
                                                                      const TMap<FName, FSussParameter>& Params,
@@ -76,36 +76,33 @@ void USussActivateAbilityAction::PerformAction_Implementation(const FSussContext
 			{
 				if (pTagParam->Tag.IsValid())
 				{
-					bool bAllowRemoteActivation = true;
-					float Delay = 0;
-					if (auto pAllowRemoteParam = Params.Find(SUSS::AllowRemoteParamName))
-					{
-						bAllowRemoteActivation = pAllowRemoteParam->BoolValue;
-					}
-					if (auto pDelayParam = Params.Find(SUSS::CompletionDelayParamName))
-					{
-						Delay = pDelayParam->FloatValue;
-					}
+					// Would we activate any abilities?
+					const FGameplayTagContainer Tags(pTagParam->Tag);
+					AbilitiesActivating.Empty();
+					ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(Tags, AbilitiesActivating);
 
-					if (ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(pTagParam->Tag), bAllowRemoteActivation))
+					if (AbilitiesActivating.Num() > 0)
 					{
-						// Ability was (probably) activated
-						if (Delay > 0)
+						bool bAllowRemoteActivation = true;
+						if (auto pAllowRemoteParam = Params.Find(SUSS::AllowRemoteParamName))
 						{
-							FTimerHandle Temp;
-							Context.ControlledActor->GetWorldTimerManager().SetTimer(Temp, this, &USussActivateAbilityAction::DelayedCompletion, Delay, false);
+							bAllowRemoteActivation = pAllowRemoteParam->BoolValue;
 						}
-						else
+						PostCompletionDelay = 0;
+						if (auto pDelayParam = Params.Find(SUSS::CompletionDelayParamName))
 						{
-							ActionCompleted();
+							PostCompletionDelay = pDelayParam->FloatValue;
 						}
-						return;
-					}
-					else
-					{
-						UE_LOG(LogSuss, Warning, TEXT("Could not activate ability %s on agent %s, may not have ability or costs could not be met"),
-							*pTagParam->Tag.ToString(), *Context.ControlledActor->GetActorNameOrLabel());
-					}
+
+						// So that we can be called when each ability ends (must be registered before activating)
+						OnAbilityEndedHandle = ASC->OnAbilityEnded.AddUObject(this, &USussActivateAbilityAction::OnAbilityEnded);
+
+						if (!ASC->TryActivateAbilitiesByTag(Tags, bAllowRemoteActivation))
+						{
+							UE_LOG(LogSuss, Warning, TEXT("Could not activate ability %s on agent %s, may not have ability or costs could not be met"),
+								*pTagParam->Tag.ToString(), *Context.ControlledActor->GetActorNameOrLabel());
+						}
+					}	
 					
 				}
 			}
@@ -120,9 +117,49 @@ void USussActivateAbilityAction::PerformAction_Implementation(const FSussContext
 
 }
 
+void USussActivateAbilityAction::AllAbilitiesEnded()
+{
+	
+	if (IsValid(CurrentContext.ControlledActor) && OnAbilityEndedHandle.IsValid())
+	{
+		if (auto ASC
+			= UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(CurrentContext.ControlledActor))
+		{
+			ASC->OnAbilityEnded.Remove(OnAbilityEndedHandle);
+		}
+	}
+	OnAbilityEndedHandle.Reset();
+	
+	if (PostCompletionDelay > 0)
+	{
+		FTimerHandle Temp;
+		CurrentContext.ControlledActor->GetWorldTimerManager().SetTimer(Temp, this, &USussActivateAbilityAction::DelayedCompletion, PostCompletionDelay, false);
+	}
+	else
+	{
+		ActionCompleted();
+	}
+}
 
 void USussActivateAbilityAction::DelayedCompletion()
 {
 	ActionCompleted();
+}
+
+void USussActivateAbilityAction::OnAbilityEnded(const FAbilityEndedData& EndedData)
+{
+	for (int i = 0; i < AbilitiesActivating.Num(); ++i)
+	{
+		if (AbilitiesActivating[i]->Handle == EndedData.AbilitySpecHandle)
+		{
+			AbilitiesActivating.RemoveAt(i);
+			break;
+		}
+	}
+
+	if (AbilitiesActivating.IsEmpty())
+	{
+		AllAbilitiesEnded();
+	}
 }
 

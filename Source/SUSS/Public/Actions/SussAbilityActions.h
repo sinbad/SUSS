@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "NativeGameplayTags.h"
 #include "SussAction.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "SussAbilityActions.generated.h"
 
 class UGameplayAbility;
@@ -63,13 +64,21 @@ class SUSS_API USussActivateAbilityAction : public USussAction
 {
 	GENERATED_BODY()
 protected:
-	
+
+	TArray<FGameplayAbilitySpec*> AbilitiesActivating;
+	float PostCompletionDelay = 0;
+	FDelegateHandle OnAbilityEndedHandle;
+
 	UFUNCTION()
 	void DelayedCompletion();
+	UFUNCTION()
+	void OnAbilityEnded(const FAbilityEndedData& EndedData);
+
+	void AllAbilitiesEnded();
 public:
 	USussActivateAbilityAction();
 	virtual void PerformAction_Implementation(const FSussContext& Context,
-		const TMap<FName, FSussParameter>& Params,
-		TSubclassOf<USussAction> PreviousActionClass) override;
+	                                          const TMap<FName, FSussParameter>& Params,
+	                                          TSubclassOf<USussAction> PreviousActionClass) override;
 };
 
