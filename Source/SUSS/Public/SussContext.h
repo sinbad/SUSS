@@ -7,7 +7,114 @@
 #include "UObject/Object.h"
 #include "SussContext.generated.h"
 
-typedef TVariant<FName,int,float,double> TSussCustomContextValue;
+/// The value type held by a context value
+UENUM(BlueprintType)
+enum class ESussCustomContextValueType : uint8
+{
+	Actor,
+	Vector,
+	Rotator,
+	Tag,
+	Name,
+	Float,
+	Int,
+
+	NONE
+};
+typedef TVariant<TWeakObjectPtr<AActor>,FVector,FRotator, FGameplayTag,FName,int,float> TSussCustomContextValue;
+
+struct FSussCustomContextValue
+{
+	ESussCustomContextValueType Type = ESussCustomContextValueType::NONE;
+	TSussCustomContextValue Value;
+
+	FSussCustomContextValue(AActor* Actor) : Type(ESussCustomContextValueType::Actor)
+	{
+		Value.Set<TWeakObjectPtr<AActor>>(MakeWeakObjectPtr(Actor));
+	}
+	FSussCustomContextValue(const FVector& Vector) : Type(ESussCustomContextValueType::Vector)
+	{
+		Value.Set<FVector>(Vector);
+	}
+	FSussCustomContextValue(const FRotator& Rotator) : Type(ESussCustomContextValueType::Rotator)
+	{
+		Value.Set<FRotator>(Rotator);
+	}
+	FSussCustomContextValue(const FGameplayTag& Tag) : Type(ESussCustomContextValueType::Tag)
+	{
+		Value.Set<FGameplayTag>(Tag);
+	}
+	FSussCustomContextValue(const FName& Name) : Type(ESussCustomContextValueType::Name)
+	{
+		Value.Set<FName>(Name);
+	}
+	FSussCustomContextValue(float V) : Type(ESussCustomContextValueType::Float)
+	{
+		Value.Set<float>(V);
+	}
+	FSussCustomContextValue(int V) : Type(ESussCustomContextValueType::Int)
+	{
+		Value.Set<int>(V);
+	}
+
+	FString ToString() const
+	{
+		switch (Type)
+		{
+		case ESussCustomContextValueType::Actor:
+			return Value.Get<TWeakObjectPtr<AActor>>()->GetActorNameOrLabel();
+		case ESussCustomContextValueType::Vector:
+			return Value.Get<FVector>().ToCompactString();
+		case ESussCustomContextValueType::Rotator:
+			return Value.Get<FRotator>().ToCompactString();
+		case ESussCustomContextValueType::Tag:
+			return Value.Get<FGameplayTag>().ToString();
+		case ESussCustomContextValueType::Name:
+			return Value.Get<FName>().ToString();
+		case ESussCustomContextValueType::Float:
+			return FString::SanitizeFloat(Value.Get<float>());
+		case ESussCustomContextValueType::Int:
+			return FString::FromInt(Value.Get<int>());
+		default:
+		case ESussCustomContextValueType::NONE:
+			return TEXT("NONE");
+		}
+	}
+
+	friend bool operator==(const FSussCustomContextValue& Lhs, const FSussCustomContextValue& Rhs)
+	{
+		if (Lhs.Type != Rhs.Type)
+			return false;
+
+		switch (Lhs.Type)
+		{
+		case ESussCustomContextValueType::Actor:
+			return Lhs.Value.Get<TWeakObjectPtr<AActor>>() == Rhs.Value.Get<TWeakObjectPtr<AActor>>();
+		case ESussCustomContextValueType::Vector:
+			return Lhs.Value.Get<FVector>() == Rhs.Value.Get<FVector>();
+		case ESussCustomContextValueType::Rotator:
+			return Lhs.Value.Get<FRotator>() == Rhs.Value.Get<FRotator>();
+		case ESussCustomContextValueType::Tag:
+			return Lhs.Value.Get<FGameplayTag>() == Rhs.Value.Get<FGameplayTag>();
+		case ESussCustomContextValueType::Name:
+			return Lhs.Value.Get<FName>() == Rhs.Value.Get<FName>();
+		case ESussCustomContextValueType::Float:
+			return Lhs.Value.Get<float>() == Rhs.Value.Get<float>();
+		case ESussCustomContextValueType::Int:
+			return Lhs.Value.Get<int>() == Rhs.Value.Get<int>();
+		case ESussCustomContextValueType::NONE:
+			// Nones are equal
+			return true;
+		}
+
+		return false;
+	}
+
+	friend bool operator!=(const FSussCustomContextValue& Lhs, const FSussCustomContextValue& RHS)
+	{
+		return !(Lhs == RHS);
+	}
+};
 /**
  * This object provides all the context required for many other SUSS classes to make their decisions and execute actions.
  * In the simplest case, there is only one context in which an action is evaluated, e.g. if an AI is considering what to
@@ -32,10 +139,10 @@ public:
 	/// When multiple targets are possible, there are multiple contexts.
 	UPROPERTY(BlueprintReadOnly)
 	TWeakObjectPtr<AActor> Target;
-	/// Location which could vary per context (use determined by input provider)
+	/// Location which could vary per context (use determined by query provider)
 	UPROPERTY(BlueprintReadOnly)
 	FVector Location = FVector::ZeroVector;
-	/// Rotation which could vary per context (use determined by input provider)
+	/// Rotation which could vary per context (use determined by query provider)
 	UPROPERTY(BlueprintReadOnly)
 	FRotator Rotation = FRotator::ZeroRotator;
 	/// A gameplay tag which could represent any kind of identifying information (use determined by query & input provider)
@@ -44,15 +151,34 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FGameplayTag Tag;
 
-	/// Any other custom context value you'd like to use (C++ only)
-	TSussCustomContextValue Custom;
+	/// Any other custom context values you'd like to use (C++ only)
+	TMap<FName, FSussCustomContextValue> CustomValues;
 
 	bool operator==(const FSussContext& Other) const
 	{
-		return ControlledActor == Other.ControlledActor &&
-			Target == Other.Target &&
-			Location.Equals(Other.Location) &&
-			Rotation.Equals(Other.Rotation);
+		if (ControlledActor != Other.ControlledActor ||
+			Target != Other.Target ||
+			!Location.Equals(Other.Location) ||
+			!Rotation.Equals(Other.Rotation) ||
+			Tag != Other.Tag ||
+			CustomValues.Num() != Other.CustomValues.Num())
+		{
+			return false;
+		}
+		
+		for (auto& Pair : CustomValues)
+		{
+			if (const auto pOtherCustom = Other.CustomValues.Find(Pair.Key))
+			{
+				if (*pOtherCustom != Pair.Value)
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
+					
 	}
 
 	FString ToString() const
@@ -79,25 +205,10 @@ public:
 			Builder.Append(" Tag: ");
 			Builder.Append(Tag.ToString());
 		}
-		if (Custom.IsType<FName>())
+
+		for (const auto& Custom : CustomValues)
 		{
-			// name is the default so we can filter out unset values
-			if (Custom.Get<FName>() != NAME_None)
-			{
-				Builder.Appendf(TEXT(" Custom: %s"), *Custom.Get<FName>().ToString());
-			}
-		}
-		else if (Custom.IsType<float>())
-		{
-			Builder.Appendf(TEXT(" Custom: %f"), Custom.Get<float>());
-		}
-		else if (Custom.IsType<int>())
-		{
-			Builder.Appendf(TEXT(" Custom: %d"), Custom.Get<int>());
-		}
-		else if (Custom.IsType<double>())
-		{
-			Builder.Appendf(TEXT(" Custom: %f"), Custom.Get<double>());
+			Builder.Appendf(TEXT(" %s: %s"), *Custom.Key.ToString(), *Custom.Value.ToString());
 		}
 
 		Builder.Append(" }");

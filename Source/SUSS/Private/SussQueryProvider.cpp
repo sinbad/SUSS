@@ -78,9 +78,16 @@ void USussTagQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 }
 
 void USussCustomValueQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
-                                                 AActor* Self,
-                                                 const TMap<FName, FSussParameter>& Params,
-                                                 TArray<TSussCustomContextValue>& OutResults)
+	AActor* Self,
+	const TMap<FName, FSussParameter>& Params,
+	TSussResultsArray& OutResults)
 {
-	// Subclasses can override this, no BP version (unsupported type)
+
+	// Subclasses can override this, call BP version  by default
+	// We have to store local version so BP can interact using helper functions
+	TempOutResults = &OutResults;
+	ExecuteQueryBP(Brain, Self, Params);
+	TempOutResults = nullptr;
+
 }
+

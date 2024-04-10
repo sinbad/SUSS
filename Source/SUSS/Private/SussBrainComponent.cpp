@@ -563,7 +563,7 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 		FSussScopeReservedArray Locations = Pool->ReserveArray<FVector>();
 		FSussScopeReservedArray Rotations = Pool->ReserveArray<FRotator>();
 		FSussScopeReservedArray Tags = Pool->ReserveArray<FGameplayTag>();
-		FSussScopeReservedArray CustomValues = Pool->ReserveArray<TSussCustomContextValue>();
+		FSussScopeReservedArray CustomValues = Pool->ReserveArray<TPair<FName, FSussCustomContextValue>>();
 
 		for (const auto& Query : Action.Queries)
 		{
@@ -590,7 +590,7 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 				Tags.Get<FGameplayTag>()->Append(QueryProvider->GetResults<FGameplayTag>(this, Self, Query.MaxFrequency, ResolvedParams));
 				break;
 			case ESussQueryContextElement::CustomValue:
-				CustomValues.Get<TSussCustomContextValue>()->Append(QueryProvider->GetResults<TSussCustomContextValue>(this, Self, Query.MaxFrequency, ResolvedParams));
+				CustomValues.Get<TPair<FName, FSussCustomContextValue>>()->Append(QueryProvider->GetResults<TPair<FName, FSussCustomContextValue>>(this, Self, Query.MaxFrequency, ResolvedParams));
 				break;
 			}
 		}
@@ -620,11 +620,11 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 								 {
 									 Ctx.Tag = Tag;
 								 });
-		AppendContexts<TSussCustomContextValue>(Self, CustomValues,
+		AppendContexts<TPair<FName, FSussCustomContextValue>>(Self, CustomValues,
 										  OutContexts,
-										  [](const TSussCustomContextValue& CV, FSussContext& Ctx)
+										  [](const TPair<FName, FSussCustomContextValue>& CV, FSussContext& Ctx)
 										  {
-											  Ctx.Custom = CV;
+											  Ctx.CustomValues[CV.Key] = CV.Value;
 										  });
 	}
 	else

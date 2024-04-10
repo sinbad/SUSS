@@ -36,7 +36,7 @@ typedef TVariant<
 		TArray<FVector>,
 		TArray<FRotator>,
 		TArray<FGameplayTag>,
-		TArray<TSussCustomContextValue>
+		TArray<TPair<FName, FSussCustomContextValue>>
 	> TSussResultsArray;
 
 struct FSussCachedQueryResults
@@ -330,13 +330,37 @@ class USussCustomValueQueryProvider : public USussQueryProvider
 	GENERATED_BODY()
 protected:
 
-	/// Should be overridden by subclasses
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<TSussCustomContextValue>& OutResults);
+	// We need to hold this to allow BP to fill in
+	TSussResultsArray* TempOutResults;
+
+	TArray<TPair<FName, FSussCustomContextValue>>& GetTempArray() const { return TempOutResults->Get<TArray<TPair<FName, FSussCustomContextValue>>>(); }
+	UFUNCTION(BlueprintCallable)
+	void AddCustomValueActor(FName Name, AActor* Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	UFUNCTION(BlueprintCallable)
+	void AddCustomValueVector(FName Name, FVector Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	UFUNCTION(BlueprintCallable)
+	void AddCustomValueRotator(FName Name, FRotator Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	UFUNCTION(BlueprintCallable)
+	void AddCustomValueTag(FName Name, FGameplayTag Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	UFUNCTION(BlueprintCallable)
+	void AddCustomValueName(FName Name, FName Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	UFUNCTION(BlueprintCallable)
+	void AddCustomValueFloat(FName Name, float Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	UFUNCTION(BlueprintCallable)
+	void AddCustomValueInt(FName Name, int Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+
+
+	/// Should be overridden by subclasses, who should call the AddCustomValueFOO functions to add values
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults);
+
+	// For consistency, call the BP version something different
+	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
+	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params);
 
 	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
-		InitResults<TSussCustomContextValue>(OutResults);
-		ExecuteQuery(Brain, Self, Params, GetResultsArray<TSussCustomContextValue>(OutResults));
+		InitResults<TPair<FName, FSussCustomContextValue>>(OutResults);
+		ExecuteQuery(Brain, Self, Params, OutResults);
 	}
 
 public:
