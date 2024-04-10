@@ -12,13 +12,36 @@ class UGameplayAbility;
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussActionActivateAbility);
 
+
+UCLASS(Abstract)
+class SUSS_API USussActivateAbilityActionBase : public USussAction
+{
+	GENERATED_BODY()
+private:
+	float PostCompletionDelay = 0;
+protected:
+
+	TArray<FGameplayAbilitySpec*> AbilitiesActivating;
+	FDelegateHandle OnAbilityEndedHandle;
+
+	UFUNCTION()
+	void DelayedCompletion();
+	UFUNCTION()
+	void OnAbilityEnded(const FAbilityEndedData& EndedData);
+
+	void CompleteWithMaybeDelay();
+
+	void Activate(const FSussContext& Context, float Delay, bool bAllowRemote, bool bWaitForEnd);
+	
+};
+
 /**
  * Base action class which activates a gameplay ability.
  * You can derive from this class in a Blueprint and set the specific Ability to run.
  * Alternatively, use the more generic USussActivateAbilityAction and use tag parameters instead.
  */
 UCLASS(Abstract)
-class SUSS_API USussActivateAbilityByClassAction : public USussAction
+class SUSS_API USussActivateAbilityByClassAction : public USussActivateAbilityActionBase
 {
 	GENERATED_BODY()
 protected:
@@ -39,9 +62,11 @@ protected:
 	/// If > 0, will delay the call to ActionCompleted by this many seconds
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	float CompletionDelay = 0;
+	
+	/// Whether to wait for the ability to end before calling ActionCompleted
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	bool bWaitForAbilityEnd = true;
 
-	UFUNCTION()
-	void DelayedCompletion();
 public:
 	
 	virtual void PerformAction_Implementation(const FSussContext& Context,
@@ -60,21 +85,10 @@ public:
  * in order to filter out abilities that are not available.
  */
 UCLASS()
-class SUSS_API USussActivateAbilityAction : public USussAction
+class SUSS_API USussActivateAbilityAction : public USussActivateAbilityActionBase
 {
 	GENERATED_BODY()
-protected:
-
-	TArray<FGameplayAbilitySpec*> AbilitiesActivating;
-	float PostCompletionDelay = 0;
-	FDelegateHandle OnAbilityEndedHandle;
-
-	UFUNCTION()
-	void DelayedCompletion();
-	UFUNCTION()
-	void OnAbilityEnded(const FAbilityEndedData& EndedData);
-
-	void AllAbilitiesEnded();
+	
 public:
 	USussActivateAbilityAction();
 	virtual void PerformAction_Implementation(const FSussContext& Context,

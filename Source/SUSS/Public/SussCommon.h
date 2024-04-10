@@ -29,5 +29,6 @@ namespace SUSS
 	extern const FName TagParamName;
 	extern const FName AllowRemoteParamName;
 	extern const FName CompletionDelayParamName;
+	extern const FName WaitForEndParamName;
 }
 

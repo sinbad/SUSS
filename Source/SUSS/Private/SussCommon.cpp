@@ -9,3 +9,4 @@ const FName SUSS::KeyParamName("Key");
 const FName SUSS::TagParamName("Tag");
 const FName SUSS::AllowRemoteParamName("AllowRemote");
 const FName SUSS::CompletionDelayParamName("CompletionDelay");
+const FName SUSS::WaitForEndParamName("WaitForEnd");
