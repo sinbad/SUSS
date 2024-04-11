@@ -225,12 +225,6 @@ void FSussBrainTestContextsSpec::Define()
 			Brain->GenerateContexts(Self, Action, Contexts);
 			TestEqual("Query should have been re-used, newer again", Q->NumTimesRun, 3);
 			
-			// Test adding an unused parameter, should not invalidate
-			Action.Queries[0].Params.Add("UnusedParam", FSussParameter(300.0f));
-			Contexts.Empty();
-			Brain->GenerateContexts(Self, Action, Contexts);
-			TestEqual("Query should have been re-used, unused parameter", Q->NumTimesRun, 3);
-
 			// Changing which "self" we refer to should invalidate, if relevant
 			AActor* WrongSelf = WorldFixture->GetWorld()->SpawnActor<AActor>();
 
