@@ -81,28 +81,40 @@ void USussGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		{
 			if (UClass* ActionClass = Cast<UClass>(SoftRef.ResolveObject()))
 			{
-				RegisterActionClass(ActionClass);
+				if (!ActionClass->HasAnyClassFlags(CLASS_Abstract))
+				{
+					RegisterActionClass(ActionClass);
+				}
 			}
 		}
 		for (auto& SoftRef : InputProviderBPs)
 		{
 			if (UClass* IpClass = Cast<UClass>(SoftRef.ResolveObject()))
 			{
-				RegisterInputProviderClass(IpClass);
+				if (!IpClass->HasAnyClassFlags(CLASS_Abstract))
+				{
+					RegisterInputProviderClass(IpClass);
+				}
 			}
 		}
 		for (auto& SoftRef : QueryProviderBPs)
 		{
 			if (UClass* QClass = Cast<UClass>(SoftRef.ResolveObject()))
 			{
-				RegisterQueryProviderClass(QClass);
+				if (!QClass->HasAnyClassFlags(CLASS_Abstract))
+				{
+					RegisterQueryProviderClass(QClass);
+				}
 			}
 		}
 		for (auto& SoftRef : ParamProviderBPs)
 		{
 			if (UClass* PClass = Cast<UClass>(SoftRef.ResolveObject()))
 			{
-				RegisterParameterProviderClass(PClass);
+				if (!PClass	->HasAnyClassFlags(CLASS_Abstract))
+				{
+					RegisterParameterProviderClass(PClass);
+				}
 			}
 		}
 		
@@ -156,7 +168,7 @@ void USussGameSubsystem::RegisterActionClass(TSubclassOf<USussAction> ActionClas
 		}
 		else
 		{
-			UE_LOG(LogSuss, Warning, TEXT("Unable to register Action Class %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, ignore this."), *ActionClass->GetName())
+			UE_LOG(LogSuss, Warning, TEXT("Unable to register Action Class %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, mark it as abstract to remove this warning."), *ActionClass->GetName())
 		}
 	}
 }
@@ -221,7 +233,7 @@ void USussGameSubsystem::RegisterInputProvider(USussInputProvider* Provider)
 	}
 	else
 	{
-		UE_LOG(LogSuss, Error, TEXT("Unable to register Input Provider %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, ignore this."), *Provider->GetName())
+		UE_LOG(LogSuss, Error, TEXT("Unable to register Input Provider %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, mark it as abstract to remove this warning."), *Provider->GetName())
 	}
 }
 
@@ -274,7 +286,7 @@ void USussGameSubsystem::RegisterQueryProvider(USussQueryProvider* Provider)
 	}
 	else
 	{
-		UE_LOG(LogSuss, Error, TEXT("Unable to register Query Provider %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, ignore this."), *Provider->GetName())
+		UE_LOG(LogSuss, Error, TEXT("Unable to register Query Provider %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, mark it as abstract to remove this warning."), *Provider->GetName())
 	}
 }
 
@@ -357,7 +369,7 @@ void USussGameSubsystem::RegisterParameterProvider(USussParameterProvider* Provi
 	}
 	else
 	{
-		UE_LOG(LogSuss, Error, TEXT("Unable to register Parameter Provider %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, ignore this."), *Provider->GetName())
+		UE_LOG(LogSuss, Error, TEXT("Unable to register Parameter Provider %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, mark it as abstract to remove this warning."), *Provider->GetName())
 	}
 }
 
