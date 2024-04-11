@@ -56,7 +56,7 @@ void FSussBrainTestContextsSpec::Define()
 
 			// Query single item
 			FSussActionDef Action;
-			Action.Queries.Add(FSussQuery {TAG_TestSingleLocationQuery });
+			Action.Queries.Add(FSussQuery { FGameplayTag::RequestGameplayTag(USussTestSingleLocationQueryProvider::TagName) });
 			TArray<FSussContext> Contexts;
 			Brain->GenerateContexts(Self, Action, Contexts);
 
@@ -76,7 +76,7 @@ void FSussBrainTestContextsSpec::Define()
 
 			// Query multiple locations
 			FSussActionDef Action;
-			Action.Queries.Add(FSussQuery {TAG_TestMultipleLocationQuery });
+			Action.Queries.Add(FSussQuery { FGameplayTag::RequestGameplayTag(USussTestMultipleLocationQueryProvider::TagName) });
 			TArray<FSussContext> Contexts;
 			Brain->GenerateContexts(Self, Action, Contexts);
 
@@ -104,11 +104,11 @@ void FSussBrainTestContextsSpec::Define()
 		{
 			AActor* Self = WorldFixture->GetWorld()->SpawnActor<AActor>();
 			auto Brain = Cast<USussBrainComponent>(Self->AddComponentByClass(USussBrainComponent::StaticClass(), false, FTransform::Identity, false));
-
+			
 			// Query multiple locations
 			FSussActionDef Action;
-			Action.Queries.Add(FSussQuery {TAG_TestMultipleLocationQuery });
-			Action.Queries.Add(FSussQuery {TAG_TestMultipleRotationQuery });
+			Action.Queries.Add(FSussQuery {FGameplayTag::RequestGameplayTag(USussTestMultipleLocationQueryProvider::TagName) });
+			Action.Queries.Add(FSussQuery {FGameplayTag::RequestGameplayTag(USussTestMultipleRotationQueryProvider::TagName) });
 			TArray<FSussContext> Contexts;
 			Brain->GenerateContexts(Self, Action, Contexts);
 
@@ -172,7 +172,7 @@ void FSussBrainTestContextsSpec::Define()
 
 			// Query single item
 			FSussActionDef Action;
-			Action.Queries.Add(FSussQuery {TAG_TestSingleLocationQuery });
+			Action.Queries.Add(FSussQuery {FGameplayTag::RequestGameplayTag(USussTestSingleLocationQueryProvider::TagName) });
 			TArray<FSussContext> Contexts;
 			Brain->GenerateContexts(Self, Action, Contexts);
 			TestEqual("Query run count", Q->NumTimesRun, 1);

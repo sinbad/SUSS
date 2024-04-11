@@ -1,8 +1,6 @@
 ﻿#include "SussTestQueryProviders.h"
-#include "NativeGameplayTags.h"
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_TestSingleLocationQuery, "Suss.Query.Location.Test.Single")
-UE_DEFINE_GAMEPLAY_TAG(TAG_TestMultipleLocationQuery, "Suss.Query.Location.Test.Multiple")
-UE_DEFINE_GAMEPLAY_TAG(TAG_TestMultipleRotationQuery, "Suss.Query.Rotation.Test.Multiple")
-
+const FName USussTestSingleLocationQueryProvider::TagName("Suss.Query.Location.Test.Single");
+const FName USussTestMultipleLocationQueryProvider::TagName("Suss.Query.Location.Test.Multiple");
+const FName USussTestMultipleRotationQueryProvider::TagName("Suss.Query.Rotation.Test.Multiple");
 

@@ -5,22 +5,34 @@
 #include "NativeGameplayTags.h"
 #include "SussGameSubsystem.h"
 #include "SussQueryProvider.h"
+#include "SussTestGameplayTag.h"
 #include "SussTestQueryProviders.generated.h"
 
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_TestSingleLocationQuery);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN();
 UCLASS()
 class USussTestSingleLocationQueryProvider : public USussLocationQueryProvider
 {
 	GENERATED_BODY()
 public:
+
+	static const FName TagName;
+
 	USussTestSingleLocationQueryProvider()
+		: TAG_TEMP(UE_PLUGIN_NAME,
+		           UE_MODULE_NAME,
+		           TagName,
+		           TEXT(""),
+		           ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
 	{
-		QueryTag = TAG_TestSingleLocationQuery;
+		QueryTag = TAG_TEMP;
 	}
 
 	int NumTimesRun = 0;
 protected:
+
+	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
+	FSussTempNativeGameplayTag TAG_TEMP;
 
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
@@ -45,14 +57,25 @@ protected:
 	}
 };
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_TestMultipleLocationQuery);
 UCLASS()
 class USussTestMultipleLocationQueryProvider : public USussLocationQueryProvider
 {
 	GENERATED_BODY()
 public:
-	USussTestMultipleLocationQueryProvider() { QueryTag = TAG_TestMultipleLocationQuery; }
+	static const FName TagName;
+
+	USussTestMultipleLocationQueryProvider()
+		: TAG_TEMP(UE_PLUGIN_NAME,
+		           UE_MODULE_NAME,
+		           "Suss.Query.Location.Test.Multiple",
+		           TEXT(""),
+		           ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
+	{
+		QueryTag = TAG_TEMP;
+	}
 protected:
+	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
+	FSussTempNativeGameplayTag TAG_TEMP;
 	
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
@@ -65,14 +88,23 @@ protected:
 	}
 };
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_TestMultipleRotationQuery);
 UCLASS()
 class USussTestMultipleRotationQueryProvider : public USussRotationQueryProvider
 {
 	GENERATED_BODY()
 public:
-	USussTestMultipleRotationQueryProvider() { QueryTag = TAG_TestMultipleRotationQuery; }
+	static const FName TagName;
+
+	USussTestMultipleRotationQueryProvider()
+	: TAG_TEMP(UE_PLUGIN_NAME,
+		   UE_MODULE_NAME,
+		   "Suss.Query.Rotation.Test.Multiple",
+		   TEXT(""),
+		   ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
+	{ QueryTag = TAG_TEMP; }
 protected:
+	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
+	FSussTempNativeGameplayTag TAG_TEMP;
 
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
