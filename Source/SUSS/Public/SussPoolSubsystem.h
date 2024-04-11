@@ -18,7 +18,7 @@ public:
 		TArray<FVector>*,
 		TArray<FRotator>*,
 		TArray<FGameplayTag>*,
-		TArray<TPair<FName, FSussCustomContextValue>>*,
+		TArray<TPair<FName, FSussNamedContextValue>>*,
 		TArray<FSussContext>*> ArrayPointer;
 
 	FSussPooledArrayPtr(TArray<TWeakObjectPtr<AActor>>* InActors)
@@ -37,9 +37,9 @@ public:
 	{
 		ArrayPointer.Set<TArray<FGameplayTag>*>(InTags);
 	}
-	FSussPooledArrayPtr(TArray<TPair<FName, FSussCustomContextValue>>* InVals)
+	FSussPooledArrayPtr(TArray<TPair<FName, FSussNamedContextValue>>* InVals)
 	{
-		ArrayPointer.Set<TArray<TPair<FName, FSussCustomContextValue>>*>(InVals);
+		ArrayPointer.Set<TArray<TPair<FName, FSussNamedContextValue>>*>(InVals);
 	}
 	FSussPooledArrayPtr(TArray<FSussContext>* InContexts)
 	{
@@ -65,9 +65,9 @@ public:
 		{
 			delete ArrayPointer.Get<TArray<FGameplayTag>*>();
 		}
-		else if (ArrayPointer.IsType<TArray<TPair<FName, FSussCustomContextValue>>*>())
+		else if (ArrayPointer.IsType<TArray<TPair<FName, FSussNamedContextValue>>*>())
 		{
-			delete ArrayPointer.Get<TArray<TPair<FName, FSussCustomContextValue>>*>();
+			delete ArrayPointer.Get<TArray<TPair<FName, FSussNamedContextValue>>*>();
 		}
 		else if (ArrayPointer.IsType<TArray<FSussContext>*>())
 		{
@@ -95,9 +95,9 @@ public:
 		{
 			ArrayPointer.Get<TArray<FGameplayTag>*>()->Reset();
 		}
-		else if (ArrayPointer.IsType<TArray<TPair<FName, FSussCustomContextValue>>*>())
+		else if (ArrayPointer.IsType<TArray<TPair<FName, FSussNamedContextValue>>*>())
 		{
-			ArrayPointer.Get<TArray<TPair<FName, FSussCustomContextValue>>*>()->Reset();
+			ArrayPointer.Get<TArray<TPair<FName, FSussNamedContextValue>>*>()->Reset();
 		}
 		else if (ArrayPointer.IsType<TArray<FSussContext>*>())
 		{

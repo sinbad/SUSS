@@ -9,7 +9,7 @@
 
 /// The value type held by a context value
 UENUM(BlueprintType)
-enum class ESussCustomContextValueType : uint8
+enum class ESussNamedContextValueType : uint8
 {
 	Actor,
 	Vector,
@@ -21,38 +21,38 @@ enum class ESussCustomContextValueType : uint8
 
 	NONE
 };
-typedef TVariant<TWeakObjectPtr<AActor>,FVector,FRotator, FGameplayTag,FName,int,float> TSussCustomContextValue;
+typedef TVariant<TWeakObjectPtr<AActor>,FVector,FRotator, FGameplayTag,FName,int,float> TSussContextValueVariant;
 
-struct FSussCustomContextValue
+struct FSussNamedContextValue
 {
-	ESussCustomContextValueType Type = ESussCustomContextValueType::NONE;
-	TSussCustomContextValue Value;
+	ESussNamedContextValueType Type = ESussNamedContextValueType::NONE;
+	TSussContextValueVariant Value;
 
-	FSussCustomContextValue(AActor* Actor) : Type(ESussCustomContextValueType::Actor)
+	FSussNamedContextValue(AActor* Actor) : Type(ESussNamedContextValueType::Actor)
 	{
 		Value.Set<TWeakObjectPtr<AActor>>(MakeWeakObjectPtr(Actor));
 	}
-	FSussCustomContextValue(const FVector& Vector) : Type(ESussCustomContextValueType::Vector)
+	FSussNamedContextValue(const FVector& Vector) : Type(ESussNamedContextValueType::Vector)
 	{
 		Value.Set<FVector>(Vector);
 	}
-	FSussCustomContextValue(const FRotator& Rotator) : Type(ESussCustomContextValueType::Rotator)
+	FSussNamedContextValue(const FRotator& Rotator) : Type(ESussNamedContextValueType::Rotator)
 	{
 		Value.Set<FRotator>(Rotator);
 	}
-	FSussCustomContextValue(const FGameplayTag& Tag) : Type(ESussCustomContextValueType::Tag)
+	FSussNamedContextValue(const FGameplayTag& Tag) : Type(ESussNamedContextValueType::Tag)
 	{
 		Value.Set<FGameplayTag>(Tag);
 	}
-	FSussCustomContextValue(const FName& Name) : Type(ESussCustomContextValueType::Name)
+	FSussNamedContextValue(const FName& Name) : Type(ESussNamedContextValueType::Name)
 	{
 		Value.Set<FName>(Name);
 	}
-	FSussCustomContextValue(float V) : Type(ESussCustomContextValueType::Float)
+	FSussNamedContextValue(float V) : Type(ESussNamedContextValueType::Float)
 	{
 		Value.Set<float>(V);
 	}
-	FSussCustomContextValue(int V) : Type(ESussCustomContextValueType::Int)
+	FSussNamedContextValue(int V) : Type(ESussNamedContextValueType::Int)
 	{
 		Value.Set<int>(V);
 	}
@@ -61,48 +61,48 @@ struct FSussCustomContextValue
 	{
 		switch (Type)
 		{
-		case ESussCustomContextValueType::Actor:
+		case ESussNamedContextValueType::Actor:
 			return Value.Get<TWeakObjectPtr<AActor>>()->GetActorNameOrLabel();
-		case ESussCustomContextValueType::Vector:
+		case ESussNamedContextValueType::Vector:
 			return Value.Get<FVector>().ToCompactString();
-		case ESussCustomContextValueType::Rotator:
+		case ESussNamedContextValueType::Rotator:
 			return Value.Get<FRotator>().ToCompactString();
-		case ESussCustomContextValueType::Tag:
+		case ESussNamedContextValueType::Tag:
 			return Value.Get<FGameplayTag>().ToString();
-		case ESussCustomContextValueType::Name:
+		case ESussNamedContextValueType::Name:
 			return Value.Get<FName>().ToString();
-		case ESussCustomContextValueType::Float:
+		case ESussNamedContextValueType::Float:
 			return FString::SanitizeFloat(Value.Get<float>());
-		case ESussCustomContextValueType::Int:
+		case ESussNamedContextValueType::Int:
 			return FString::FromInt(Value.Get<int>());
 		default:
-		case ESussCustomContextValueType::NONE:
+		case ESussNamedContextValueType::NONE:
 			return TEXT("NONE");
 		}
 	}
 
-	friend bool operator==(const FSussCustomContextValue& Lhs, const FSussCustomContextValue& Rhs)
+	friend bool operator==(const FSussNamedContextValue& Lhs, const FSussNamedContextValue& Rhs)
 	{
 		if (Lhs.Type != Rhs.Type)
 			return false;
 
 		switch (Lhs.Type)
 		{
-		case ESussCustomContextValueType::Actor:
+		case ESussNamedContextValueType::Actor:
 			return Lhs.Value.Get<TWeakObjectPtr<AActor>>() == Rhs.Value.Get<TWeakObjectPtr<AActor>>();
-		case ESussCustomContextValueType::Vector:
+		case ESussNamedContextValueType::Vector:
 			return Lhs.Value.Get<FVector>() == Rhs.Value.Get<FVector>();
-		case ESussCustomContextValueType::Rotator:
+		case ESussNamedContextValueType::Rotator:
 			return Lhs.Value.Get<FRotator>() == Rhs.Value.Get<FRotator>();
-		case ESussCustomContextValueType::Tag:
+		case ESussNamedContextValueType::Tag:
 			return Lhs.Value.Get<FGameplayTag>() == Rhs.Value.Get<FGameplayTag>();
-		case ESussCustomContextValueType::Name:
+		case ESussNamedContextValueType::Name:
 			return Lhs.Value.Get<FName>() == Rhs.Value.Get<FName>();
-		case ESussCustomContextValueType::Float:
+		case ESussNamedContextValueType::Float:
 			return Lhs.Value.Get<float>() == Rhs.Value.Get<float>();
-		case ESussCustomContextValueType::Int:
+		case ESussNamedContextValueType::Int:
 			return Lhs.Value.Get<int>() == Rhs.Value.Get<int>();
-		case ESussCustomContextValueType::NONE:
+		case ESussNamedContextValueType::NONE:
 			// Nones are equal
 			return true;
 		}
@@ -110,7 +110,7 @@ struct FSussCustomContextValue
 		return false;
 	}
 
-	friend bool operator!=(const FSussCustomContextValue& Lhs, const FSussCustomContextValue& RHS)
+	friend bool operator!=(const FSussNamedContextValue& Lhs, const FSussNamedContextValue& RHS)
 	{
 		return !(Lhs == RHS);
 	}
@@ -152,7 +152,7 @@ public:
 	FGameplayTag Tag;
 
 	/// Any other custom context values you'd like to use (C++ only)
-	TMap<FName, FSussCustomContextValue> CustomValues;
+	TMap<FName, FSussNamedContextValue> CustomValues;
 
 	bool operator==(const FSussContext& Other) const
 	{

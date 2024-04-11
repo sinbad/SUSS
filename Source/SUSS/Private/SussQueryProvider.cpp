@@ -77,7 +77,7 @@ void USussTagQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 	ExecuteQueryBP(Brain, Self, Params, OutResults);
 }
 
-void USussCustomValueQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
+void USussNamedValueQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 	AActor* Self,
 	const TMap<FName, FSussParameter>& Params,
 	TSussResultsArray& OutResults)

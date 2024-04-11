@@ -36,7 +36,7 @@ typedef TVariant<
 		TArray<FVector>,
 		TArray<FRotator>,
 		TArray<FGameplayTag>,
-		TArray<TPair<FName, FSussCustomContextValue>>
+		TArray<TPair<FName, FSussNamedContextValue>>
 	> TSussResultsArray;
 
 struct FSussCachedQueryResults
@@ -323,9 +323,9 @@ public:
 };
 
 
-/// Subclass this to provide a query which returns custom context values
+/// Subclass this to provide a query which returns named context values
 UCLASS(Abstract, Blueprintable)
-class USussCustomValueQueryProvider : public USussQueryProvider
+class USussNamedValueQueryProvider : public USussQueryProvider
 {
 	GENERATED_BODY()
 protected:
@@ -333,24 +333,24 @@ protected:
 	// We need to hold this to allow BP to fill in
 	TSussResultsArray* TempOutResults;
 
-	TArray<TPair<FName, FSussCustomContextValue>>& GetTempArray() const { return TempOutResults->Get<TArray<TPair<FName, FSussCustomContextValue>>>(); }
+	TArray<TPair<FName, FSussNamedContextValue>>& GetTempArray() const { return TempOutResults->Get<TArray<TPair<FName, FSussNamedContextValue>>>(); }
 	UFUNCTION(BlueprintCallable)
-	void AddCustomValueActor(FName Name, AActor* Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	void AddNamedValueActor(FName Name, AActor* Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
 	UFUNCTION(BlueprintCallable)
-	void AddCustomValueVector(FName Name, FVector Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	void AddNamedValueVector(FName Name, FVector Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
 	UFUNCTION(BlueprintCallable)
-	void AddCustomValueRotator(FName Name, FRotator Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	void AddNamedValueRotator(FName Name, FRotator Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
 	UFUNCTION(BlueprintCallable)
-	void AddCustomValueTag(FName Name, FGameplayTag Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	void AddNamedValueTag(FName Name, FGameplayTag Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
 	UFUNCTION(BlueprintCallable)
-	void AddCustomValueName(FName Name, FName Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	void AddNamedValueName(FName Name, FName Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
 	UFUNCTION(BlueprintCallable)
-	void AddCustomValueFloat(FName Name, float Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	void AddNamedValueFloat(FName Name, float Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
 	UFUNCTION(BlueprintCallable)
-	void AddCustomValueInt(FName Name, int Value) { GetTempArray().Add(TPair<FName, FSussCustomContextValue>(Name, FSussCustomContextValue(Value))); }
+	void AddNamedValueInt(FName Name, int Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
 
 
-	/// Should be overridden by subclasses, who should call the AddCustomValueFOO functions to add values
+	/// Should be overridden by subclasses, who should call the AddNamedValueFOO functions to add values
 	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults);
 
 	// For consistency, call the BP version something different
@@ -359,7 +359,7 @@ protected:
 
 	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
-		InitResults<TPair<FName, FSussCustomContextValue>>(OutResults);
+		InitResults<TPair<FName, FSussNamedContextValue>>(OutResults);
 		ExecuteQuery(Brain, Self, Params, OutResults);
 	}
 
