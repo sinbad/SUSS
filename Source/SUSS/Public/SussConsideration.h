@@ -58,7 +58,7 @@ public:
 	FVector4f CurveParams = FVector4f(1,1,0, 0); // default x=y linear
 
 	/// If curve is custom, the actual curve to use.
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="CurveType==ESussCurveType::Custom", EditConditionHides))
 	UCurveFloat* CustomCurve = nullptr;
 
 	float EvaluateCurve(float Input) const;
