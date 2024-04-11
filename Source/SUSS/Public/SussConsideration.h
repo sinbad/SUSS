@@ -54,7 +54,7 @@ public:
 	/// k = exponent (quadratic) or vertical change (step/logistic)
 	/// b = y-shift
 	/// c = x-shift
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="CurveType!=ESussCurveType::Custom", EditConditionHides))
 	FVector4f CurveParams = FVector4f(1,1,0, 0); // default x=y linear
 
 	/// If curve is custom, the actual curve to use.
