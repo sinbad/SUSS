@@ -11,7 +11,8 @@
 /// Variant typed pointer holder (passed by value)
 struct FSussPooledArrayPtr
 {
-public:
+protected:
+	bool bIsBound;
 	/// Internal variant pointer
 	TVariant<
 		TArray<TWeakObjectPtr<AActor>>*,
@@ -21,89 +22,150 @@ public:
 		TArray<FSussContextValue>*,
 		TArray<FSussContext>*> ArrayPointer;
 
-	FSussPooledArrayPtr(TArray<TWeakObjectPtr<AActor>>* InActors)
+public:
+	FSussPooledArrayPtr() : bIsBound(false) {}
+	FSussPooledArrayPtr(TArray<TWeakObjectPtr<AActor>>* InActors) : bIsBound(true)
 	{
 		ArrayPointer.Set<TArray<TWeakObjectPtr<AActor>>*>(InActors);
 	}
-	FSussPooledArrayPtr(TArray<FVector>* InLocations)
+	FSussPooledArrayPtr(TArray<FVector>* InLocations): bIsBound(true)
 	{
 		ArrayPointer.Set<TArray<FVector>*>(InLocations);
 	}
-	FSussPooledArrayPtr(TArray<FRotator>* InRots)
+	FSussPooledArrayPtr(TArray<FRotator>* InRots): bIsBound(true)
 	{
 		ArrayPointer.Set<TArray<FRotator>*>(InRots);
 	}
-	FSussPooledArrayPtr(TArray<FGameplayTag>* InTags)
+	FSussPooledArrayPtr(TArray<FGameplayTag>* InTags): bIsBound(true)
 	{
 		ArrayPointer.Set<TArray<FGameplayTag>*>(InTags);
 	}
-	FSussPooledArrayPtr(TArray<FSussContextValue>* InVals)
+	FSussPooledArrayPtr(TArray<FSussContextValue>* InVals): bIsBound(true)
 	{
 		ArrayPointer.Set<TArray<FSussContextValue>*>(InVals);
 	}
-	FSussPooledArrayPtr(TArray<FSussContext>* InContexts)
+	FSussPooledArrayPtr(TArray<FSussContext>* InContexts): bIsBound(true)
 	{
 		ArrayPointer.Set<TArray<FSussContext>*>(InContexts);
 	}
 
+	void Bind(TArray<TWeakObjectPtr<AActor>>* InActors)
+	{
+		ArrayPointer.Set<TArray<TWeakObjectPtr<AActor>>*>(InActors);
+		bIsBound = true;
+	}
+	void Bind(TArray<FVector>* InLocations)
+	{
+		ArrayPointer.Set<TArray<FVector>*>(InLocations);
+		bIsBound = true;
+	}
+	void Bind(TArray<FRotator>* InRots)
+	{
+		ArrayPointer.Set<TArray<FRotator>*>(InRots);
+		bIsBound = true;
+	}
+	void Bind(TArray<FGameplayTag>* InTags)
+	{
+		ArrayPointer.Set<TArray<FGameplayTag>*>(InTags);
+		bIsBound = true;
+	}
+	void Bind(TArray<FSussContextValue>* InVals)
+	{
+		ArrayPointer.Set<TArray<FSussContextValue>*>(InVals);
+		bIsBound = true;
+	}
+	void Bind(TArray<FSussContext>* InContexts)
+	{
+		ArrayPointer.Set<TArray<FSussContext>*>(InContexts);
+		bIsBound = true;
+	}
+	
+
 	void Destroy()
 	{
-		// Could do this via TUniquePtr maybe, but then I wouldn't be able to copy this holder around
-		if (ArrayPointer.IsType<TArray<TWeakObjectPtr<AActor>>*>())
+		if (bIsBound)
 		{
-			delete ArrayPointer.Get<TArray<TWeakObjectPtr<AActor>>*>();
-		}
-		else if (ArrayPointer.IsType<TArray<FVector>*>())
-		{
-			delete ArrayPointer.Get<TArray<FVector>*>();
-		}
-		else if (ArrayPointer.IsType<TArray<FRotator>*>())
-		{
-			delete ArrayPointer.Get<TArray<FRotator>*>();
-		}
-		else if (ArrayPointer.IsType<TArray<FGameplayTag>*>())
-		{
-			delete ArrayPointer.Get<TArray<FGameplayTag>*>();
-		}
-		else if (ArrayPointer.IsType<TArray<FSussContextValue>*>())
-		{
-			delete ArrayPointer.Get<TArray<FSussContextValue>*>();
-		}
-		else if (ArrayPointer.IsType<TArray<FSussContext>*>())
-		{
-			delete ArrayPointer.Get<TArray<FSussContext>*>();
+			// Could do this via TUniquePtr maybe, but then I wouldn't be able to copy this holder around
+			if (ArrayPointer.IsType<TArray<TWeakObjectPtr<AActor>>*>())
+			{
+				delete ArrayPointer.Get<TArray<TWeakObjectPtr<AActor>>*>();
+			}
+			else if (ArrayPointer.IsType<TArray<FVector>*>())
+			{
+				delete ArrayPointer.Get<TArray<FVector>*>();
+			}
+			else if (ArrayPointer.IsType<TArray<FRotator>*>())
+			{
+				delete ArrayPointer.Get<TArray<FRotator>*>();
+			}
+			else if (ArrayPointer.IsType<TArray<FGameplayTag>*>())
+			{
+				delete ArrayPointer.Get<TArray<FGameplayTag>*>();
+			}
+			else if (ArrayPointer.IsType<TArray<FSussContextValue>*>())
+			{
+				delete ArrayPointer.Get<TArray<FSussContextValue>*>();
+			}
+			else if (ArrayPointer.IsType<TArray<FSussContext>*>())
+			{
+				delete ArrayPointer.Get<TArray<FSussContext>*>();
+			}
+			bIsBound = false;
 		}
 	}
 
 	void Reset() const
 	{
-		// A bit clunky but it's the price we pay for a non-templated holder
-		// Use reset not empty to keep allocations
-		if (ArrayPointer.IsType<TArray<TWeakObjectPtr<AActor>>*>())
+		if (bIsBound)
 		{
-			ArrayPointer.Get<TArray<TWeakObjectPtr<AActor>>*>()->Reset();
-		}
-		else if (ArrayPointer.IsType<TArray<FVector>*>())
-		{
-			ArrayPointer.Get<TArray<FVector>*>()->Reset();
-		}
-		else if (ArrayPointer.IsType<TArray<FRotator>*>())
-		{
-			ArrayPointer.Get<TArray<FRotator>*>()->Reset();
-		}
-		else if (ArrayPointer.IsType<TArray<FGameplayTag>*>())
-		{
-			ArrayPointer.Get<TArray<FGameplayTag>*>()->Reset();
-		}
-		else if (ArrayPointer.IsType<TArray<FSussContextValue>*>())
-		{
-			ArrayPointer.Get<TArray<FSussContextValue>*>()->Reset();
-		}
-		else if (ArrayPointer.IsType<TArray<FSussContext>*>())
-		{
-			ArrayPointer.Get<TArray<FSussContext>*>()->Reset();
+			// A bit clunky but it's the price we pay for a non-templated holder
+			// Use reset not empty to keep allocations
+			if (ArrayPointer.IsType<TArray<TWeakObjectPtr<AActor>>*>())
+			{
+				ArrayPointer.Get<TArray<TWeakObjectPtr<AActor>>*>()->Reset();
+			}
+			else if (ArrayPointer.IsType<TArray<FVector>*>())
+			{
+				ArrayPointer.Get<TArray<FVector>*>()->Reset();
+			}
+			else if (ArrayPointer.IsType<TArray<FRotator>*>())
+			{
+				ArrayPointer.Get<TArray<FRotator>*>()->Reset();
+			}
+			else if (ArrayPointer.IsType<TArray<FGameplayTag>*>())
+			{
+				ArrayPointer.Get<TArray<FGameplayTag>*>()->Reset();
+			}
+			else if (ArrayPointer.IsType<TArray<FSussContextValue>*>())
+			{
+				ArrayPointer.Get<TArray<FSussContextValue>*>()->Reset();
+			}
+			else if (ArrayPointer.IsType<TArray<FSussContext>*>())
+			{
+				ArrayPointer.Get<TArray<FSussContext>*>()->Reset();
+			}
 		}
 		
+	}
+
+	template<typename T>
+	TArray<T>* Get() const
+	{
+		if (bIsBound)
+		{
+			return ArrayPointer.Get<TArray<T>*>();
+		}
+		return nullptr;
+	}
+
+	template<typename T>
+	bool ContainsType() const
+	{
+		if (bIsBound)
+		{
+			return ArrayPointer.IsType<TArray<T>*>();
+		}
+		return false;
 	}
 	
 };
@@ -114,13 +176,17 @@ protected:
 	FSussPooledArrayPtr Holder;
 	TWeakObjectPtr<class USussPoolSubsystem> OwningSystem;
 public:
+	FSussScopeReservedArray()
+	{
+	}
+
 	FSussScopeReservedArray(const FSussPooledArrayPtr& H, USussPoolSubsystem* System) : Holder(H), OwningSystem(System) {}
 	~FSussScopeReservedArray();
 
 	template<typename T>
 	TArray<T>* Get()
 	{
-		return Holder.ArrayPointer.Get<TArray<T>*>();
+		return Holder.Get<T>();
 	}
 	
 	FSussScopeReservedArray(FSussScopeReservedArray&& Other) noexcept
@@ -141,13 +207,14 @@ public:
 
 struct FSussPooledMapPtr
 {
-public:
+protected:
 	/// Internal variant pointer
 	TVariant<
 		TMap<FName, FSussParameter>*,
 		TMap<FName, FSussContextValue>*,
 		TMap<FName, FSussScopeReservedArray>*> MapPointer;
 
+public:
 	FSussPooledMapPtr(TMap<FName, FSussParameter>* Params)
 	{
 		MapPointer.Set<TMap<FName, FSussParameter>*>(Params);
@@ -196,6 +263,19 @@ public:
 			MapPointer.Get<TMap<FName, FSussScopeReservedArray>*>()->Reset();
 		}
 	}
+
+	template<typename K, typename V>
+	TMap<K,V>* Get() const
+	{
+		return MapPointer.Get<TMap<K,V>*>();
+	}
+
+	template<typename K, typename V>
+	bool ContainsType() const
+	{
+		return MapPointer.IsType<TMap<K,V>*>();
+	}
+
 };
 
 struct FSussScopeReservedMap
@@ -210,7 +290,7 @@ public:
 	template<typename K, typename V>
 	TMap<K, V>* Get()
 	{
-		return Holder.MapPointer.Get<TMap<K, V>*>();
+		return Holder.Get<K, V>();
 	}
 	
 	FSussScopeReservedMap(FSussScopeReservedMap&& Other) noexcept
@@ -262,7 +342,7 @@ protected:
 
 		for (int i = 0; i < FreeArrayPools.Num(); ++i)
 		{
-			if (FreeArrayPools[i].ArrayPointer.IsType<T*>())
+			if (FreeArrayPools[i].ContainsType<T>())
 			{
 				FSussPooledArrayPtr H = FreeArrayPools[i];
 				FreeArrayPools.RemoveAt(i);
@@ -271,18 +351,18 @@ protected:
 		}
 
 		// If we got here, did not exist
-		T* NewItem = new T();
+		TArray<T>* NewItem = new TArray<T>();
 		return FSussScopeReservedArray(FSussPooledArrayPtr(NewItem), this);
 	}
 	
-	template<typename T>
+	template<typename K, typename V>
 	FSussScopeReservedMap ReserveMapImpl()
 	{
 		FScopeLock Lock(&Guard);
 
 		for (int i = 0; i < FreeMapPools.Num(); ++i)
 		{
-			if (FreeMapPools[i].MapPointer.IsType<T*>())
+			if (FreeMapPools[i].ContainsType<K,V>())
 			{
 				FSussPooledMapPtr H = FreeMapPools[i];
 				FreeMapPools.RemoveAt(i);
@@ -291,7 +371,7 @@ protected:
 		}
 
 		// If we got here, did not exist
-		T* NewItem = new T();
+		TMap<K,V>* NewItem = new TMap<K,V>();
 		return FSussScopeReservedMap(FSussPooledMapPtr(NewItem), this);
 	}
 
@@ -300,7 +380,7 @@ public:
 	template<typename T>
 	FSussScopeReservedArray ReserveArray()
 	{
-		return ReserveArrayImpl<TArray<T>>();
+		return ReserveArrayImpl<T>();
 	}
 	
 	void FreeArray(const FSussPooledArrayPtr& Holder)
@@ -314,7 +394,7 @@ public:
 	template<typename K, typename V>
 	FSussScopeReservedMap ReserveMap()
 	{
-		return ReserveMapImpl<TMap<K, V>>();
+		return ReserveMapImpl<K, V>();
 	}
 	
 	void FreeMap(const FSussPooledMapPtr& Holder)

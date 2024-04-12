@@ -177,15 +177,21 @@ void FSussBrainTestContextsSpec::Define()
 			{
 				TestEqual("Self reference 0", Contexts[0].ControlledActor, Self);
 				TestEqual("Location 0", Contexts[0].Location, FVector(10, -20, 50));
-				TestEqual("Named 0", Contexts[0].NamedValues["MapRef"].Value.Get<FVector>(), FVector(120, -450, 80));
+				if (TestTrue("Named Range 0",Contexts[0].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named 0", Contexts[0].NamedValues["Range"].Value.Get<float>(), 2000.0f);
+				}
 
 				TestEqual("Self reference 1", Contexts[1].ControlledActor, Self);
 				TestEqual("Location 1", Contexts[1].Location, FVector(10, -20, 50));
-				TestEqual("Named 1", Contexts[1].NamedValues["MapRef"].Value.Get<FVector>(), FVector(70, 123, -210));
+				if (TestTrue("Named Range 1",Contexts[1].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named 1", Contexts[1].NamedValues["Range"].Value.Get<float>(), 5000.0f);
+				}
 
-				TestEqual("Self reference 2", Contexts[2].ControlledActor, Self);
-				TestEqual("Location 2", Contexts[2].Location, FVector(10, -20, 50));
-				TestEqual("Named 2", Contexts[2].NamedValues["MapRef"].Value.Get<FVector>(), FVector(-35, 65, 0));
+				// TestEqual("Self reference 2", Contexts[2].ControlledActor, Self);
+				// TestEqual("Location 2", Contexts[2].Location, FVector(10, -20, 50));
+				// TestEqual("Named 2", Contexts[2].NamedValues["MapRef"].Value.Get<float>(), FVector(-35, 65, 0));
 			
 			}
 			

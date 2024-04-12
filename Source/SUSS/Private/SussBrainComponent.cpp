@@ -559,14 +559,9 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 
 	if (Action.Queries.Num() > 0)
 	{
-		FSussScopeReservedArray Targets = Pool->ReserveArray<TWeakObjectPtr<AActor>>();
-		FSussScopeReservedArray Locations = Pool->ReserveArray<FVector>();
-		FSussScopeReservedArray Rotations = Pool->ReserveArray<FRotator>();
-		FSussScopeReservedArray Tags = Pool->ReserveArray<FGameplayTag>();
+		TSet<ESussQueryContextElement> ContextElements;
+		TSet<FName> NamedQueryValues;
 
-		// Scope reserved array in map is OK because of move constructor/assignment
-		FSussScopeReservedMap NamedValueMap = Pool->ReserveMap<FName, FSussScopeReservedArray>();
-		
 		for (const auto& Query : Action.Queries)
 		{
 			auto QueryProvider = SUSS->GetQueryProvider(Query.QueryTag);
@@ -576,70 +571,103 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 			FSussScopeReservedMap ResolvedQueryParamsScope = Pool->ReserveMap<FName, FSussParameter>();
 			TMap<FName, FSussParameter>& ResolvedParams = *ResolvedQueryParamsScope.Get<FName, FSussParameter>();
 			ResolveParameters(Self, Query.Params, ResolvedParams);
+
+			// Because we use the results from each query to multiply combinations with existing results, we cannot have >1 query
+			// returning the same element (you'd multiply Targets * Targets for example)
+			const auto Element = QueryProvider->GetProvidedContextElement();
+			// Special case for Named Values, we can have multiples, just not providing the same name
+			if (Element != ESussQueryContextElement::NamedValue && ContextElements.Contains(Element))
+			{
+				UE_LOG(LogSuss,
+				       Warning,
+				       TEXT("Action %s has more than one query returning %s, ignoring extra one %s"),
+				       *Action.ActionTag.ToString(),
+				       *StaticEnum<ESussQueryContextElement>()->GetValueAsString(Element),
+				       *Query.QueryTag.ToString())
+				continue;
+			}
+			ContextElements.Add(Element);
 		
-			switch (QueryProvider->GetProvidedContextElement())
+			switch (Element)
 			{
 			case ESussQueryContextElement::Target:
-				Targets.Get<TWeakObjectPtr<AActor>>()->Append(QueryProvider->GetResults<TWeakObjectPtr<AActor>>(this, Self, Query.MaxFrequency, ResolvedParams));
-				break;
-			case ESussQueryContextElement::Location:
-				Locations.Get<FVector>()->Append(QueryProvider->GetResults<FVector>(this, Self, Query.MaxFrequency, ResolvedParams));
-				break;
-			case ESussQueryContextElement::Rotation:
-				Rotations.Get<FRotator>()->Append(QueryProvider->GetResults<FRotator>(this, Self, Query.MaxFrequency, ResolvedParams));
-				break;
-			case ESussQueryContextElement::Tag:
-				Tags.Get<FGameplayTag>()->Append(QueryProvider->GetResults<FGameplayTag>(this, Self, Query.MaxFrequency, ResolvedParams));
-				break;
-			case ESussQueryContextElement::NamedValue:
-				if (auto NQP = Cast<USussNamedValueQueryProvider>(QueryProvider))
 				{
-					FSussScopeReservedArray* pValueArray = NamedValueMap.Get<FName, FSussScopeReservedArray>()->Find(NQP->GetQueryValueName());
-					if (!pValueArray)
-					{
-						pValueArray = &NamedValueMap.Get<FName, FSussScopeReservedArray>()->Emplace(NQP->GetQueryValueName(), Pool->ReserveArray<FSussContextValue>());
-					}
-					pValueArray->Get<FSussContextValue>()->Append(QueryProvider->GetResults<FSussContextValue>(this, Self, Query.MaxFrequency, ResolvedParams));
-				}
-				break;
-			}
-		}
-
-		// Now we have all the dimensions, produce a context for every combination
-		AppendContexts<TWeakObjectPtr<AActor>>(Self, Targets,
+					FSussScopeReservedArray Targets = Pool->ReserveArray<TWeakObjectPtr<AActor>>();
+					Targets.Get<TWeakObjectPtr<AActor>>()->Append(QueryProvider->GetResults<TWeakObjectPtr<AActor>>(this, Self, Query.MaxFrequency, ResolvedParams));
+					AppendContexts<TWeakObjectPtr<AActor>>(Self, Targets,
 											   OutContexts,
 											   [](const TWeakObjectPtr<AActor>& Target, FSussContext& Ctx)
 											   {
 												   Ctx.Target = Target;
 											   });
-		AppendContexts<FVector>(Self, Locations,
-								OutContexts,
-								[](const FVector& Loc, FSussContext& Ctx)
-								{
-									Ctx.Location = Loc;
-								});
-		AppendContexts<FRotator>(Self, Rotations,
-								 OutContexts,
-								 [](const FRotator& Rot, FSussContext& Ctx)
-								 {
-									 Ctx.Rotation = Rot;
-								 });
-		AppendContexts<FGameplayTag>(Self, Tags,
-								 OutContexts,
-								 [](const FGameplayTag& Tag, FSussContext& Ctx)
-								 {
-									 Ctx.Tag = Tag;
-								 });
-		for (auto& Pair : *NamedValueMap.Get<FName, FSussScopeReservedArray>())
-		{
-			// Need to append contexts for each key separately, for all values of that key
-			const FName ValueName = Pair.Key;
-			AppendContexts<FSussContextValue>(Self, *Pair.Value.Get<FSussContextValue>() ,
-											  OutContexts,
-											  [ValueName](const FSussContextValue& CV, FSussContext& Ctx)
-											  {
-												  Ctx.NamedValues[ValueName] = CV;
-											  });
+					break;
+				}
+			case ESussQueryContextElement::Location:
+				{
+					FSussScopeReservedArray Locations = Pool->ReserveArray<FVector>();
+					Locations.Get<FVector>()->Append(QueryProvider->GetResults<FVector>(this, Self, Query.MaxFrequency, ResolvedParams));
+					AppendContexts<FVector>(Self, Locations,
+											OutContexts,
+											[](const FVector& Loc, FSussContext& Ctx)
+											{
+												Ctx.Location = Loc;
+											});
+					
+					break;
+				}
+			case ESussQueryContextElement::Rotation:
+				{
+					FSussScopeReservedArray Rotations = Pool->ReserveArray<FRotator>();
+					Rotations.Get<FRotator>()->Append(QueryProvider->GetResults<FRotator>(this, Self, Query.MaxFrequency, ResolvedParams));
+					AppendContexts<FRotator>(Self, Rotations,
+						 OutContexts,
+						 [](const FRotator& Rot, FSussContext& Ctx)
+						 {
+							 Ctx.Rotation = Rot;
+						 });
+
+					break;
+				}
+			case ESussQueryContextElement::Tag:
+				{
+					FSussScopeReservedArray Tags = Pool->ReserveArray<FGameplayTag>();
+					Tags.Get<FGameplayTag>()->Append(QueryProvider->GetResults<FGameplayTag>(this, Self, Query.MaxFrequency, ResolvedParams));
+					AppendContexts<FGameplayTag>(Self, Tags,
+						 OutContexts,
+						 [](const FGameplayTag& Tag, FSussContext& Ctx)
+						 {
+							 Ctx.Tag = Tag;
+						 });
+					break;
+				}
+			case ESussQueryContextElement::NamedValue:
+				{
+					if (auto NQP = Cast<USussNamedValueQueryProvider>(QueryProvider))
+					{
+						const FName ValueName = NQP->GetQueryValueName();
+						// Make sure we haven't seen this name before; since we allow multiple named type queries
+						if (NamedQueryValues.Contains(ValueName))
+						{
+							UE_LOG(LogSuss,
+							       Warning,
+							       TEXT("Action %s has more than one query returning named value %s, ignoring extra one %s"),
+							       *Action.ActionTag.ToString(),
+							       *ValueName.ToString(),
+							       *Query.QueryTag.ToString());
+							continue;
+						}
+						FSussScopeReservedArray NamedValues = Pool->ReserveArray<FSussContextValue>();
+						NamedValues.Get<FSussContextValue>()->Append(QueryProvider->GetResults<FSussContextValue>(this, Self, Query.MaxFrequency, ResolvedParams));
+						AppendContexts<FSussContextValue>(Self, NamedValues,
+												 OutContexts,
+												 [ValueName](const FSussContextValue& Value, FSussContext& Ctx)
+												 {
+													 Ctx.NamedValues.Add(ValueName, Value);
+												 });
+					}
+					break;
+				}
+			}
 		}
 	}
 	else
