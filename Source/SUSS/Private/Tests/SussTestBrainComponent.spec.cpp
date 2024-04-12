@@ -315,6 +315,110 @@ void FSussBrainTestContextsSpec::Define()
 			}
 		});
 		
+		It("Named struct params",
+		   [this]()
+		{
+			AActor* Self = WorldFixture->GetWorld()->SpawnActor<AActor>();
+			auto Brain = Cast<USussBrainComponent>(
+				Self->AddComponentByClass(USussBrainComponent::StaticClass(),
+				                          false,
+				                          FTransform::Identity,
+				                          false));
+
+			FSussActionDef Action;
+			Action.Queries.Add(FSussQuery{
+				FGameplayTag::RequestGameplayTag(USussTestMultipleLocationQueryProvider::TagName)
+			}); // 2 items
+			Action.Queries.Add(FSussQuery{
+				FGameplayTag::RequestGameplayTag(USussTestNamedStructValueQueryProvider::TagName)
+			}); // 3 items
+			TArray<FSussContext> Contexts;
+			Brain->GenerateContexts(Self, Action, Contexts);
+
+			if (TestEqual("Number of contexts", Contexts.Num(), 6))
+			{
+				TestEqual("Self reference 0", Contexts[0].ControlledActor, Self);
+				TestEqual("Location 0", Contexts[0].Location, FVector(10, -20, 50));
+				if (TestTrue("Named Struct 0", Contexts[0].NamedValues.Contains("Struct")))
+				{
+					auto S = Contexts[0].NamedValues["Struct"].Value.Get<TSharedPtr<FSussContextValueStructBase>>();
+					if (TestValid("Named Struct 0", S))
+					{
+						auto TS = static_cast<FSussTestContextValueStruct*>(S.Get());
+						TestEqual("Named Struct 0 int", TS->IntValue , 200);
+						TestEqual("Named Struct 0 float", TS->FloatValue , 123.4f);
+					}
+				}
+
+				TestEqual("Self reference 1", Contexts[1].ControlledActor, Self);
+				TestEqual("Location 1", Contexts[1].Location, FVector(20, 100, -2));
+				if (TestTrue("Named Struct 1", Contexts[1].NamedValues.Contains("Struct")))
+				{
+					auto S = Contexts[1].NamedValues["Struct"].Value.Get<TSharedPtr<FSussContextValueStructBase>>();
+					if (TestValid("Named Struct 1", S))
+					{
+						auto TS = static_cast<FSussTestContextValueStruct*>(S.Get());
+						TestEqual("Named Struct 1 int", TS->IntValue , 200);
+						TestEqual("Named Struct 1 float", TS->FloatValue , 123.4f);
+					}
+				}
+
+				TestEqual("Self reference 2", Contexts[2].ControlledActor, Self);
+				TestEqual("Location 2", Contexts[2].Location, FVector(-40, 220, 750));
+				if (TestTrue("Named Struct 2", Contexts[2].NamedValues.Contains("Struct")))
+				{
+					auto S = Contexts[2].NamedValues["Struct"].Value.Get<TSharedPtr<FSussContextValueStructBase>>();
+					if (TestValid("Named Struct 2", S))
+					{
+						auto TS = static_cast<FSussTestContextValueStruct*>(S.Get());
+						TestEqual("Named Struct 2 int", TS->IntValue , 200);
+						TestEqual("Named Struct 2 float", TS->FloatValue , 123.4f);
+					}
+				}
+
+				TestEqual("Self reference 3", Contexts[3].ControlledActor, Self);
+				TestEqual("Location 3", Contexts[3].Location, FVector(10, -20, 50));
+				if (TestTrue("Named Struct 3", Contexts[3].NamedValues.Contains("Struct")))
+				{
+					auto S = Contexts[3].NamedValues["Struct"].Value.Get<TSharedPtr<FSussContextValueStructBase>>();
+					if (TestValid("Named Struct 3", S))
+					{
+						auto TS = static_cast<FSussTestContextValueStruct*>(S.Get());
+						TestEqual("Named Struct 3 int", TS->IntValue , -30);
+						TestEqual("Named Struct 3 float", TS->FloatValue , 785.2f);
+					}
+				}
+
+				TestEqual("Self reference 4", Contexts[4].ControlledActor, Self);
+				TestEqual("Location 4", Contexts[4].Location, FVector(20, 100, -2));
+				if (TestTrue("Named Struct 4", Contexts[4].NamedValues.Contains("Struct")))
+				{
+					auto S = Contexts[4].NamedValues["Struct"].Value.Get<TSharedPtr<FSussContextValueStructBase>>();
+					if (TestValid("Named Struct 4", S))
+					{
+						auto TS = static_cast<FSussTestContextValueStruct*>(S.Get());
+						TestEqual("Named Struct 4 int", TS->IntValue , -30);
+						TestEqual("Named Struct 4 float", TS->FloatValue , 785.2f);
+					}
+				}
+
+				TestEqual("Self reference 5", Contexts[5].ControlledActor, Self);
+				TestEqual("Location 5", Contexts[5].Location, FVector(-40, 220, 750));
+				if (TestTrue("Named Struct 5", Contexts[5].NamedValues.Contains("Struct")))
+				{
+					auto S = Contexts[5].NamedValues["Struct"].Value.Get<TSharedPtr<FSussContextValueStructBase>>();
+					if (TestValid("Named Struct 5", S))
+					{
+						auto TS = static_cast<FSussTestContextValueStruct*>(S.Get());
+						TestEqual("Named Struct 5 int", TS->IntValue , -30);
+						TestEqual("Named Struct 5 float", TS->FloatValue , 785.2f);
+
+					}
+				}
+
+
+			}
+		});
 
 		It("Query caching works as intended", [this]()
 		{

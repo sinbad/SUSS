@@ -7,6 +7,19 @@
 #include "UObject/Object.h"
 #include "SussContext.generated.h"
 
+
+/// Base struct which can be used to store groups of related values in a context.
+/// Normally, every value in a context multiplies the possibility space by all the others. But if you want, say 3 related
+/// values that are always together in the context, you can put them in a subclass of this struct
+USTRUCT(BlueprintType)
+struct FSussContextValueStructBase
+{
+	GENERATED_BODY()
+	
+	FSussContextValueStructBase() {}
+	
+};
+
 /// The value type held by a context value
 UENUM(BlueprintType)
 enum class ESussContextValueType : uint8
@@ -18,11 +31,24 @@ enum class ESussContextValueType : uint8
 	Name,
 	Float,
 	Int,
+	Struct,
 
 	NONE
 };
-typedef TVariant<TWeakObjectPtr<AActor>,FVector,FRotator, FGameplayTag,FName,int,float> TSussContextValueVariant;
 
+/// All the types that can be held in a named value on a context, should match ESussContextValueType
+typedef TVariant<
+	TWeakObjectPtr<AActor>,
+	FVector,
+	FRotator,
+	FGameplayTag,
+	FName,
+	float,
+	int,
+	TSharedPtr<FSussContextValueStructBase>
+> TSussContextValueVariant;
+
+/// A flexibly typed value which can be present in a context so that inputs / autoparameters can use them
 struct FSussContextValue
 {
 	ESussContextValueType Type = ESussContextValueType::NONE;
@@ -56,6 +82,11 @@ struct FSussContextValue
 	{
 		Value.Set<int>(V);
 	}
+	FSussContextValue(const TSharedPtr<FSussContextValueStructBase>& V) : Type(ESussContextValueType::Struct)
+	{
+		Value.Set<TSharedPtr<FSussContextValueStructBase>>(V);
+	}
+	
 
 	FString ToString() const
 	{
@@ -75,6 +106,15 @@ struct FSussContextValue
 			return FString::SanitizeFloat(Value.Get<float>());
 		case ESussContextValueType::Int:
 			return FString::FromInt(Value.Get<int>());
+		case ESussContextValueType::Struct:
+			{
+				const auto S = Value.Get<TSharedPtr<FSussContextValueStructBase>>();
+				if (S.IsValid())
+				{
+					return S->StaticStruct()->GetName();
+				}
+				return "";
+			}
 		default:
 		case ESussContextValueType::NONE:
 			return TEXT("NONE");
@@ -105,6 +145,9 @@ struct FSussContextValue
 		case ESussContextValueType::NONE:
 			// Nones are equal
 			return true;
+		case ESussContextValueType::Struct:
+			// Can't do this
+			return false;
 		}
 
 		return false;

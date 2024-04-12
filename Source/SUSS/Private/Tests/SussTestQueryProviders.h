@@ -185,6 +185,56 @@ protected:
 	}
 };
 
+USTRUCT()
+struct FSussTestContextValueStruct : public FSussContextValueStructBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int IntValue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float FloatValue;
+
+	FSussTestContextValueStruct(): IntValue(0), FloatValue(0)
+	{
+	}
+
+	FSussTestContextValueStruct(int i, float f) : IntValue(i), FloatValue(f) {}
+};
+
+UCLASS()
+class USussTestNamedStructValueQueryProvider : public USussNamedValueQueryProvider
+{
+	GENERATED_BODY()
+public:
+	static const FName TagName;
+
+	USussTestNamedStructValueQueryProvider()
+	: TAG_TEMP(UE_PLUGIN_NAME,
+		   UE_MODULE_NAME,
+		   TagName,
+		   TEXT(""),
+		   ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
+	{
+		QueryTag = TAG_TEMP;
+		QueryValueName = FName("Struct");
+		QueryValueType = ESussContextValueType::Struct;
+	}
+protected:
+	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
+	FSussTempNativeGameplayTag TAG_TEMP;
+
+	virtual void ExecuteQuery(USussBrainComponent* Brain,
+							  AActor* Self,
+							  const TMap<FName, FSussParameter>& Params,
+							  TArray<FSussContextValue>& OutResults) override
+	{
+		const FSussContextValue S1(MakeShareable(new FSussTestContextValueStruct(200, 123.4f)));
+		const FSussContextValue S2(MakeShareable(new FSussTestContextValueStruct(-30, 785.2f)));
+		OutResults.Add(S1);
+		OutResults.Add(S2);
+	}
+};
 
 inline void RegisterTestQueryProviders(UWorld* World)
 {
@@ -195,6 +245,7 @@ inline void RegisterTestQueryProviders(UWorld* World)
 		SUSS->RegisterQueryProviderClass(USussTestMultipleRotationQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestNamedLocationValueQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestNamedFloatValueQueryProvider::StaticClass());
+		SUSS->RegisterQueryProviderClass(USussTestNamedStructValueQueryProvider::StaticClass());
 	}
 }
 
@@ -207,5 +258,6 @@ inline void UnregisterTestQueryProviders(UWorld* World)
 		SUSS->UnregisterQueryProviderClass(USussTestMultipleRotationQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestNamedLocationValueQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestNamedFloatValueQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProviderClass(USussTestNamedStructValueQueryProvider::StaticClass());
 	}
 }
