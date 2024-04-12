@@ -23,10 +23,6 @@ enum class ESussQueryContextElement : uint8
 	Target,
 	/// Locations in the world
 	Location,
-	/// Rotations in the world
-	Rotation,
-	/// Tags
-	Tag,
 	/// Named values of various types
 	NamedValue,
 };
@@ -34,8 +30,6 @@ enum class ESussQueryContextElement : uint8
 typedef TVariant<
 		TArray<TWeakObjectPtr<AActor>>,
 		TArray<FVector>,
-		TArray<FRotator>,
-		TArray<FGameplayTag>,
 		TArray<FSussContextValue>
 	> TSussResultsArray;
 
@@ -273,55 +267,6 @@ protected:
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Location; }
 };
-
-/// Subclass this to provide a query which returns rotations
-UCLASS(Abstract, Blueprintable)
-class USussRotationQueryProvider : public USussQueryProvider
-{
-	GENERATED_BODY()
-protected:
-	/// Should be overridden by subclasses
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FRotator>& OutResults);
-
-	// For consistency, call the BP version something different
-	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
-	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<FRotator>& OutResults);
-
-	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
-	{
-		InitResults<FRotator>(OutResults);
-		ExecuteQuery(Brain, Self, Params, GetResultsArray<FRotator>(OutResults));
-	}
-
-public:
-	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Rotation; }
-
-};
-
-/// Subclass this to provide a query which returns tags
-UCLASS(Abstract, Blueprintable)
-class USussTagQueryProvider : public USussQueryProvider
-{
-	GENERATED_BODY()
-protected:
-
-	/// Should be overridden by subclasses
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FGameplayTag>& OutResults);
-
-	// For consistency, call the BP version something different
-	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
-	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<FGameplayTag>& OutResults);
-
-	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
-	{
-		InitResults<FGameplayTag>(OutResults);
-		ExecuteQuery(Brain, Self, Params, GetResultsArray<FGameplayTag>(OutResults));
-	}
-
-public:
-	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Tag; }
-};
-
 
 /// Subclass this to provide a query which returns named context values
 /// Each query must only return items of a single type, for a single name

@@ -88,34 +88,6 @@ protected:
 	}
 };
 
-UCLASS()
-class USussTestMultipleRotationQueryProvider : public USussRotationQueryProvider
-{
-	GENERATED_BODY()
-public:
-	static const FName TagName;
-
-	USussTestMultipleRotationQueryProvider()
-	: TAG_TEMP(UE_PLUGIN_NAME,
-		   UE_MODULE_NAME,
-		   TagName,
-		   TEXT(""),
-		   ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
-	{ QueryTag = TAG_TEMP; }
-protected:
-	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
-	FSussTempNativeGameplayTag TAG_TEMP;
-
-	virtual void ExecuteQuery(USussBrainComponent* Brain,
-		AActor* Self,
-		const TMap<FName, FSussParameter>& Params,
-		TArray<FRotator>& OutResults) override
-	{
-		OutResults.Add(FRotator(10, -20, 50));
-		OutResults.Add(FRotator(20, 100, -2));
-		OutResults.Add(FRotator(-40, 220, 750));
-	}
-};
 
 UCLASS()
 class USussTestNamedLocationValueQueryProvider : public USussNamedValueQueryProvider
@@ -240,7 +212,6 @@ inline void RegisterTestQueryProviders(UWorld* World)
 	{
 		SUSS->RegisterQueryProviderClass(USussTestSingleLocationQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestMultipleLocationQueryProvider::StaticClass());
-		SUSS->RegisterQueryProviderClass(USussTestMultipleRotationQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestNamedLocationValueQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestNamedFloatValueQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestNamedStructValueQueryProvider::StaticClass());
@@ -253,7 +224,6 @@ inline void UnregisterTestQueryProviders(UWorld* World)
 	{
 		SUSS->UnregisterQueryProviderClass(USussTestSingleLocationQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestMultipleLocationQueryProvider::StaticClass());
-		SUSS->UnregisterQueryProviderClass(USussTestMultipleRotationQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestNamedLocationValueQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestNamedFloatValueQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestNamedStructValueQueryProvider::StaticClass());

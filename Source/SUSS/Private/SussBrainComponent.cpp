@@ -615,31 +615,6 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 					
 					break;
 				}
-			case ESussQueryContextElement::Rotation:
-				{
-					FSussScopeReservedArray Rotations = Pool->ReserveArray<FRotator>();
-					Rotations.Get<FRotator>()->Append(QueryProvider->GetResults<FRotator>(this, Self, Query.MaxFrequency, ResolvedParams));
-					AppendContexts<FRotator>(Self, Rotations,
-						 OutContexts,
-						 [](const FRotator& Rot, FSussContext& Ctx)
-						 {
-							 Ctx.Rotation = Rot;
-						 });
-
-					break;
-				}
-			case ESussQueryContextElement::Tag:
-				{
-					FSussScopeReservedArray Tags = Pool->ReserveArray<FGameplayTag>();
-					Tags.Get<FGameplayTag>()->Append(QueryProvider->GetResults<FGameplayTag>(this, Self, Query.MaxFrequency, ResolvedParams));
-					AppendContexts<FGameplayTag>(Self, Tags,
-						 OutContexts,
-						 [](const FGameplayTag& Tag, FSussContext& Ctx)
-						 {
-							 Ctx.Tag = Tag;
-						 });
-					break;
-				}
 			case ESussQueryContextElement::NamedValue:
 				{
 					if (auto NQP = Cast<USussNamedValueQueryProvider>(QueryProvider))

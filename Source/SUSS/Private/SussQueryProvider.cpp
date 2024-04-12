@@ -59,24 +59,6 @@ void USussLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 	ExecuteQueryBP(Brain, Self, Params, OutResults);
 }
 
-void USussRotationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
-	AActor* Self,
-	const TMap<FName, FSussParameter>& Params,
-	TArray<FRotator>& OutResults)
-{
-	// Subclasses can override this, call BP version by default
-	ExecuteQueryBP(Brain, Self, Params, OutResults);
-}
-
-void USussTagQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
-	AActor* Self,
-	const TMap<FName, FSussParameter>& Params,
-	TArray<FGameplayTag>& OutResults)
-{
-	// Subclasses can override this, call BP version by default
-	ExecuteQueryBP(Brain, Self, Params, OutResults);
-}
-
 void USussNamedValueQueryProvider::AddValueStruct(FSussContextValueStructBase* Struct)
 {
 	const FSussContextValue S(MakeShareable(Struct));

@@ -188,16 +188,8 @@ public:
 	/// Location which could vary per context (use determined by query provider)
 	UPROPERTY(BlueprintReadOnly)
 	FVector Location = FVector::ZeroVector;
-	/// Rotation which could vary per context (use determined by query provider)
-	UPROPERTY(BlueprintReadOnly)
-	FRotator Rotation = FRotator::ZeroRotator;
-	/// A gameplay tag which could represent any kind of identifying information (use determined by query & input provider)
-	/// This can be useful for all kinds of things where a set of "something" needs to be queried & identified. For example,
-	/// "get the set of attacks for this creature" could produce 1 context per attack tag for consideration
-	UPROPERTY(BlueprintReadOnly)
-	FGameplayTag Tag;
 
-	/// Named values of varying types
+	/// Named values of context for any other purpose
 	TMap<FName, FSussContextValue> NamedValues;
 
 	bool operator==(const FSussContext& Other) const
@@ -205,8 +197,6 @@ public:
 		if (ControlledActor != Other.ControlledActor ||
 			Target != Other.Target ||
 			!Location.Equals(Other.Location) ||
-			!Rotation.Equals(Other.Rotation) ||
-			Tag != Other.Tag ||
 			NamedValues.Num() != Other.NamedValues.Num())
 		{
 			return false;
@@ -240,16 +230,6 @@ public:
 		{
 			Builder.Append(" Location: ");
 			Builder.Append(Location.ToString());
-		}
-		if (!Rotation.IsNearlyZero())
-		{
-			Builder.Append(" Rotation: ");
-			Builder.Append(Rotation.ToString());
-		}
-		if (Tag.IsValid())
-		{
-			Builder.Append(" Tag: ");
-			Builder.Append(Tag.ToString());
 		}
 
 		for (const auto& Custom : NamedValues)
