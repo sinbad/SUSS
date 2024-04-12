@@ -67,7 +67,7 @@ public:
 	USussTestMultipleLocationQueryProvider()
 		: TAG_TEMP(UE_PLUGIN_NAME,
 		           UE_MODULE_NAME,
-		           "Suss.Query.Location.Test.Multiple",
+		           TagName,
 		           TEXT(""),
 		           ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
 	{
@@ -98,7 +98,7 @@ public:
 	USussTestMultipleRotationQueryProvider()
 	: TAG_TEMP(UE_PLUGIN_NAME,
 		   UE_MODULE_NAME,
-		   "Suss.Query.Rotation.Test.Multiple",
+		   TagName,
 		   TEXT(""),
 		   ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
 	{ QueryTag = TAG_TEMP; }
