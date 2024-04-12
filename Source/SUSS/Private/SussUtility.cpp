@@ -257,6 +257,179 @@ bool USussUtility::GetSussParameterValueAsTag(const FSussParameter& Parameter, F
 	return false;
 }
 
+bool USussUtility::GetSussContextValueAsActor(const FSussContext& Context, FName Name, AActor*& Value)
+{
+	if (const auto pValue = Context.NamedValues.Find(Name))
+	{
+		switch(pValue->Type)
+		{
+		case ESussContextValueType::Actor:
+			Value = pValue->Value.Get<TWeakObjectPtr<AActor>>().Get();
+			return true;
+		case ESussContextValueType::Int:
+		case ESussContextValueType::NONE:
+		case ESussContextValueType::Vector:
+		case ESussContextValueType::Float:
+		case ESussContextValueType::Rotator:
+		case ESussContextValueType::Tag:
+		case ESussContextValueType::Name:
+			return false;
+		}
+	}
+
+	return false;	
+}
+
+bool USussUtility::GetSussContextValueAsFloat(const FSussContext& Context, FName Name, float& Value)
+{
+	if (const auto pValue = Context.NamedValues.Find(Name))
+	{
+		switch(pValue->Type)
+		{
+		case ESussContextValueType::Float:
+			Value = pValue->Value.Get<float>();
+			return true;
+		case ESussContextValueType::Int:
+			// Allow conversion
+			Value = pValue->Value.Get<int>();
+			return true;
+		case ESussContextValueType::NONE:
+		case ESussContextValueType::Actor:
+		case ESussContextValueType::Vector:
+		case ESussContextValueType::Rotator:
+		case ESussContextValueType::Tag:
+		case ESussContextValueType::Name:
+			return false;
+		}
+	}
+
+	return false;
+}
+
+bool USussUtility::GetSussContextValueAsVector(const FSussContext& Context, FName Name, FVector& Value)
+{
+	if (const auto pValue = Context.NamedValues.Find(Name))
+	{
+		switch(pValue->Type)
+		{
+		case ESussContextValueType::Vector:
+			Value = pValue->Value.Get<FVector>();
+			return true;
+		case ESussContextValueType::Int:
+		case ESussContextValueType::NONE:
+		case ESussContextValueType::Actor:
+		case ESussContextValueType::Float:
+		case ESussContextValueType::Rotator:
+		case ESussContextValueType::Tag:
+		case ESussContextValueType::Name:
+			return false;
+		}
+	}
+
+	return false;
+}
+
+bool USussUtility::GetSussContextValueAsRotator(const FSussContext& Context, FName Name, FRotator& Value)
+{
+	if (const auto pValue = Context.NamedValues.Find(Name))
+	{
+		switch(pValue->Type)
+		{
+		case ESussContextValueType::Rotator:
+			Value = pValue->Value.Get<FRotator>();
+			return true;
+		case ESussContextValueType::Int:
+		case ESussContextValueType::NONE:
+		case ESussContextValueType::Actor:
+		case ESussContextValueType::Float:
+		case ESussContextValueType::Vector:
+		case ESussContextValueType::Tag:
+		case ESussContextValueType::Name:
+			return false;
+		}
+	}
+
+	return false;	
+}
+
+
+bool USussUtility::GetSussContextValueAsInt(const FSussContext& Context, FName Name, int& Value)
+{
+	if (const auto pValue = Context.NamedValues.Find(Name))
+	{
+		switch(pValue->Type)
+		{
+		case ESussContextValueType::Int:
+			Value = pValue->Value.Get<int>();
+			return true;
+		case ESussContextValueType::Float:
+			// Allow conversion
+			Value = pValue->Value.Get<float>();
+			return true;
+		case ESussContextValueType::NONE:
+		case ESussContextValueType::Actor:
+		case ESussContextValueType::Vector:
+		case ESussContextValueType::Rotator:
+		case ESussContextValueType::Tag:
+		case ESussContextValueType::Name:
+			return false;
+		}
+	}
+
+	return false;
+}
+
+bool USussUtility::GetSussContextValueAsName(const FSussContext& Context, FName Name, FName& Value)
+{
+	if (const auto pValue = Context.NamedValues.Find(Name))
+	{
+		switch(pValue->Type)
+		{
+
+		case ESussContextValueType::Tag:
+			// Allow conversion
+			Value = pValue->Value.Get<FGameplayTag>().GetTagName();
+			return true;
+		case ESussContextValueType::Name:
+			Value = pValue->Value.Get<FName>();
+			return true;
+		case ESussContextValueType::Int:
+		case ESussContextValueType::Float:
+		case ESussContextValueType::NONE:
+		case ESussContextValueType::Actor:
+		case ESussContextValueType::Vector:
+		case ESussContextValueType::Rotator:
+			return false;
+		}
+	}
+
+	return false;
+}
+
+bool USussUtility::GetSussContextValueAsTag(const FSussContext& Context, FName Name, FGameplayTag& Value)
+{
+	if (const auto pValue = Context.NamedValues.Find(Name))
+	{
+		switch(pValue->Type)
+		{
+
+		case ESussContextValueType::Tag:
+			Value = pValue->Value.Get<FGameplayTag>();
+			return true;
+		case ESussContextValueType::Name:
+		case ESussContextValueType::Int:
+		case ESussContextValueType::Float:
+		case ESussContextValueType::NONE:
+		case ESussContextValueType::Actor:
+		case ESussContextValueType::Vector:
+		case ESussContextValueType::Rotator:
+			return false;
+		}
+	}
+
+	return false;
+}
+
 const TArray<FVector>& USussUtility::RunLocationQuery(AActor* Querier, FGameplayTag Tag, const TMap<FName, FSussParameter>& Params, float UseCachedResultsFor)
 {
 	if (IsValid(Querier))

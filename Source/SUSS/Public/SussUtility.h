@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "SussCommon.h"
 #include "SussParameter.h"
+#include "SussContext.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SussUtility.generated.h"
@@ -93,7 +94,70 @@ public:
 	UFUNCTION(BlueprintCallable, Category="SUSS")
 	static UPARAM(DisplayName="Success") bool GetSussParameterValueAsTag(const FSussParameter& Parameter, FGameplayTag& Value);
 
-	
+	/**
+	 * Try to extract a named Actor value from a context.
+	 * @param Context The context
+	 * @param Name The name of the value
+	 * @param Value The Actor value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussContextValueAsActor(const FSussContext& Context, FName Name, AActor*& Value);
+	/**
+	 * Try to extract a named float value from a context.
+	 * @param Context The context
+	 * @param Name The name of the value
+	 * @param Value The float value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussContextValueAsFloat(const FSussContext& Context, FName Name, float& Value);
+	/**
+	 * Try to extract a named vector value from a context.
+	 * @param Context The context
+	 * @param Name The name of the value
+	 * @param Value The vector value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussContextValueAsVector(const FSussContext& Context, FName Name, FVector& Value);	
+	/**
+	 * Try to extract a named rotator value from a context.
+	 * @param Context The context
+	 * @param Name The name of the value
+	 * @param Value The rotator value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussContextValueAsRotator(const FSussContext& Context, FName Name, FRotator& Value);	
+
+	/**
+	 * Try to extract an named integer value from a context.
+	 * @param Context The context
+	 * @param Name The name of the value
+	 * @param Value The integer value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussContextValueAsInt(const FSussContext& Context, FName Name, int& Value);
+	/**
+	 * Try to extract a named name value from a context.
+	 * @param Context The context
+	 * @param Name The name of the value
+	 * @param Value The name value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussContextValueAsName(const FSussContext& Context, FName Name, FName& Value);
+	/**
+	 * Try to extract a named tag value from a context.
+	 * @param Context The context
+	 * @param Name The name of the value
+	 * @param Value The name value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussContextValueAsTag(const FSussContext& Context, FName Name, FGameplayTag& Value);
 
 	/**
 	 * Manually run a query that returns locations, rather than use it to generate context for a brain decision.
@@ -101,8 +165,8 @@ public:
 	 * all the results individually as contexts.
 	 * @param Querier The actor which is the "Querier", usually the controlled actor, or self.
 	 * @param Tag The tag identifying the query provider, should begin with "Suss.Query"
-	 * @param Params Any parameters you wish to supply to the query
-	 * @param UseCachedResultsFor If > 0, this query will return previous results for the same parameters rather than
+	 * @param Params Any contexts you wish to supply to the query
+	 * @param UseCachedResultsFor If > 0, this query will return previous results for the same contexts rather than
 	 *    running the query again, if it was already run within the last N seconds
 	 * @return A list of locations from the query
 	 */
@@ -114,8 +178,8 @@ public:
 	 * all the results individually as contexts.
 	 * @param Querier The actor which is the "Querier", usually the controlled actor, or self.
 	 * @param Tag The tag identifying the query provider, should begin with "Suss.Query"
-	 * @param Params Any parameters you wish to supply to the query
-	 * @param UseCachedResultsFor If > 0, this query will return previous results for the same parameters rather than
+	 * @param Params Any contexts you wish to supply to the query
+	 * @param UseCachedResultsFor If > 0, this query will return previous results for the same contexts rather than
 	 *    running the query again, if it was already run within the last N seconds
 	 * @return A list of targets from the query
 	 */
