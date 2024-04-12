@@ -77,10 +77,16 @@ void USussTagQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 	ExecuteQueryBP(Brain, Self, Params, OutResults);
 }
 
+void USussNamedValueQueryProvider::AddValueStruct(FSussContextValueStructBase* Struct)
+{
+	const FSussContextValue S(MakeShareable(Struct));
+	GetTempArray().Add(S);
+}
+
 void USussNamedValueQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
-	AActor* Self,
-	const TMap<FName, FSussParameter>& Params,
-	TArray<FSussContextValue>& OutResults)
+                                                AActor* Self,
+                                                const TMap<FName, FSussParameter>& Params,
+                                                TArray<FSussContextValue>& OutResults)
 {
 
 	// Subclasses can override this, call BP version  by default

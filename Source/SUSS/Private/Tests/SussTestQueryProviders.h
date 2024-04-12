@@ -229,10 +229,8 @@ protected:
 							  const TMap<FName, FSussParameter>& Params,
 							  TArray<FSussContextValue>& OutResults) override
 	{
-		const FSussContextValue S1(MakeShareable(new FSussTestContextValueStruct(200, 123.4f)));
-		const FSussContextValue S2(MakeShareable(new FSussTestContextValueStruct(-30, 785.2f)));
-		OutResults.Add(S1);
-		OutResults.Add(S2);
+		AddValueStruct(new FSussTestContextValueStruct(200, 123.4f));
+		AddValueStruct(new FSussTestContextValueStruct(-30, 785.2f));
 	}
 };
 

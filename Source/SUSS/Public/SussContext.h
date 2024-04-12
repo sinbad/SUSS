@@ -10,7 +10,9 @@
 
 /// Base struct which can be used to store groups of related values in a context.
 /// Normally, every value in a context multiplies the possibility space by all the others. But if you want, say 3 related
-/// values that are always together in the context, you can put them in a subclass of this struct
+/// values that are always together in the context, you can put them in a subclass of this struct.
+/// This is only really usable if you have access to C++; you can't define Blueprint subclasses and expect this to be useful.
+/// You can, however, create C++ subclasses and some helper functions to make those available to Blueprints.
 USTRUCT(BlueprintType)
 struct FSussContextValueStructBase
 {
@@ -31,6 +33,7 @@ enum class ESussContextValueType : uint8
 	Name,
 	Float,
 	Int,
+	/// A subclass of FSussContextValueStructBase
 	Struct,
 
 	NONE

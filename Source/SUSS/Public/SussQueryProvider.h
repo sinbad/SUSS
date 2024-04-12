@@ -344,19 +344,22 @@ protected:
 
 	TArray<FSussContextValue>& GetTempArray() const { return TempOutResults->Get<TArray<FSussContextValue>>(); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueActor(FName Name, AActor* Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueActor(AActor* Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueVector(FName Name, FVector Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueVector(FVector Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueRotator(FName Name, FRotator Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueRotator(FRotator Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueTag(FName Name, FGameplayTag Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueTag(FGameplayTag Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueName(FName Name, FName Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueName(FName Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueFloat(FName Name, float Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueFloat(float Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueInt(FName Name, int Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueInt(int Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	
+	// Only available to C++ as a convenience
+	void AddValueStruct(FSussContextValueStructBase* Struct);
 
 
 	/// Should be overridden by subclasses, who should call the AddValueFOO functions to add values
