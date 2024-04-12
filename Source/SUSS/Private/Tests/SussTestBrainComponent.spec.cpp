@@ -189,12 +189,130 @@ void FSussBrainTestContextsSpec::Define()
 					TestEqual("Named 1", Contexts[1].NamedValues["Range"].Value.Get<float>(), 5000.0f);
 				}
 
-				// TestEqual("Self reference 2", Contexts[2].ControlledActor, Self);
-				// TestEqual("Location 2", Contexts[2].Location, FVector(10, -20, 50));
-				// TestEqual("Named 2", Contexts[2].NamedValues["MapRef"].Value.Get<float>(), FVector(-35, 65, 0));
-			
+				TestEqual("Self reference 2", Contexts[2].ControlledActor, Self);
+				TestEqual("Location 2", Contexts[2].Location, FVector(20, 100, -2));
+				if (TestTrue("Named Range 2",Contexts[2].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named 2", Contexts[2].NamedValues["Range"].Value.Get<float>(), 2000.0f);
+				}
+
+				TestEqual("Self reference 3", Contexts[3].ControlledActor, Self);
+				TestEqual("Location 3", Contexts[3].Location, FVector(20, 100, -2));
+				if (TestTrue("Named Range 3",Contexts[3].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named 3", Contexts[3].NamedValues["Range"].Value.Get<float>(), 5000.0f);
+				}
+
+				TestEqual("Self reference 4", Contexts[4].ControlledActor, Self);
+				TestEqual("Location 4", Contexts[4].Location, FVector(-40, 220, 750));
+				if (TestTrue("Named Range 4",Contexts[4].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named 4", Contexts[4].NamedValues["Range"].Value.Get<float>(), 2000.0f);
+				}
+
+				TestEqual("Self reference 5", Contexts[5].ControlledActor, Self);
+				TestEqual("Location 5", Contexts[5].Location, FVector(-40, 220, 750));
+				if (TestTrue("Named Range 5",Contexts[5].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named 5", Contexts[5].NamedValues["Range"].Value.Get<float>(), 5000.0f);
+				}
 			}
-			
+		});
+
+		It("Named params x2",
+		   [this]()
+		{
+			AActor* Self = WorldFixture->GetWorld()->SpawnActor<AActor>();
+			auto Brain = Cast<USussBrainComponent>(
+				Self->AddComponentByClass(USussBrainComponent::StaticClass(),
+				                          false,
+				                          FTransform::Identity,
+				                          false));
+
+			FSussActionDef Action;
+			Action.Queries.Add(FSussQuery{
+				FGameplayTag::RequestGameplayTag(USussTestNamedFloatValueQueryProvider::TagName)
+			}); // 2 items
+			Action.Queries.Add(FSussQuery{
+				FGameplayTag::RequestGameplayTag(USussTestNamedLocationValueQueryProvider::TagName)
+			}); // 3 items
+			TArray<FSussContext> Contexts;
+			Brain->GenerateContexts(Self, Action, Contexts);
+
+			if (TestEqual("Number of contexts", Contexts.Num(), 6))
+			{
+				TestEqual("Self reference 0", Contexts[0].ControlledActor, Self);
+				if (TestTrue("Named MapRef 0", Contexts[0].NamedValues.Contains("MapRef")))
+				{
+					TestEqual("Named MapRef 0",
+					          Contexts[0].NamedValues["MapRef"].Value.Get<FVector>(),
+					          FVector(120, -450, 80));
+				}
+				if (TestTrue("Named Range 0", Contexts[0].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named Range 0", Contexts[0].NamedValues["Range"].Value.Get<float>(), 2000.0f);
+				}
+
+				TestEqual("Self reference 1", Contexts[1].ControlledActor, Self);
+				if (TestTrue("Named MapRef 1", Contexts[1].NamedValues.Contains("MapRef")))
+				{
+					TestEqual("Named MapRef 1",
+					          Contexts[1].NamedValues["MapRef"].Value.Get<FVector>(),
+					          FVector(120, -450, 80));
+				}
+				if (TestTrue("Named Range 1", Contexts[1].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named 1", Contexts[1].NamedValues["Range"].Value.Get<float>(), 5000.0f);
+				}
+
+				TestEqual("Self reference 2", Contexts[2].ControlledActor, Self);
+				if (TestTrue("Named MapRef 2", Contexts[2].NamedValues.Contains("MapRef")))
+				{
+					TestEqual("Named MapRef 2",
+					          Contexts[2].NamedValues["MapRef"].Value.Get<FVector>(),
+					          FVector(70, 123, -210));
+				}
+				if (TestTrue("Named Range 2", Contexts[2].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named 2", Contexts[2].NamedValues["Range"].Value.Get<float>(), 2000.0f);
+				}
+
+				TestEqual("Self reference 3", Contexts[3].ControlledActor, Self);
+				if (TestTrue("Named MapRef 3", Contexts[3].NamedValues.Contains("MapRef")))
+				{
+					TestEqual("Named MapRef 3",
+					          Contexts[3].NamedValues["MapRef"].Value.Get<FVector>(),
+					          FVector(70, 123, -210));
+				}
+				if (TestTrue("Named Range 3", Contexts[3].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named 3", Contexts[3].NamedValues["Range"].Value.Get<float>(), 5000.0f);
+				}
+
+				TestEqual("Self reference 4", Contexts[4].ControlledActor, Self);
+				if (TestTrue("Named MapRef 4", Contexts[4].NamedValues.Contains("MapRef")))
+				{
+					TestEqual("Named MapRef 4",
+					          Contexts[4].NamedValues["MapRef"].Value.Get<FVector>(),
+					          FVector(-35, 65, 0));
+				}
+				if (TestTrue("Named Range 4", Contexts[4].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named 4", Contexts[4].NamedValues["Range"].Value.Get<float>(), 2000.0f);
+				}
+
+				TestEqual("Self reference 5", Contexts[5].ControlledActor, Self);
+				if (TestTrue("Named MapRef 5", Contexts[5].NamedValues.Contains("MapRef")))
+				{
+					TestEqual("Named MapRef 5",
+					          Contexts[5].NamedValues["MapRef"].Value.Get<FVector>(),
+					          FVector(-35, 65, 0));
+				}
+				if (TestTrue("Named Range 5", Contexts[5].NamedValues.Contains("Range")))
+				{
+					TestEqual("Named 5", Contexts[5].NamedValues["Range"].Value.Get<float>(), 5000.0f);
+				}
+			}
 		});
 		
 
