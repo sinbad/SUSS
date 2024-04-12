@@ -563,8 +563,10 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 		FSussScopeReservedArray Locations = Pool->ReserveArray<FVector>();
 		FSussScopeReservedArray Rotations = Pool->ReserveArray<FRotator>();
 		FSussScopeReservedArray Tags = Pool->ReserveArray<FGameplayTag>();
-		FSussScopeReservedArray CustomValues = Pool->ReserveArray<TPair<FName, FSussNamedContextValue>>();
 
+		// Scope reserved array in map is OK because of move constructor/assignment
+		FSussScopeReservedMap NamedValueMap = Pool->ReserveMap<FName, FSussScopeReservedArray>();
+		
 		for (const auto& Query : Action.Queries)
 		{
 			auto QueryProvider = SUSS->GetQueryProvider(Query.QueryTag);
@@ -589,8 +591,16 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 			case ESussQueryContextElement::Tag:
 				Tags.Get<FGameplayTag>()->Append(QueryProvider->GetResults<FGameplayTag>(this, Self, Query.MaxFrequency, ResolvedParams));
 				break;
-			case ESussQueryContextElement::CustomValue:
-				CustomValues.Get<TPair<FName, FSussNamedContextValue>>()->Append(QueryProvider->GetResults<TPair<FName, FSussNamedContextValue>>(this, Self, Query.MaxFrequency, ResolvedParams));
+			case ESussQueryContextElement::NamedValue:
+				if (auto NQP = Cast<USussNamedValueQueryProvider>(QueryProvider))
+				{
+					FSussScopeReservedArray* pValueArray = NamedValueMap.Get<FName, FSussScopeReservedArray>()->Find(NQP->GetQueryValueName());
+					if (!pValueArray)
+					{
+						pValueArray = &NamedValueMap.Get<FName, FSussScopeReservedArray>()->Emplace(NQP->GetQueryValueName(), Pool->ReserveArray<FSussContextValue>());
+					}
+					pValueArray->Get<FSussContextValue>()->Append(QueryProvider->GetResults<FSussContextValue>(this, Self, Query.MaxFrequency, ResolvedParams));
+				}
 				break;
 			}
 		}
@@ -620,12 +630,17 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 								 {
 									 Ctx.Tag = Tag;
 								 });
-		AppendContexts<TPair<FName, FSussNamedContextValue>>(Self, CustomValues,
-										  OutContexts,
-										  [](const TPair<FName, FSussNamedContextValue>& CV, FSussContext& Ctx)
-										  {
-											  Ctx.CustomValues[CV.Key] = CV.Value;
-										  });
+		for (auto& Pair : *NamedValueMap.Get<FName, FSussScopeReservedArray>())
+		{
+			// Need to append contexts for each key separately, for all values of that key
+			const FName ValueName = Pair.Key;
+			AppendContexts<FSussContextValue>(Self, *Pair.Value.Get<FSussContextValue>() ,
+											  OutContexts,
+											  [ValueName](const FSussContextValue& CV, FSussContext& Ctx)
+											  {
+												  Ctx.NamedValues[ValueName] = CV;
+											  });
+		}
 	}
 	else
 	{

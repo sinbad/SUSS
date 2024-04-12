@@ -80,14 +80,11 @@ void USussTagQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 void USussNamedValueQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 	AActor* Self,
 	const TMap<FName, FSussParameter>& Params,
-	TSussResultsArray& OutResults)
+	TArray<FSussContextValue>& OutResults)
 {
 
 	// Subclasses can override this, call BP version  by default
-	// We have to store local version so BP can interact using helper functions
-	TempOutResults = &OutResults;
+	// Array is not passed because it's BP-incompatible, use utility methods AddNamedValue.. 
 	ExecuteQueryBP(Brain, Self, Params);
-	TempOutResults = nullptr;
-
 }
 

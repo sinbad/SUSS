@@ -161,6 +161,37 @@ void FSussBrainTestContextsSpec::Define()
 			}
 		});
 
+		It("Named params combined with locations", [this]()
+		{
+			AActor* Self = WorldFixture->GetWorld()->SpawnActor<AActor>();
+			auto Brain = Cast<USussBrainComponent>(
+				Self->AddComponentByClass(USussBrainComponent::StaticClass(), false, FTransform::Identity, false));
+
+			FSussActionDef Action;
+			Action.Queries.Add(FSussQuery {FGameplayTag::RequestGameplayTag(USussTestNamedFloatValueQueryProvider::TagName) }); // 2 items
+			Action.Queries.Add(FSussQuery {FGameplayTag::RequestGameplayTag(USussTestMultipleLocationQueryProvider::TagName) }); // 3 items
+			TArray<FSussContext> Contexts;
+			Brain->GenerateContexts(Self, Action, Contexts);
+
+			if (TestEqual("Number of contexts", Contexts.Num(), 6))
+			{
+				TestEqual("Self reference 0", Contexts[0].ControlledActor, Self);
+				TestEqual("Location 0", Contexts[0].Location, FVector(10, -20, 50));
+				TestEqual("Named 0", Contexts[0].NamedValues["MapRef"].Value.Get<FVector>(), FVector(120, -450, 80));
+
+				TestEqual("Self reference 1", Contexts[1].ControlledActor, Self);
+				TestEqual("Location 1", Contexts[1].Location, FVector(10, -20, 50));
+				TestEqual("Named 1", Contexts[1].NamedValues["MapRef"].Value.Get<FVector>(), FVector(70, 123, -210));
+
+				TestEqual("Self reference 2", Contexts[2].ControlledActor, Self);
+				TestEqual("Location 2", Contexts[2].Location, FVector(10, -20, 50));
+				TestEqual("Named 2", Contexts[2].NamedValues["MapRef"].Value.Get<FVector>(), FVector(-35, 65, 0));
+			
+			}
+			
+		});
+		
+
 		It("Query caching works as intended", [this]()
 		{
 		   	AActor* Self = WorldFixture->GetWorld()->SpawnActor<AActor>();

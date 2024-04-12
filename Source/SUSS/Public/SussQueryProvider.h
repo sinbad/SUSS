@@ -27,8 +27,8 @@ enum class ESussQueryContextElement : uint8
 	Rotation,
 	/// Tags
 	Tag,
-	/// Custom values
-	CustomValue,
+	/// Named values of various types
+	NamedValue,
 };
 
 typedef TVariant<
@@ -36,7 +36,7 @@ typedef TVariant<
 		TArray<FVector>,
 		TArray<FRotator>,
 		TArray<FGameplayTag>,
-		TArray<TPair<FName, FSussNamedContextValue>>
+		TArray<FSussContextValue>
 	> TSussResultsArray;
 
 struct FSussCachedQueryResults
@@ -324,34 +324,43 @@ public:
 
 
 /// Subclass this to provide a query which returns named context values
+/// Each query must only return items of a single type, for a single name
 UCLASS(Abstract, Blueprintable)
 class USussNamedValueQueryProvider : public USussQueryProvider
 {
 	GENERATED_BODY()
 protected:
 
+	/// The name of the value that this query will be returning
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName QueryValueName;
+
+	/// The type of the value that this query will be returning
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	ESussContextValueType QueryValueType = ESussContextValueType::Float;
+
 	// We need to hold this to allow BP to fill in
 	TSussResultsArray* TempOutResults;
 
-	TArray<TPair<FName, FSussNamedContextValue>>& GetTempArray() const { return TempOutResults->Get<TArray<TPair<FName, FSussNamedContextValue>>>(); }
+	TArray<FSussContextValue>& GetTempArray() const { return TempOutResults->Get<TArray<FSussContextValue>>(); }
 	UFUNCTION(BlueprintCallable)
-	void AddNamedValueActor(FName Name, AActor* Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
+	void AddValueActor(FName Name, AActor* Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddNamedValueVector(FName Name, FVector Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
+	void AddValueVector(FName Name, FVector Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddNamedValueRotator(FName Name, FRotator Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
+	void AddValueRotator(FName Name, FRotator Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddNamedValueTag(FName Name, FGameplayTag Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
+	void AddValueTag(FName Name, FGameplayTag Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddNamedValueName(FName Name, FName Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
+	void AddValueName(FName Name, FName Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddNamedValueFloat(FName Name, float Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
+	void AddValueFloat(FName Name, float Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddNamedValueInt(FName Name, int Value) { GetTempArray().Add(TPair<FName, FSussNamedContextValue>(Name, FSussNamedContextValue(Value))); }
+	void AddValueInt(FName Name, int Value) { GetTempArray().Add(FSussContextValue(Value)); }
 
 
-	/// Should be overridden by subclasses, who should call the AddNamedValueFOO functions to add values
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults);
+	/// Should be overridden by subclasses, who should call the AddValueFOO functions to add values
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FSussContextValue>& OutResults);
 
 	// For consistency, call the BP version something different
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
@@ -359,11 +368,25 @@ protected:
 
 	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
-		InitResults<TPair<FName, FSussNamedContextValue>>(OutResults);
-		ExecuteQuery(Brain, Self, Params, OutResults);
+		InitResults<FSussContextValue>(OutResults);
+		// We have to store local version so BP can interact using helper functions
+		TempOutResults = &OutResults;
+		ExecuteQuery(Brain, Self, Params, GetResultsArray<FSussContextValue>(OutResults));
+		TempOutResults = nullptr;
+
 	}
 
 public:
-	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::CustomValue; }
+	const FName& GetQueryValueName() const
+	{
+		return QueryValueName;
+	}
+
+	ESussContextValueType GetQueryValueType() const
+	{
+		return QueryValueType;
+	}
+
+	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::NamedValue; }
 
 };

@@ -18,7 +18,7 @@ public:
 		TArray<FVector>*,
 		TArray<FRotator>*,
 		TArray<FGameplayTag>*,
-		TArray<TPair<FName, FSussNamedContextValue>>*,
+		TArray<FSussContextValue>*,
 		TArray<FSussContext>*> ArrayPointer;
 
 	FSussPooledArrayPtr(TArray<TWeakObjectPtr<AActor>>* InActors)
@@ -37,9 +37,9 @@ public:
 	{
 		ArrayPointer.Set<TArray<FGameplayTag>*>(InTags);
 	}
-	FSussPooledArrayPtr(TArray<TPair<FName, FSussNamedContextValue>>* InVals)
+	FSussPooledArrayPtr(TArray<FSussContextValue>* InVals)
 	{
-		ArrayPointer.Set<TArray<TPair<FName, FSussNamedContextValue>>*>(InVals);
+		ArrayPointer.Set<TArray<FSussContextValue>*>(InVals);
 	}
 	FSussPooledArrayPtr(TArray<FSussContext>* InContexts)
 	{
@@ -65,9 +65,9 @@ public:
 		{
 			delete ArrayPointer.Get<TArray<FGameplayTag>*>();
 		}
-		else if (ArrayPointer.IsType<TArray<TPair<FName, FSussNamedContextValue>>*>())
+		else if (ArrayPointer.IsType<TArray<FSussContextValue>*>())
 		{
-			delete ArrayPointer.Get<TArray<TPair<FName, FSussNamedContextValue>>*>();
+			delete ArrayPointer.Get<TArray<FSussContextValue>*>();
 		}
 		else if (ArrayPointer.IsType<TArray<FSussContext>*>())
 		{
@@ -95,9 +95,9 @@ public:
 		{
 			ArrayPointer.Get<TArray<FGameplayTag>*>()->Reset();
 		}
-		else if (ArrayPointer.IsType<TArray<TPair<FName, FSussNamedContextValue>>*>())
+		else if (ArrayPointer.IsType<TArray<FSussContextValue>*>())
 		{
-			ArrayPointer.Get<TArray<TPair<FName, FSussNamedContextValue>>*>()->Reset();
+			ArrayPointer.Get<TArray<FSussContextValue>*>()->Reset();
 		}
 		else if (ArrayPointer.IsType<TArray<FSussContext>*>())
 		{
@@ -122,6 +122,21 @@ public:
 	{
 		return Holder.ArrayPointer.Get<TArray<T>*>();
 	}
+	
+	FSussScopeReservedArray(FSussScopeReservedArray&& Other) noexcept
+		: Holder(std::move(Other.Holder)),
+		  OwningSystem(std::move(Other.OwningSystem))
+	{
+	}
+	
+	FSussScopeReservedArray& operator=(FSussScopeReservedArray&& Other) noexcept
+	{
+		if (this == &Other)
+			return *this;
+		Holder = std::move(Other.Holder);
+		OwningSystem = std::move(Other.OwningSystem);
+		return *this;
+	}
 };
 
 struct FSussPooledMapPtr
@@ -129,11 +144,21 @@ struct FSussPooledMapPtr
 public:
 	/// Internal variant pointer
 	TVariant<
-		TMap<FName, FSussParameter>*> MapPointer;
+		TMap<FName, FSussParameter>*,
+		TMap<FName, FSussContextValue>*,
+		TMap<FName, FSussScopeReservedArray>*> MapPointer;
 
 	FSussPooledMapPtr(TMap<FName, FSussParameter>* Params)
 	{
 		MapPointer.Set<TMap<FName, FSussParameter>*>(Params);
+	}
+	FSussPooledMapPtr(TMap<FName, FSussContextValue>* Params)
+	{
+		MapPointer.Set<TMap<FName, FSussContextValue>*>(Params);
+	}
+	FSussPooledMapPtr(TMap<FName, FSussScopeReservedArray>* Params)
+	{
+		MapPointer.Set<TMap<FName, FSussScopeReservedArray>*>(Params);
 	}
 	
 
@@ -144,6 +169,14 @@ public:
 		{
 			delete MapPointer.Get<TMap<FName, FSussParameter>*>();
 		}
+		else if (MapPointer.IsType<TMap<FName, FSussContextValue>*>())
+		{
+			delete MapPointer.Get<TMap<FName, FSussContextValue>*>();
+		}
+		else if (MapPointer.IsType<TMap<FName, FSussScopeReservedArray>*>())
+		{
+			delete MapPointer.Get<TMap<FName, FSussScopeReservedArray>*>();
+		}
 	}
 
 	void Reset() const
@@ -153,6 +186,14 @@ public:
 		if (MapPointer.IsType<TMap<FName, FSussParameter>*>())
 		{
 			MapPointer.Get<TMap<FName, FSussParameter>*>()->Reset();
+		}
+		else if (MapPointer.IsType<TMap<FName, FSussContextValue>*>())
+		{
+			MapPointer.Get<TMap<FName, FSussContextValue>*>()->Reset();
+		}
+		else if (MapPointer.IsType<TMap<FName, FSussScopeReservedArray>*>())
+		{
+			MapPointer.Get<TMap<FName, FSussScopeReservedArray>*>()->Reset();
 		}
 	}
 };
@@ -170,6 +211,21 @@ public:
 	TMap<K, V>* Get()
 	{
 		return Holder.MapPointer.Get<TMap<K, V>*>();
+	}
+	
+	FSussScopeReservedMap(FSussScopeReservedMap&& Other) noexcept
+		: Holder(std::move(Other.Holder)),
+		  OwningSystem(std::move(Other.OwningSystem))
+	{
+	}
+
+	FSussScopeReservedMap& operator=(FSussScopeReservedMap&& Other) noexcept
+	{
+		if (this == &Other)
+			return *this;
+		Holder = std::move(Other.Holder);
+		OwningSystem = std::move(Other.OwningSystem);
+		return *this;
 	}
 };
 

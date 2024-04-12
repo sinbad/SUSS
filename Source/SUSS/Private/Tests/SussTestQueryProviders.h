@@ -117,6 +117,75 @@ protected:
 	}
 };
 
+UCLASS()
+class USussTestNamedLocationValueQueryProvider : public USussNamedValueQueryProvider
+{
+	GENERATED_BODY()
+public:
+	static const FName TagName;
+
+	USussTestNamedLocationValueQueryProvider()
+	: TAG_TEMP(UE_PLUGIN_NAME,
+		   UE_MODULE_NAME,
+		   TagName,
+		   TEXT(""),
+		   ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
+	{
+		QueryTag = TAG_TEMP;
+		QueryValueName = FName("MapRef");
+		QueryValueType = ESussContextValueType::Vector;
+	}
+protected:
+	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
+	FSussTempNativeGameplayTag TAG_TEMP;
+
+	virtual void ExecuteQuery(USussBrainComponent* Brain,
+	                          AActor* Self,
+	                          const TMap<FName, FSussParameter>& Params,
+	                          TArray<FSussContextValue>& OutResults) override
+	{
+		OutResults.Add(FVector(120, -450, 80));
+		OutResults.Add(FVector(70, 123, -210));
+		OutResults.Add(FVector(-35, 65, 0));
+	}
+};
+
+UCLASS()
+class USussTestNamedFloatValueQueryProvider : public USussNamedValueQueryProvider
+{
+	GENERATED_BODY()
+public:
+	static const FName TagName;
+
+	USussTestNamedFloatValueQueryProvider()
+	: TAG_TEMP(UE_PLUGIN_NAME,
+		   UE_MODULE_NAME,
+		   TagName,
+		   TEXT(""),
+		   ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
+	{
+		QueryTag = TAG_TEMP;
+		QueryValueName = FName("Range");
+		QueryValueType = ESussContextValueType::Float;
+
+	}
+protected:
+	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
+	FSussTempNativeGameplayTag TAG_TEMP;
+
+	virtual void ExecuteQuery(USussBrainComponent* Brain,
+							  AActor* Self,
+							  const TMap<FName, FSussParameter>& Params,
+							  TArray<FSussContextValue>& OutResults) override
+	{
+		// The .f is very important so this does become a float value not an int value
+		// Could have used AddValueFloat for clarity
+		OutResults.Add(2000.0f);
+		OutResults.Add(5000.0f);
+	}
+};
+
+
 inline void RegisterTestQueryProviders(UWorld* World)
 {
 	if (auto SUSS = GetSUSS(World))
@@ -124,6 +193,8 @@ inline void RegisterTestQueryProviders(UWorld* World)
 		SUSS->RegisterQueryProviderClass(USussTestSingleLocationQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestMultipleLocationQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestMultipleRotationQueryProvider::StaticClass());
+		SUSS->RegisterQueryProviderClass(USussTestNamedLocationValueQueryProvider::StaticClass());
+		SUSS->RegisterQueryProviderClass(USussTestNamedFloatValueQueryProvider::StaticClass());
 	}
 }
 
@@ -134,5 +205,7 @@ inline void UnregisterTestQueryProviders(UWorld* World)
 		SUSS->UnregisterQueryProviderClass(USussTestSingleLocationQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestMultipleLocationQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestMultipleRotationQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProviderClass(USussTestNamedLocationValueQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProviderClass(USussTestNamedFloatValueQueryProvider::StaticClass());
 	}
 }
