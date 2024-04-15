@@ -9,6 +9,11 @@ ASussAIControllerBase::ASussAIControllerBase()
 
 	BrainComponent = CreateDefaultSubobject<USussBrainComponent>("SUSS Brain");
 	AddInstanceComponent(BrainComponent);
+
+	// We need StartLogic to be called for our brain to work, doing it on possess is easiest
+	// Not sure why this isn't default, perhaps because you're supposed to activate it when players come near
+	// However our brain component already accounts for distance & throttles when far away
+	bStartAILogicOnPossess = true;
 	
 }
 
