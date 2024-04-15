@@ -17,7 +17,7 @@ class SUSS_API ASussAIControllerBase : public AAIController
 
 public:
 	// Sets default values for this actor's properties
-	ASussAIControllerBase();
+	ASussAIControllerBase(const FObjectInitializer& ObjectInitializer);
 
 	UFUNCTION(BlueprintPure)
 	class USussBrainComponent* GetSussBrainComponent() const;

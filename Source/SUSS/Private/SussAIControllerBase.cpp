@@ -3,7 +3,7 @@
 
 #include "SussBrainComponent.h"
 
-ASussAIControllerBase::ASussAIControllerBase()
+ASussAIControllerBase::ASussAIControllerBase(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
