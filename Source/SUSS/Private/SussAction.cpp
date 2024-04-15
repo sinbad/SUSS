@@ -31,6 +31,8 @@ UWorld* USussAction::GetWorld() const
 
 void USussAction::ActionCompleted()
 {
+	// Allow BP to do something
+	OnActionCompleted();
 	InternalOnActionCompleted.ExecuteIfBound(this);
 }
 

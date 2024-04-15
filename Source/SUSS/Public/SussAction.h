@@ -80,6 +80,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void ActionCompleted();
 
+	/// Method that can be implemented in Blueprints to do extra work on action completion called by a C++ base
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnActionCompleted();
+
 	/// Implement this to output a series of locations in the gameplay debugger
 	UFUNCTION(BlueprintNativeEvent)
 	void DebugLocations(UPARAM(Ref) TArray<FVector>& OutLocations, bool bIncludeDetails) const;
