@@ -13,7 +13,7 @@ struct FSussAgentDistanceSettings
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, meta = (ToolTip = "The maximum distance of an agent from any player at which these update settings apply"))
-	float MaxDistance;
+	float MaxDistance = 1000;
 
 	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "The interval at which a brain requests an update to its decision making at this distance, unless some other event forces them to request an update faster"))
 	float BrainUpdateRequestIntervalSeconds = 1.0f;
