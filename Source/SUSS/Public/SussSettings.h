@@ -6,6 +6,19 @@
 #include "SussQueryProvider.h"
 #include "SussSettings.generated.h"
 
+
+USTRUCT(BlueprintType)
+struct FSussAgentDistanceSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, meta = (ToolTip = "The maximum distance of an agent from any player at which these update settings apply"))
+	float MaxDistance;
+
+	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "The interval at which a brain requests an update to its decision making at this distance, unless some other event forces them to request an update faster"))
+	float BrainUpdateRequestIntervalSeconds = 1.0f;
+
+};
 /**
  * Settings for editor-specific aspects of SUDS (no effect at runtime)
  */
@@ -44,11 +57,20 @@ public:
 	
 	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "The frame time budget in milliseconds for running updates on AI brains"))
 	float BrainUpdateFrameTimeBudgetMilliseconds = 0.5f;
-
-	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "The interval at which a brain requests an update to its decision making, unless some other event forces them to request an update faster"))
-	float BrainUpdateRequestIntervalSeconds = 1.0f;
-
+	
 	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "Whether perception changes trigger an immediate decision update of brains (e.g. spotting an enemy)"))
 	bool BrainUpdateOnPerceptionChanges = true;
+
+	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "Settings related for agents near to any player"))
+	FSussAgentDistanceSettings NearAgentSettings = {1000, 0.1f };
+
+	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "Settings related for agents at middling range to any player"))
+	FSussAgentDistanceSettings MidRangeAgentSettings = {5000, 1.0f };
+
+	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "Settings related for agents far from any player. Any agents more distant than this will not be updated."))
+	FSussAgentDistanceSettings FarAgentSettings = {10000, 3.0f };
 	
+	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "The interval at which we'll re-calculate the distance to the players when the agent is beyond the far distance"))
+	float OutOfBoundsDistanceCheckInterval = 3;
+
 };

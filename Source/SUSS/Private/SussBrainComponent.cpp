@@ -11,27 +11,22 @@
 #include "SussWorldSubsystem.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
 
 
 // Sets default values for this component's properties
 USussBrainComponent::USussBrainComponent(): bQueuedForUpdate(false),
-                                            TimeSinceLastUpdate(0),
                                             BrainConfigAsset(nullptr),
-                                            CachedUpdateRequestTime(1),
+                                            DistanceCategory(ESussDistanceCategory::OutOfRange),
+                                            CurrentUpdateInterval(0),
                                             CurrentActionResult(),
                                             PerceptionComp(nullptr)
 {
-	// Brains tick in order to queue themselves for update regularly
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// Disable ticking by default
 	PrimaryComponentTick.SetTickFunctionEnable(false);
-
-	if (auto Settings = GetDefault<USussSettings>())
-	{
-		CachedUpdateRequestTime = Settings->BrainUpdateRequestIntervalSeconds;
-	}
 }
 
 void USussBrainComponent::SetBrainConfig(const FSussBrainConfig& NewConfig)
@@ -82,24 +77,94 @@ void USussBrainComponent::StartLogic()
 {
 	Super::StartLogic();
 
-	// Randomise the time that brains update to spread them out
-	TimeSinceLastUpdate = FMath::RandRange(0.0f, CachedUpdateRequestTime);
+	if (GetOwner()->HasAuthority())
+	{
+		UpdateDistanceCategory();
 
-	if (IsValid(BrainConfigAsset))
-	{
-		if (BrainConfig.ActionDefs.Num() || BrainConfig.ActionSets.Num())
+		if (IsValid(BrainConfigAsset))
 		{
-			UE_LOG(LogSuss, Warning, TEXT("SUSS embedded BrainConfig is being overwritten by asset link on BeginPlay"))
+			if (BrainConfig.ActionDefs.Num() || BrainConfig.ActionSets.Num())
+			{
+				UE_LOG(LogSuss, Warning, TEXT("SUSS embedded BrainConfig is being overwritten by asset link on BeginPlay"))
+			}
+			SetBrainConfigFromAsset(BrainConfigAsset);
 		}
-		SetBrainConfigFromAsset(BrainConfigAsset);
+		else
+		{
+			BrainConfigChanged();
+		}
 	}
-	else
+	
+}
+
+float USussBrainComponent::GetDistanceToAnyPlayer() const
+{
+	auto Pawn = GetPawn();
+	if (IsValid(Pawn))
 	{
-		BrainConfigChanged();
+		const auto World = GetWorld();
+		const FVector OurPos = Pawn->GetActorLocation();
+		float MinSqDistance = std::numeric_limits<float>::max();
+
+		for (int i = 0; i < UGameplayStatics::GetNumPlayerControllers(World); ++i)
+		{
+			auto PlayerPawn = UGameplayStatics::GetPlayerPawn(World, i);
+			if (IsValid(PlayerPawn))
+			{
+				MinSqDistance = FMath::Min(MinSqDistance, FVector::DistSquared(OurPos, PlayerPawn->GetActorLocation()));
+			}
+		}
+
+		return FMath::Sqrt(MinSqDistance);
 	}
+
+	return std::numeric_limits<float>::max();
+}
+
+void USussBrainComponent::UpdateDistanceCategory()
+{
+	const float Dist = GetDistanceToAnyPlayer();
+	float NewInterval = 1.0f;
 	
-	SetComponentTickEnabled(true);
-	
+	if (const auto Settings = GetDefault<USussSettings>())
+	{
+		if (Dist <= Settings->NearAgentSettings.MaxDistance)
+		{
+			DistanceCategory = ESussDistanceCategory::Near;
+			NewInterval = Settings->NearAgentSettings.BrainUpdateRequestIntervalSeconds;
+		}
+		else if (Dist <= Settings->MidRangeAgentSettings.MaxDistance)
+		{
+			DistanceCategory = ESussDistanceCategory::MidRange;
+			NewInterval = Settings->MidRangeAgentSettings.BrainUpdateRequestIntervalSeconds;
+		}
+		else if (Dist <= Settings->FarAgentSettings.MaxDistance)
+		{
+			DistanceCategory = ESussDistanceCategory::Far;
+			NewInterval = Settings->FarAgentSettings.BrainUpdateRequestIntervalSeconds;
+		}
+		else
+		{
+			DistanceCategory = ESussDistanceCategory::OutOfRange;
+			NewInterval = Settings->OutOfBoundsDistanceCheckInterval;
+		}
+	}
+
+	auto& TM = GetWorld()->GetTimerManager();
+
+	if (!UpdateRequestTimer.IsValid() || NewInterval != CurrentUpdateInterval)
+	{
+		// Randomise the time that brains start their update to spread them out
+		float Delay = FMath::RandRange(0.0f, NewInterval);
+		TM.SetTimer(UpdateRequestTimer, this, &USussBrainComponent::TimerCallback, NewInterval, true, Delay);
+		CurrentUpdateInterval = NewInterval;
+	}
+
+	// Just in case this somehow gets called while agent is paused
+	if (IsPaused())
+	{
+		TM.PauseTimer(UpdateRequestTimer);
+	}
 }
 
 void USussBrainComponent::StopLogic(const FString& Reason)
@@ -107,7 +172,11 @@ void USussBrainComponent::StopLogic(const FString& Reason)
 	Super::StopLogic(Reason);
 
 	StopCurrentAction();
-	SetComponentTickEnabled(false);
+	if (UpdateRequestTimer.IsValid())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(UpdateRequestTimer);
+	}
+
 }
 
 void USussBrainComponent::RestartLogic()
@@ -115,15 +184,17 @@ void USussBrainComponent::RestartLogic()
 	Super::RestartLogic();
 
 	StopCurrentAction();
-	TimeSinceLastUpdate = 9999999;
-	SetComponentTickEnabled(true);
+	UpdateDistanceCategory();
 }
 
 void USussBrainComponent::PauseLogic(const FString& Reason)
 {
 	Super::PauseLogic(Reason);
 
-	SetComponentTickEnabled(false);
+	if (UpdateRequestTimer.IsValid())
+	{
+		GetWorld()->GetTimerManager().PauseTimer(UpdateRequestTimer);
+	}
 }
 
 EAILogicResuming::Type USussBrainComponent::ResumeLogic(const FString& Reason)
@@ -132,7 +203,10 @@ EAILogicResuming::Type USussBrainComponent::ResumeLogic(const FString& Reason)
 	if (Ret != EAILogicResuming::RestartedInstead)
 	{
 		// restarted calls RestartLogic
-		SetComponentTickEnabled(true);
+		if (UpdateRequestTimer.IsValid())
+		{
+			GetWorld()->GetTimerManager().UnPauseTimer(UpdateRequestTimer);
+		}
 	}
 	return Ret;
 }
@@ -164,28 +238,10 @@ void USussBrainComponent::InitActions()
 	});
 }
 
-// Called every frame
-void USussBrainComponent::TickComponent(float DeltaTime,
-                                        ELevelTick TickType,
-                                        FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+void USussBrainComponent::RequestUpdate()
+{
 	if (GetOwner()->HasAuthority())
-	{
-		if (CurrentActionInertiaCooldown > 0)
-		{
-			CurrentActionInertiaCooldown = FMath::Max(CurrentActionInertiaCooldown - DeltaTime, 0);
-		}
-
-		CheckForNeededUpdate(DeltaTime);
-	}
-}
-
-void USussBrainComponent::CheckForNeededUpdate(float DeltaTime)
-{
-	TimeSinceLastUpdate += DeltaTime;
-	if (TimeSinceLastUpdate > CachedUpdateRequestTime)
 	{
 		QueueForUpdate();
 	}
@@ -200,6 +256,22 @@ void USussBrainComponent::QueueForUpdate()
 			SS->QueueBrainUpdate(this);
 			bQueuedForUpdate = true;
 		}
+	}
+}
+
+void USussBrainComponent::TimerCallback()
+{
+	if (CurrentActionInertiaCooldown > 0)
+	{
+		CurrentActionInertiaCooldown = FMath::Max(CurrentActionInertiaCooldown - CurrentUpdateInterval, 0);
+	}
+
+	UpdateDistanceCategory();
+
+	// We still get timer callbacks for being out of range, we simply check the distance
+	if (DistanceCategory != ESussDistanceCategory::OutOfRange)
+	{
+		QueueForUpdate();
 	}
 }
 
@@ -357,7 +429,6 @@ void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 void USussBrainComponent::Update()
 {
 	bQueuedForUpdate = false;
-	TimeSinceLastUpdate = 0;
 	
 	if (!GetOwner()->HasAuthority())
 		return;
@@ -728,25 +799,26 @@ void USussBrainComponent::OnPerceptionUpdated(const TArray<AActor*>& Actors)
 
 FString USussBrainComponent::GetDebugSummaryString() const
 {
+	TStringBuilder<256> Builder;
+	Builder.Appendf(TEXT("Distance Category: %s  UpdateFreq: %4.2f\n"), *StaticEnum<ESussDistanceCategory>()->GetValueAsString(DistanceCategory), CurrentUpdateInterval);
+	
 	if (CombinedActionsByPriority.IsValidIndex(CurrentActionResult.ActionDefIndex))
 	{
 		// Log all actions
 		// Log all considerations?
 		const FSussActionDef& Def = CombinedActionsByPriority[CurrentActionResult.ActionDefIndex];
-		return FString::Printf(
+		Builder.Appendf(
 			TEXT(
 				"Current Action: {yellow}%s{white} Score: {yellow}%4.2f{white}\n"
-				"Countdown: {yellow}%4.2f{white}\n"
 				"Inertia: {yellow}%4.2f{white}"),
 				Def.Description.IsEmpty() ? 
 					*CurrentActionInstance->GetClass()->GetName() :
 					*Def.Description,
 				CurrentActionResult.Score,
-				FMath::Max(0.0f, CachedUpdateRequestTime - TimeSinceLastUpdate),
 				CurrentActionInertia);
 	}
 
-	return FString();
+	return Builder.ToString();
 		
 }
 

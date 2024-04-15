@@ -24,6 +24,16 @@ enum class ESussActionChoiceMethod : uint8
 	WeightedRandomTopNPercent
 };
 
+/// Distance category to any player, determines how quickly a brain ticks
+UENUM(BlueprintType)
+enum class ESussDistanceCategory : uint8
+{
+	Near,
+	MidRange,
+	Far,
+	OutOfRange
+};
+
 /// Collected configuration for a brain which can be plugged in as needed
 USTRUCT(BlueprintType)
 struct FSussBrainConfig
@@ -75,10 +85,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bQueuedForUpdate;
 
-	/// Time that has elapsed since the last brain update
-	UPROPERTY(BlueprintReadOnly)
-	float TimeSinceLastUpdate;
-
 	/// Current brain configuration; can be set in defaults, or imported from USussBrainConfigAsset, or set at runtime
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, BlueprintSetter=SetBrainConfig)
 	FSussBrainConfig BrainConfig;
@@ -89,7 +95,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, BlueprintSetter=SetBrainConfigFromAsset)
 	USussBrainConfigAsset* BrainConfigAsset;
 
-	float CachedUpdateRequestTime;
+	UPROPERTY(BlueprintReadOnly)
+	ESussDistanceCategory DistanceCategory;
+
+	/// The timer that handles the update requests (and also checks distance).
+	/// This runs at a variable rate depending on distance to players.
+	FTimerHandle UpdateRequestTimer;
+	float CurrentUpdateInterval;
+
 	mutable TWeakObjectPtr<AAIController> AiController;
 
 	/// Combination of ActionSets and ActionDefs, sorted by descending priority group
@@ -126,6 +139,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StopCurrentAction();
 
+	ESussDistanceCategory GetDistanceCategory() const { return DistanceCategory; }
+
 	/// Are we waiting for an update (should be queued already)
 	bool NeedsUpdate() const { return bQueuedForUpdate; }
 	/// Update function which triggers an evaluation & action decision
@@ -160,6 +175,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	double GetTimeSinceActionPerformed(FGameplayTag ActionTag) const;
 
+	/// Request an update to this brain, outside the usual update interval
+	UFUNCTION(BlueprintCallable)
+	void RequestUpdate();
+
+
 
 	virtual void StartLogic() override;
 	virtual void RestartLogic() override;
@@ -181,9 +201,10 @@ protected:
 	virtual void BeginPlay() override;
 	void BrainConfigChanged();
 	void InitActions();
-	void CheckForNeededUpdate(float DeltaTime);
 	void QueueForUpdate();
-	void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
+	void TimerCallback();
+	float GetDistanceToAnyPlayer() const;
+	void UpdateDistanceCategory();
 
 	UFUNCTION()
 	void OnActionCompleted(USussAction* SussAction);
