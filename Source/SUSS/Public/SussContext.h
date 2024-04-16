@@ -19,6 +19,9 @@ struct SUSS_API FSussContextValueStructBase
 	GENERATED_BODY()
 	
 	FSussContextValueStructBase() {}
+	virtual ~FSussContextValueStructBase() {}
+
+	virtual FString ToString() const { return "Override FSussContextValueStructBase::ToString for more!"; }
 	
 };
 
@@ -122,7 +125,7 @@ struct FSussContextValue
 			{
 				if (auto S = GetStructValue())
 				{
-					return S->StaticStruct()->GetName();
+					return S->ToString();
 				}
 				return "";
 			}
