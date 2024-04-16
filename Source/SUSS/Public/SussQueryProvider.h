@@ -220,7 +220,7 @@ protected:
 
 /// Subclass this to provide a query which returns targets
 UCLASS(Abstract, Blueprintable)
-class USussTargetQueryProvider : public USussQueryProvider
+class SUSS_API USussTargetQueryProvider : public USussQueryProvider
 {
 	GENERATED_BODY()
 protected:
@@ -246,7 +246,7 @@ public:
 
 /// Subclass this to provide a query which returns locations
 UCLASS(Abstract, Blueprintable)
-class USussLocationQueryProvider : public USussQueryProvider
+class SUSS_API USussLocationQueryProvider : public USussQueryProvider
 {
 	GENERATED_BODY()
 protected:
@@ -271,7 +271,7 @@ public:
 /// Subclass this to provide a query which returns named context values
 /// Each query must only return items of a single type, for a single name
 UCLASS(Abstract, Blueprintable)
-class USussNamedValueQueryProvider : public USussQueryProvider
+class SUSS_API USussNamedValueQueryProvider : public USussQueryProvider
 {
 	GENERATED_BODY()
 protected:

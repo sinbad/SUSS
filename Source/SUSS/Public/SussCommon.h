@@ -25,10 +25,10 @@ enum class ESussCurveType : uint8
 
 namespace SUSS
 {
-	extern const FName KeyParamName;
-	extern const FName TagParamName;
-	extern const FName AllowRemoteParamName;
-	extern const FName CompletionDelayParamName;
-	extern const FName WaitForEndParamName;
+	extern SUSS_API const FName KeyParamName;
+	extern SUSS_API const FName TagParamName;
+	extern SUSS_API const FName AllowRemoteParamName;
+	extern SUSS_API const FName CompletionDelayParamName;
+	extern SUSS_API const FName WaitForEndParamName;
 }
 
