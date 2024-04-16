@@ -59,10 +59,9 @@ void USussLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 	ExecuteQueryBP(Brain, Self, Params, OutResults);
 }
 
-void USussNamedValueQueryProvider::AddValueStruct(FSussContextValueStructBase* Struct)
+void USussNamedValueQueryProvider::AddValueStruct(const TSharedPtr<FSussContextValueStructBase>& Struct)
 {
-	const FSussContextValue S(MakeShareable(Struct));
-	GetTempArray().Add(S);
+	GetTempArray().Add(FSussContextValue(Struct));
 }
 
 void USussNamedValueQueryProvider::ExecuteQuery(USussBrainComponent* Brain,

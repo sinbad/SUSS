@@ -303,8 +303,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void AddValueInt(int Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	
-	// Only available to C++ as a convenience
-	void AddValueStruct(FSussContextValueStructBase* Struct);
+	/// Add a struct as a shared pointer (C++ only)
+	void AddValueStruct(const TSharedPtr<FSussContextValueStructBase>& Struct);
 
 
 	/// Should be overridden by subclasses, who should call the AddValueFOO functions to add values
