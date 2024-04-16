@@ -48,7 +48,7 @@ typedef TVariant<
 	FName,
 	float,
 	int,
-	TSharedPtr<FSussContextValueStructBase>
+	TSharedPtr<const FSussContextValueStructBase>
 > TSussContextValueVariant;
 
 /// A flexibly typed value which can be present in a context so that inputs / autoparameters can use them
@@ -85,9 +85,9 @@ struct FSussContextValue
 	{
 		Value.Set<int>(V);
 	}
-	FSussContextValue(const TSharedPtr<FSussContextValueStructBase>& V) : Type(ESussContextValueType::Struct)
+	FSussContextValue(const TSharedPtr<const FSussContextValueStructBase>& V) : Type(ESussContextValueType::Struct)
 	{
-		Value.Set<TSharedPtr<FSussContextValueStructBase>>(V);
+		Value.Set<TSharedPtr<const FSussContextValueStructBase>>(V);
 	}
 	
 
@@ -111,7 +111,7 @@ struct FSussContextValue
 			return FString::FromInt(Value.Get<int>());
 		case ESussContextValueType::Struct:
 			{
-				const auto S = Value.Get<TSharedPtr<FSussContextValueStructBase>>();
+				const auto S = Value.Get<TSharedPtr<const FSussContextValueStructBase>>();
 				if (S.IsValid())
 				{
 					return S->StaticStruct()->GetName();

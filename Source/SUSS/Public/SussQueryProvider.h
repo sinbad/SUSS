@@ -304,7 +304,7 @@ protected:
 	void AddValueInt(int Value) { GetTempArray().Add(FSussContextValue(Value)); }
 	
 	/// Add a struct as a shared pointer (C++ only)
-	void AddValueStruct(const TSharedPtr<FSussContextValueStructBase>& Struct);
+	void AddValueStruct(const TSharedPtr<const FSussContextValueStructBase>& Struct);
 
 
 	/// Should be overridden by subclasses, who should call the AddValueFOO functions to add values
