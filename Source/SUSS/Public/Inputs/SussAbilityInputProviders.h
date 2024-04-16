@@ -15,6 +15,8 @@ class SUSS_API USussCanActivateAbilityInputProvider : public USussInputProvider
 {
 	GENERATED_BODY()
 
+protected:
+	float EvaluateAbility(const AActor* Owner, const FGameplayTag& Tag) const;
 public:
 
 	USussCanActivateAbilityInputProvider();
