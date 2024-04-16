@@ -13,6 +13,8 @@ class UGameplayAbility;
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussActionActivateAbility);
 
 
+/// Base action class which can activate an ability, and will call ActionCompleted when the ability ends if required
+/// Subclasses just need to fill AbilitiesActivating before calling Activate.
 UCLASS(Abstract)
 class SUSS_API USussActivateAbilityActionBase : public USussAction
 {
@@ -21,6 +23,7 @@ private:
 	float PostCompletionDelay = 0;
 protected:
 
+	/// Subclasses: fill this with the abilities you want to activate
 	TArray<FGameplayAbilitySpec*> AbilitiesActivating;
 	FDelegateHandle OnAbilityEndedHandle;
 
@@ -31,6 +34,9 @@ protected:
 
 	void CompleteWithMaybeDelay();
 
+	/// Activate everything that's been added to AbilitiesActivating, and use standard named params
+	void ActivateWithParams(const FSussContext& Context, const TMap<FName, FSussParameter>& Params);
+	/// Activate everything that's been added to AbilitiesActivating, with explicit params
 	void Activate(const FSussContext& Context, float Delay, bool bAllowRemote, bool bWaitForEnd);
 	
 };

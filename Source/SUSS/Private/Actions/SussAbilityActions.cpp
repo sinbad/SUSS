@@ -7,6 +7,29 @@
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussActionActivateAbility, "Suss.Action.Ability.Activate", "Activate a gameplay ability by tag. Requires parameter 'Tag', optional parameters 'WaitForEnd', 'CompletionDelay' and 'AllowRemote')")
 
+void USussActivateAbilityActionBase::ActivateWithParams(const FSussContext& Context, const TMap<FName, FSussParameter>& Params)
+{
+	bool bAllowRemoteActivation = true;
+	bool bWaitForEnd = true;
+	float Delay = 0;
+
+	// Apply general params
+	if (auto pAllowRemoteParam = Params.Find(SUSS::AllowRemoteParamName))
+	{
+		bAllowRemoteActivation = pAllowRemoteParam->BoolValue;
+	}
+	if (auto pWaitParam = Params.Find(SUSS::WaitForEndParamName))
+	{
+		bWaitForEnd = pWaitParam->BoolValue;
+	}
+
+	if (auto pDelayParam = Params.Find(SUSS::CompletionDelayParamName))
+	{
+		Delay = pDelayParam->FloatValue;
+	}
+
+	Activate(Context, Delay, bAllowRemoteActivation, bWaitForEnd);
+}
 
 void USussActivateAbilityActionBase::Activate(const FSussContext& Context, float Delay, bool bAllowRemote, bool bWaitForEnd)
 {
@@ -181,25 +204,7 @@ void USussActivateAbilityAction::PerformAction_Implementation(const FSussContext
 					AbilitiesActivating.Empty();
 					ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(Tags, AbilitiesActivating);
 					
-					bool bAllowRemoteActivation = true;
-					bool bWaitForEnd = true;
-					float Delay = 0;
-
-					if (auto pAllowRemoteParam = Params.Find(SUSS::AllowRemoteParamName))
-					{
-						bAllowRemoteActivation = pAllowRemoteParam->BoolValue;
-					}
-					if (auto pWaitParam = Params.Find(SUSS::WaitForEndParamName))
-					{
-						bWaitForEnd = pWaitParam->BoolValue;
-					}
-
-					if (auto pDelayParam = Params.Find(SUSS::CompletionDelayParamName))
-					{
-						Delay = pDelayParam->FloatValue;
-					}
-
-					Activate(Context, Delay, bAllowRemoteActivation, bWaitForEnd);
+					ActivateWithParams(Context, Params);
 					bSuccess = true;
 					
 				}
