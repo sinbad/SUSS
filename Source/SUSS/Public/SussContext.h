@@ -14,7 +14,7 @@
 /// This is only really usable if you have access to C++; you can't define Blueprint subclasses and expect this to be useful.
 /// You can, however, create C++ subclasses and some helper functions to make those available to Blueprints.
 USTRUCT(BlueprintType)
-struct FSussContextValueStructBase
+struct SUSS_API FSussContextValueStructBase
 {
 	GENERATED_BODY()
 	
