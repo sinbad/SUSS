@@ -1,5 +1,7 @@
 ﻿#include "SussQueryProvider.h"
 
+#include "SussCommon.h"
+
 
 uint32 USussQueryProvider::HashQueryRequest(AActor* Self, const TMap<FName, FSussParameter>& Params)
 {
@@ -61,6 +63,15 @@ void USussLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 
 void USussNamedValueQueryProvider::AddValueStruct(const TSharedPtr<const FSussContextValueStructBase>& Struct)
 {
+	GetTempArray().Add(FSussContextValue(Struct));
+}
+
+void USussNamedValueQueryProvider::AddValueStruct(const FSussContextValueStructBase* Struct)
+{
+	if (bUseCachedResults && !bDisableRawPointerCacheWarning)
+	{
+		UE_LOG(LogSuss, Warning, TEXT("%s uses raw pointers AND cacheing together, this is dangerous! Either set bUseCachedResults=false or bDisableRawPointerCacheWarning=true"), *StaticClass()->GetName());
+	}
 	GetTempArray().Add(FSussContextValue(Struct));
 }
 

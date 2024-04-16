@@ -4,5 +4,6 @@ const FName USussTestSingleLocationQueryProvider::TagName("Suss.Query.Location.T
 const FName USussTestMultipleLocationQueryProvider::TagName("Suss.Query.Location.Test.Multiple");
 const FName USussTestNamedLocationValueQueryProvider::TagName("Suss.Query.Test.Named.Location");
 const FName USussTestNamedFloatValueQueryProvider::TagName("Suss.Query.Test.Named.Float");
-const FName USussTestNamedStructValueQueryProvider::TagName("Suss.Query.Test.Named.Struct");
+const FName USussTestNamedStructSharedValueQueryProvider::TagName("Suss.Query.Test.Named.Struct.Shared");
+const FName USussTestNamedStructRawPointerQueryProvider::TagName("Suss.Query.Test.Named.Struct.NonShared");
 

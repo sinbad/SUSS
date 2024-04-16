@@ -79,6 +79,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	bool bUseCachedResults = true;
 
+	/// Set this to true if you're using raw pointers to structs as results (C++ only) and want to keep caching results
+	/// without having warnings all the time. Use with caution! You must be absolutely sure that the structs the cached
+	/// results point to will outlive the cache.
+	bool bDisableRawPointerCacheWarning = false; 
+
 	// Cached results for each params combination
 	TMap<uint32, FSussCachedQueryResults> CachedResultsByParamsHash;
 
@@ -305,6 +310,9 @@ protected:
 	
 	/// Add a struct as a shared pointer (C++ only)
 	void AddValueStruct(const TSharedPtr<const FSussContextValueStructBase>& Struct);
+	/// Add a struct as a raw pointer (C++ only)
+	/// STRONGLY advise to set bUseCachedResults=false unless you *know* for sure that what's pointed to will outlive the cache
+	void AddValueStruct(const FSussContextValueStructBase* Struct);
 
 
 	/// Should be overridden by subclasses, who should call the AddValueFOO functions to add values

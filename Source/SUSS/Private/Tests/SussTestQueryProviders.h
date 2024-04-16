@@ -175,13 +175,13 @@ struct FSussTestContextValueStruct : public FSussContextValueStructBase
 };
 
 UCLASS()
-class USussTestNamedStructValueQueryProvider : public USussNamedValueQueryProvider
+class USussTestNamedStructSharedValueQueryProvider : public USussNamedValueQueryProvider
 {
 	GENERATED_BODY()
 public:
 	static const FName TagName;
 
-	USussTestNamedStructValueQueryProvider()
+	USussTestNamedStructSharedValueQueryProvider()
 	: TAG_TEMP(UE_PLUGIN_NAME,
 		   UE_MODULE_NAME,
 		   TagName,
@@ -206,6 +206,50 @@ protected:
 	}
 };
 
+UCLASS()
+class USussTestNamedStructRawPointerQueryProvider : public USussNamedValueQueryProvider
+{
+	GENERATED_BODY()
+public:
+	static const FName TagName;
+
+	USussTestNamedStructRawPointerQueryProvider()
+	: TAG_TEMP(UE_PLUGIN_NAME,
+		   UE_MODULE_NAME,
+		   TagName,
+		   TEXT(""),
+		   ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
+	{
+		QueryTag = TAG_TEMP;
+		QueryValueName = FName("Struct");
+		QueryValueType = ESussContextValueType::Struct;
+
+		// This is generally a good idea when using the raw pointer version so we don't cache raw pointers to things
+		// that could go away at any time
+		bUseCachedResults = false;
+
+		ArrayOfStructs.Add(FSussTestContextValueStruct(200, 123.4f));
+		ArrayOfStructs.Add(FSussTestContextValueStruct(-30, 785.2f));
+	}
+protected:
+	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
+	FSussTempNativeGameplayTag TAG_TEMP;
+
+	TArray<FSussTestContextValueStruct> ArrayOfStructs;
+	
+	virtual void ExecuteQuery(USussBrainComponent* Brain,
+							  AActor* Self,
+							  const TMap<FName, FSussParameter>& Params,
+							  TArray<FSussContextValue>& OutResults) override
+	{
+		// We're going to use some structs that are NOT passed by shared pointer but are kept on this class
+		// In real cases these structs would probably be on other classes (hence the lack of cacheing)
+		AddValueStruct(&ArrayOfStructs[0]);
+		AddValueStruct(&ArrayOfStructs[1]);
+	}
+};
+
+
 inline void RegisterTestQueryProviders(UWorld* World)
 {
 	if (auto SUSS = GetSUSS(World))
@@ -214,7 +258,8 @@ inline void RegisterTestQueryProviders(UWorld* World)
 		SUSS->RegisterQueryProviderClass(USussTestMultipleLocationQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestNamedLocationValueQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestNamedFloatValueQueryProvider::StaticClass());
-		SUSS->RegisterQueryProviderClass(USussTestNamedStructValueQueryProvider::StaticClass());
+		SUSS->RegisterQueryProviderClass(USussTestNamedStructSharedValueQueryProvider::StaticClass());
+		SUSS->RegisterQueryProviderClass(USussTestNamedStructRawPointerQueryProvider::StaticClass());
 	}
 }
 
@@ -226,6 +271,7 @@ inline void UnregisterTestQueryProviders(UWorld* World)
 		SUSS->UnregisterQueryProviderClass(USussTestMultipleLocationQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestNamedLocationValueQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestNamedFloatValueQueryProvider::StaticClass());
-		SUSS->UnregisterQueryProviderClass(USussTestNamedStructValueQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProviderClass(USussTestNamedStructSharedValueQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProviderClass(USussTestNamedStructRawPointerQueryProvider::StaticClass());
 	}
 }

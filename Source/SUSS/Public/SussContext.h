@@ -48,6 +48,7 @@ typedef TVariant<
 	FName,
 	float,
 	int,
+	const FSussContextValueStructBase*,
 	TSharedPtr<const FSussContextValueStructBase>
 > TSussContextValueVariant;
 
@@ -85,11 +86,19 @@ struct FSussContextValue
 	{
 		Value.Set<int>(V);
 	}
+	/// Store newly allocated context structs that will be auto-deleted when finished with
 	FSussContextValue(const TSharedPtr<const FSussContextValueStructBase>& V) : Type(ESussContextValueType::Struct)
 	{
 		Value.Set<TSharedPtr<const FSussContextValueStructBase>>(V);
 	}
-	
+	/// Store pointers to context structs that you manage the memory for. Be careful with this!
+	/// If you set your query to cache results and your objects get destroyed while the query is still keeping cached
+	/// results, this will cause a crash. If in doubt, use the shared pointer version
+	FSussContextValue(const FSussContextValueStructBase* V) : Type(ESussContextValueType::Struct)
+	{
+		Value.Set<const FSussContextValueStructBase*>(V);
+	}
+
 
 	FString ToString() const
 	{
@@ -111,8 +120,7 @@ struct FSussContextValue
 			return FString::FromInt(Value.Get<int>());
 		case ESussContextValueType::Struct:
 			{
-				const auto S = Value.Get<TSharedPtr<const FSussContextValueStructBase>>();
-				if (S.IsValid())
+				if (auto S = GetStructValue())
 				{
 					return S->StaticStruct()->GetName();
 				}
@@ -160,6 +168,25 @@ struct FSussContextValue
 	{
 		return !(Lhs == RHS);
 	}
+
+	const FSussContextValueStructBase* GetStructValue() const
+	{
+		if (const auto pRaw = Value.TryGet<const FSussContextValueStructBase*>())
+		{
+			return *pRaw;
+		}
+		if (auto pShared = Value.TryGet<TSharedPtr<const FSussContextValueStructBase>>())
+		{
+			if (pShared->IsValid())
+			{
+				return pShared->Get();
+			}
+		}
+
+		return nullptr;
+	}
+	
+
 };
 /**
  * This object provides all the context required for many other SUSS classes to make their decisions and execute actions.
