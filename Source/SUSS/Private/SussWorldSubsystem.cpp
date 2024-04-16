@@ -31,7 +31,7 @@ void USussWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 TStatId USussWorldSubsystem::GetStatId() const
 {
-	RETURN_QUICK_DECLARE_CYCLE_STAT(USussWorldSubsystem, STATGROUP_SUSS);
+	RETURN_QUICK_DECLARE_CYCLE_STAT(USussWorldSubsystem, STATGROUP_Tickables);
 }
 
 void USussWorldSubsystem::Tick(float DeltaTime)
