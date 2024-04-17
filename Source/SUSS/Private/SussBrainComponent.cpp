@@ -290,6 +290,9 @@ void USussBrainComponent::ChooseActionFromCandidates()
 
 	if (BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::HighestScoring)
 	{
+#if ENABLE_VISUAL_LOG
+		UE_VLOG(this, LogSuss, Log, TEXT("Choice method: Highest Scoring"));
+#endif
 		ChooseAction(CandidateActions[0]);
 	}
 	else
@@ -328,6 +331,15 @@ void USussBrainComponent::ChooseActionFromCandidates()
 
 			if (Rand < ScoreAccum)
 			{
+#if ENABLE_VISUAL_LOG
+				UE_VLOG(this, LogSuss, Log,
+				        TEXT("Choice method: %s (%d) [%4.2f/%4.2f]"),
+				        *StaticEnum<ESussActionChoiceMethod>()->GetDisplayNameTextByValue((int64)BrainConfig.
+					        ActionChoiceMethod).ToString(),
+					    BrainConfig.ActionChoiceTopN,
+				        Rand,
+				        TotalScores);
+#endif
 				ChooseAction(CandidateActions[i]);
 				break;
 			}
@@ -375,7 +387,7 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	const TSubclassOf<USussAction> ActionClass = SUSS->GetActionClass(Def.ActionTag);
 
 #if ENABLE_VISUAL_LOG
-	UE_VLOG(this, LogSuss, Log, TEXT("Chose NEW action: %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description);
+	UE_VLOG(this, LogSuss, Log, TEXT("Chose NEW action: %s %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description, *ActionResult.Context.ToString());
 #endif
 
 	TSubclassOf<USussAction> PreviousActionClass = nullptr;
