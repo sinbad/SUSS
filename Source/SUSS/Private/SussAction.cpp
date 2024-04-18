@@ -8,6 +8,11 @@ void USussAction::PerformAction_Implementation(const FSussContext& Context, cons
 	// Subclasses must implement
 }
 
+void USussAction::ContinueAction_Implementation(const FSussContext& Context, const TMap<FName, FSussParameter>& Params)
+{
+	// Optional for subclasses to use this
+}
+
 void USussAction::CancelAction_Implementation(TSubclassOf<USussAction> InterruptedByActionClass)
 {
 	// Subclasses must implement

@@ -69,6 +69,16 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void PerformAction(const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TSubclassOf<USussAction> PreviousActionClass);
 
+	/**
+	 * Called when the brain has updated, and the decision is to continue with this action.
+	 * You don't necessarily have to do anything here, but it's a helpful "brain frequency" version of Tick() which
+	 * you could use to do any updates to the action that don't need to run at frame tick frequency.
+	 * @param Context The context (same as the one included in the call to PerformAction)
+	 * @param Params Optional parameters (same as those included in the call to PerformAction)
+	 */
+	UFUNCTION(BlueprintNativeEvent)
+	void ContinueAction(const FSussContext& Context, const TMap<FName, FSussParameter>& Params);
+
 	/// Called when the action has been interrupted because the brain has changed its mind, before completion, or has otherwise been interrupted.
 	/// Will only be called if CanBeInterrupted() returns true, otherwise no other action can be performed until
 	/// ActionCompleted() is called.
