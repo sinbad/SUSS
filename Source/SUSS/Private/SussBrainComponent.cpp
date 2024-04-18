@@ -372,18 +372,18 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 {
 	checkf(ActionResult.ActionDefIndex >= 0, TEXT("No supplied action def"));
 
+	const FSussActionDef& Def = CombinedActionsByPriority[ActionResult.ActionDefIndex];
 	if (ActionResult.ActionDefIndex == CurrentActionResult.ActionDefIndex &&
 		ActionResult.Context == CurrentActionResult.Context)
 	{
 		// We're already running it, do nothing
 #if ENABLE_VISUAL_LOG
-		UE_VLOG(this, LogSuss, Log, TEXT("No Action Change, same as current"));
+		UE_VLOG(this, LogSuss, Log, TEXT("No Action Change, continue: %s %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description, *ActionResult.Context.ToString());
 #endif
 		return;
 	}
 
 	auto SUSS = GetSUSS(GetWorld());
-	const FSussActionDef& Def = CombinedActionsByPriority[ActionResult.ActionDefIndex];
 	const TSubclassOf<USussAction> ActionClass = SUSS->GetActionClass(Def.ActionTag);
 
 #if ENABLE_VISUAL_LOG
