@@ -42,13 +42,27 @@ public:
 	TSussResultsArray Results;
 };
 /**
- * Query providers are responsible for supplying building some element of context for action evaluation.
+ * Query providers are responsible for supplying some element of context for action evaluation, e.g. a location, or a target.
  * Action descriptions in a brain list all the queries they need running, and in turn the queries declare which elements
  * of the context they supply. The combination of all of these describes the full list of contexts that will be
  * generated for evaluation.
  *
  * Across all considerations for an action, only one query for each element of the context is allowed. Each action can
- * supply different parameters to the query.
+ * supply different parameters to the query, allowing you to reuse more general purpose queries.
+ *
+ * The results of multiple queries on a single action can be combined in two ways - "correlated" or "uncorrelated".
+ * 
+ * "Uncorrelated" means that each query is run *once* and returns its own set of results irrespective of
+ * other queries. Each set of results is combined with other queries by generating every possible combination, e.g.
+ * if Query1 returned 3 targets, and Query2 returned 2 locations, this would generate 6 (3x2) contexts in total
+ * with every combination of those results.
+ *
+ * "Correlated" queries generate results based on the results of previous queries. They are run *once per previous result*
+ * and receive a context from the previous queries for each invocation. They then generate one or more values related to
+ * that context which are then combined. For example if Query1 returned 3 targets, Query2 would be run 3 times, and
+ * the location results for each run would be combined with just the one target in that invocation (and not the others). 
+ * Location 1 might make Query2 generate 2 locations, but locations 1 and 2 might generate none; in which case there would
+ * only be 2 contexts from both queries.
  *
  * Do NOT subclass from this base class. When setting up a query provider, you must:
  *   1. Subclass from one of the derived classes USussTargetQueryProvider, USussLocationQueryProvider etc
@@ -67,6 +81,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(Categories="Suss.Query"))
 	FGameplayTag QueryTag;
 
+	/// Whether this query is "correlated" with the results of previous queries. If true the query is called once for
+	/// every context generated from previous queries in the action, allowing these results to be generated contextually
+	/// with the results from other queries: e.g. "generate locations around a target", where the list of targets was
+	/// generated from another query.
+	/// If false this query will simply generate values independently of any other query. The first query in an action
+	/// has to be uncorrelated.
+	/// Note: Correlated queries can never cache their results.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bIsCorrelatedWithContext = false;
+
 	/// Whether or not the value of "Self" (controlled actor) changes the results of this query
 	/// You can set this to false as an optimisation if your query only accesses global information (or parameters),
 	/// so that asking for results from any AI agent returns the same cached result instead of running the query again.
@@ -76,6 +100,7 @@ protected:
 	/// Whether or not this query should re-use cached results within the max requested frequency
 	/// You might want to set this to false if your query just reads already prepared data from elsewhere, which is
 	/// updated only when needed, and thus when the query fires you always want the latest from that. E.g. perception.
+	/// Note: Correlated queries can never cache their results.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	bool bUseCachedResults = true;
 
@@ -162,6 +187,15 @@ public:
 		return GetResultsArray<T>(Results.Results);
 	}
 
+	/// Run the query, correlated with an existing context generated from another query
+	/// Note: results are never cached on correlated queries.
+	template<typename T>
+	void GetResultsInContext(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<T>& OutResults)
+	{
+		// No caching, direct call through
+		ExecuteQueryInContext(Brain, Self, Context, Params, OutResults);
+	}
+
 protected:
 
 	uint32 HashQueryRequest(AActor* Self, const TMap<FName, FSussParameter>& Params);
@@ -185,7 +219,19 @@ protected:
 		return ParamsMatch(Results.Params, Params);
 	}
 
-	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults)
+	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults)
+	{
+		// Subclass specific
+	}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults)
+	{
+		// Subclass specific
+	}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults)
+	{
+		// Subclass specific
+	}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FSussContextValue>& OutResults)
 	{
 		// Subclass specific
 	}
@@ -195,9 +241,9 @@ protected:
 		OutResults.Params = Params;
 		OutResults.ControlledActor = Self;
 		OutResults.TimeSinceLastRun = 0;
-		ExecuteQueryInteral(Brain, Self, Params, OutResults.Results);
+		ExecuteQueryInternal(Brain, Self, Params, OutResults.Results);
 	}
-
+	
 	const FSussCachedQueryResults& MaybeExecuteQuery(USussBrainComponent* Brain,
 	                                                 AActor* Self,
 	                                                 float MaxFrequency,
@@ -230,18 +276,29 @@ class SUSS_API USussTargetQueryProvider : public USussQueryProvider
 	GENERATED_BODY()
 protected:
 	
-	/// Should be overridden by subclasses
+	/// Should be overridden by subclasses for uncorrelated queries
 	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults);
+	/// Should be overridden by subclasses for correlated queries
+	virtual void ExecuteQueryInContext(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults);
 
-	/// Blueprint-implementable version
+	/// Implement query for uncorrelated queries
 	// BPs cannot use weak object pointers so this has to proxy
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
 	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<AActor*>& OutResults);
+	/// Implement query for correlated queries (based on previous contexts)
+	// BPs cannot use weak object pointers so this has to proxy
+	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQueryInContext")
+	void ExecuteQueryInContextBP(USussBrainComponent* Brain, AActor* ControlledActor, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<AActor*>& OutResults);
 
-	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
+	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
 		InitResults<TWeakObjectPtr<AActor>>(OutResults);
 		ExecuteQuery(Brain, Self, Params, GetResultsArray<TWeakObjectPtr<AActor>>(OutResults));
+	}
+
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults) override final
+	{
+		ExecuteQueryInContext(Brain, Self, Context, Params, OutResults);
 	}
 
 public:
@@ -256,17 +313,27 @@ class SUSS_API USussLocationQueryProvider : public USussQueryProvider
 	GENERATED_BODY()
 protected:
 
-	/// Should be overridden by subclasses
+	/// Should be overridden by subclasses for uncorrelated queries
 	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults);
+	/// Should be overridden by subclasses for correlated queries
+	virtual void ExecuteQueryInContext(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults);
 
-	// For consistency, call the BP version something different
+	/// Implement for uncorrelated queries
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
 	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<FVector>& OutResults);
+	/// Implement for correlated queries
+	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQueryInContext")
+	void ExecuteQueryInContextBP(USussBrainComponent* Brain, AActor* ControlledActor, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<FVector>& OutResults);
 
-	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
+	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
 		InitResults<FVector>(OutResults);
 		ExecuteQuery(Brain, Self, Params, GetResultsArray<FVector>(OutResults));
+	}
+
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults) override final
+	{
+		ExecuteQueryInContext(Brain, Self, Context, Params, OutResults);
 	}
 
 public:
@@ -290,23 +357,22 @@ protected:
 	ESussContextValueType QueryValueType = ESussContextValueType::Float;
 
 	// We need to hold this to allow BP to fill in
-	TSussResultsArray* TempOutResults;
+	TArray<FSussContextValue>* TempOutArray;
 
-	TArray<FSussContextValue>& GetTempArray() const { return TempOutResults->Get<TArray<FSussContextValue>>(); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueActor(AActor* Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueActor(AActor* Value) { TempOutArray->Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueVector(FVector Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueVector(FVector Value) { TempOutArray->Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueRotator(FRotator Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueRotator(FRotator Value) { TempOutArray->Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueTag(FGameplayTag Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueTag(FGameplayTag Value) { TempOutArray->Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueName(FName Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueName(FName Value) { TempOutArray->Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueFloat(float Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueFloat(float Value) { TempOutArray->Add(FSussContextValue(Value)); }
 	UFUNCTION(BlueprintCallable)
-	void AddValueInt(int Value) { GetTempArray().Add(FSussContextValue(Value)); }
+	void AddValueInt(int Value) { TempOutArray->Add(FSussContextValue(Value)); }
 	
 	/// Add a struct as a shared pointer (C++ only)
 	void AddValueStruct(const TSharedPtr<const FSussContextValueStructBase>& Struct);
@@ -315,20 +381,34 @@ protected:
 	void AddValueStruct(const FSussContextValueStructBase* Struct);
 
 
-	/// Should be overridden by subclasses, who should call the AddValueFOO functions to add values
+	/// Should be overridden by subclasses
 	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FSussContextValue>& OutResults);
+	/// Should be overridden by subclasses
+	virtual void ExecuteQueryInContext(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FSussContextValue>& OutResults);
 
-	// For consistency, call the BP version something different
+	// Implement in BP to execute uncorrelated query
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
 	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params);
+	// Implement in BP to execute correlated query
+	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQueryInContext")
+	void ExecuteQueryInContextBP(USussBrainComponent* Brain, AActor* ControlledActor, const FSussContext& Context, const TMap<FName, FSussParameter>& Params);
 
-	virtual void ExecuteQueryInteral(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
+	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
 		InitResults<FSussContextValue>(OutResults);
 		// We have to store local version so BP can interact using helper functions
-		TempOutResults = &OutResults;
+		TempOutArray = &(OutResults.Get<TArray<FSussContextValue>>());
 		ExecuteQuery(Brain, Self, Params, GetResultsArray<FSussContextValue>(OutResults));
-		TempOutResults = nullptr;
+		TempOutArray = nullptr;
+
+	}
+
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FSussContextValue>& OutResults) override final
+	{
+		// We have to store local version so BP can interact using helper functions
+		TempOutArray = &OutResults;
+		ExecuteQueryInContext(Brain, Self, Context, Params, OutResults);
+		TempOutArray = nullptr;
 
 	}
 
