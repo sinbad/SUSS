@@ -8,8 +8,6 @@
 #include "SussTestGameplayTag.h"
 #include "SussTestQueryProviders.generated.h"
 
-
-UE_DECLARE_GAMEPLAY_TAG_EXTERN();
 UCLASS()
 class USussTestSingleLocationQueryProvider : public USussLocationQueryProvider
 {
