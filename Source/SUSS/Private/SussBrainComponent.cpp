@@ -1,5 +1,7 @@
 ﻿#include "SussBrainComponent.h"
 
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "AIController.h"
 #include "SussAction.h"
 #include "SussBrainConfigAsset.h"
@@ -17,6 +19,7 @@
 
 // Sets default values for this component's properties
 USussBrainComponent::USussBrainComponent(): bQueuedForUpdate(false),
+                                            bWasPreventedFromUpdating(false),
                                             BrainConfigAsset(nullptr),
                                             DistanceCategory(ESussDistanceCategory::OutOfRange),
                                             CurrentUpdateInterval(0),
@@ -92,6 +95,21 @@ void USussBrainComponent::StartLogic()
 		else
 		{
 			BrainConfigChanged();
+		}
+
+		if (BrainConfig.PreventBrainUpdateIfAnyTags.Num() > 0)
+		{
+			if (auto Pawn = GetPawn())
+			{
+				// Listen on gameplay tag changes
+				if (auto ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Pawn))
+				{
+					for (auto Tag : BrainConfig.PreventBrainUpdateIfAnyTags)
+					{
+						TagDelegates.Add(Tag, ASC->RegisterGameplayTagEvent(Tag).AddUObject(this, &USussBrainComponent::OnGameplayTagEvent));
+					}
+				}
+			}
 		}
 	}
 	
@@ -177,6 +195,23 @@ void USussBrainComponent::StopLogic(const FString& Reason)
 		GetWorld()->GetTimerManager().ClearTimer(UpdateRequestTimer);
 	}
 
+	if (TagDelegates.Num() > 0)
+	{
+		if (const auto Pawn = GetPawn())
+		{
+			// Listen on gameplay tag changes
+			if (const auto ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Pawn))
+			{
+				for (const auto Pair : TagDelegates)
+				{
+					ASC->UnregisterGameplayTagEvent(Pair.Value, Pair.Key);
+				}
+			}
+		}
+
+		TagDelegates.Empty();
+	}
+
 }
 
 void USussBrainComponent::RestartLogic()
@@ -247,15 +282,55 @@ void USussBrainComponent::RequestUpdate()
 	}
 }
 
+bool USussBrainComponent::IsUpdatePrevented() const
+{
+	if (BrainConfig.PreventBrainUpdateIfAnyTags.Num() > 0)
+	{
+		if (auto Pawn = GetPawn())
+		{
+			// Listen on gameplay tag changes
+			if (auto ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Pawn))
+			{
+				if (ASC->HasAnyMatchingGameplayTags(BrainConfig.PreventBrainUpdateIfAnyTags))
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 void USussBrainComponent::QueueForUpdate()
 {
 	if (!bQueuedForUpdate)
 	{
-		if (auto SS = GetSussWorldSubsystem(GetWorld()))
+		if (IsUpdatePrevented())
 		{
-			SS->QueueBrainUpdate(this);
-			bQueuedForUpdate = true;
+			bWasPreventedFromUpdating = true;
 		}
+		else
+		{
+			if (auto SS = GetSussWorldSubsystem(GetWorld()))
+			{
+				SS->QueueBrainUpdate(this);
+				bQueuedForUpdate = true;
+				bWasPreventedFromUpdating = false;
+			}
+		}
+	}
+}
+
+void USussBrainComponent::OnGameplayTagEvent(const FGameplayTag InTag, int32 NewCount)
+{
+	// By nature this has to be one of the brain config's prevent update tags
+	// We don't need to check > 0 because that's checked on update
+	// We just need to check if we need to immediately update
+	if (NewCount == 0 && bWasPreventedFromUpdating)
+	{
+		// This will check for the presence of any blocking tags again
+		QueueForUpdate();
 	}
 }
 

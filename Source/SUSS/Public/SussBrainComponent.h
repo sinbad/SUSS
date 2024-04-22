@@ -55,6 +55,13 @@ public:
 	/// When using the "Top N" or "Top N Percent" action choice methods, the value of "N"
 	UPROPERTY(EditDefaultsOnly)
 	int ActionChoiceTopN = 5;
+
+	/// If any of these gameplay tags exist on the pawn being controlled by the brain, the brain will not be
+	/// updated. This is a simple way to avoid new actions being performed while an enemy is stunned, or staggered (this
+	/// is easier than checking in every action for this condition).
+	/// When none of these tags exist anymore the brain will perform an immediate update if any were queued
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTagContainer PreventBrainUpdateIfAnyTags;
 };
 
 /// Output result of an action+context pair being considered; only recorded if score > 0
@@ -81,9 +88,13 @@ public:
 #endif
 	
 protected:
-	/// Whether this brain is awaiting an update
+	/// Whether this brain is awaiting an update that has been queued with the subsystem
 	UPROPERTY(BlueprintReadOnly)
 	bool bQueuedForUpdate;
+
+	/// Whether this brain wanted to update, but couldn't because of a condition
+	UPROPERTY(BlueprintReadOnly)
+	bool bWasPreventedFromUpdating;
 
 	/// Current brain configuration; can be set in defaults, or imported from USussBrainConfigAsset, or set at runtime
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, BlueprintSetter=SetBrainConfig)
@@ -122,6 +133,7 @@ protected:
 
 	UPROPERTY(Transient)
 	UAIPerceptionComponent* PerceptionComp;
+	TMap<FGameplayTag, FDelegateHandle> TagDelegates;
 
 public:
 	// Sets default values for this component's properties
@@ -205,6 +217,7 @@ protected:
 	void TimerCallback();
 	float GetDistanceToAnyPlayer() const;
 	void UpdateDistanceCategory();
+	bool IsUpdatePrevented() const;
 
 	UFUNCTION()
 	void OnActionCompleted(USussAction* SussAction);
@@ -213,6 +226,8 @@ protected:
 	void CancelCurrentAction(TSubclassOf<USussAction> Interrupter);
 	UFUNCTION()
 	void OnPerceptionUpdated(const TArray<AActor*>& Actors);
+	UFUNCTION()
+	void OnGameplayTagEvent(const FGameplayTag InTag, int32 NewCount);
 
 	template<typename T>
 	static void AppendContexts(AActor* Self, const TArray<T>& InValues, TArray<FSussContext>& OutContexts, TFunctionRef<void(const T&, FSussContext&)> ValueSetter)
