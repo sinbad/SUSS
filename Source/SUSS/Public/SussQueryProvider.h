@@ -121,7 +121,7 @@ public:
 
 	USussQueryProvider() {}
 	
-	const FGameplayTag& GetQueryTag() const { return QueryTag; }
+	virtual FGameplayTag GetQueryTag() const { return QueryTag; }
 
 	bool GetSelfIsRelevant() const { return bSelfIsRelevant; }
 

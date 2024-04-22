@@ -12,6 +12,7 @@ BEGIN_DEFINE_SPEC(FSussBrainTestContextsSpec,
 				  EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter);
 
 	TUniquePtr<FSussTestWorldFixture> WorldFixture;
+
 END_DEFINE_SPEC(FSussBrainTestContextsSpec);
 
 
@@ -21,6 +22,7 @@ void FSussBrainTestContextsSpec::Define()
 	{
 		WorldFixture = MakeUnique<FSussTestWorldFixture>();
 		RegisterTestQueryProviders(WorldFixture->GetWorld());
+
 	});
 	AfterEach([this]()
 	{

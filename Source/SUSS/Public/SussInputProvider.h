@@ -38,7 +38,7 @@ public:
 
 	USussInputProvider() {}
 	
-	const FGameplayTag& GetInputTag() const { return InputTag; }
+	virtual FGameplayTag GetInputTag() const { return InputTag; }
 
 	
 	/// Evaluate the input given a context

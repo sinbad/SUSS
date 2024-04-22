@@ -32,7 +32,7 @@ public:
 
 	USussParameterProvider() {}
 	
-	const FGameplayTag& GetParameterTag() const { return ParameterTag; }
+	virtual FGameplayTag GetParameterTag() const { return ParameterTag; }
 
 	
 	/// Evaluate the parameter provider given a context

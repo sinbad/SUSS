@@ -5,8 +5,24 @@
 #include "NativeGameplayTags.h"
 #include "SussGameSubsystem.h"
 #include "SussQueryProvider.h"
-#include "SussTestGameplayTag.h"
 #include "SussTestQueryProviders.generated.h"
+
+
+class FSussTestQueryTagHolder
+{
+protected:
+	/// Allocated tags which we'll register on demand & delete once the tests are over
+	TMap<FName, TUniquePtr<FNativeGameplayTag>> Tags;
+public:
+	FSussTestQueryTagHolder();
+	~FSussTestQueryTagHolder();
+
+	FGameplayTag GetTag(FName TagName);
+	void UnregisterTags();
+
+	static FSussTestQueryTagHolder Instance;
+	
+};
 
 UCLASS()
 class USussTestSingleLocationQueryProvider : public USussLocationQueryProvider
@@ -17,20 +33,18 @@ public:
 	static const FName TagName;
 
 	USussTestSingleLocationQueryProvider()
-		: TAG_TEMP(UE_PLUGIN_NAME,
-		           UE_MODULE_NAME,
-		           TagName,
-		           TEXT(""),
-		           ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
 	{
-		QueryTag = TAG_TEMP;
+	}
+
+	// Because we're using temp tags we can't store this in QueryTag at startup (StaticClass is too early)
+	virtual FGameplayTag GetQueryTag() const override
+	{
+		return FSussTestQueryTagHolder::Instance.GetTag(TagName);
 	}
 
 	int NumTimesRun = 0;
 protected:
-
-	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
-	FSussTempNativeGameplayTag TAG_TEMP;
+	
 
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
@@ -63,17 +77,14 @@ public:
 	static const FName TagName;
 
 	USussTestMultipleLocationQueryProvider()
-		: TAG_TEMP(UE_PLUGIN_NAME,
-		           UE_MODULE_NAME,
-		           TagName,
-		           TEXT(""),
-		           ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
 	{
-		QueryTag = TAG_TEMP;
+	}
+	// Because we're using temp tags we can't store this in QueryTag at startup (StaticClass is too early)
+	virtual FGameplayTag GetQueryTag() const override
+	{
+		return FSussTestQueryTagHolder::Instance.GetTag(TagName);
 	}
 protected:
-	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
-	FSussTempNativeGameplayTag TAG_TEMP;
 	
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
@@ -95,19 +106,16 @@ public:
 	static const FName TagName;
 
 	USussTestNamedLocationValueQueryProvider()
-	: TAG_TEMP(UE_PLUGIN_NAME,
-		   UE_MODULE_NAME,
-		   TagName,
-		   TEXT(""),
-		   ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
 	{
-		QueryTag = TAG_TEMP;
 		QueryValueName = FName("MapRef");
 		QueryValueType = ESussContextValueType::Vector;
 	}
+	// Because we're using temp tags we can't store this in QueryTag at startup (StaticClass is too early)
+	virtual FGameplayTag GetQueryTag() const override
+	{
+		return FSussTestQueryTagHolder::Instance.GetTag(TagName);
+	}
 protected:
-	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
-	FSussTempNativeGameplayTag TAG_TEMP;
 
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 	                          AActor* Self,
@@ -128,20 +136,16 @@ public:
 	static const FName TagName;
 
 	USussTestNamedFloatValueQueryProvider()
-	: TAG_TEMP(UE_PLUGIN_NAME,
-		   UE_MODULE_NAME,
-		   TagName,
-		   TEXT(""),
-		   ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
 	{
-		QueryTag = TAG_TEMP;
 		QueryValueName = FName("Range");
 		QueryValueType = ESussContextValueType::Float;
-
+	}
+	// Because we're using temp tags we can't store this in QueryTag at startup (StaticClass is too early)
+	virtual FGameplayTag GetQueryTag() const override
+	{
+		return FSussTestQueryTagHolder::Instance.GetTag(TagName);
 	}
 protected:
-	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
-	FSussTempNativeGameplayTag TAG_TEMP;
 
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 							  AActor* Self,
@@ -180,19 +184,16 @@ public:
 	static const FName TagName;
 
 	USussTestNamedStructSharedValueQueryProvider()
-	: TAG_TEMP(UE_PLUGIN_NAME,
-		   UE_MODULE_NAME,
-		   TagName,
-		   TEXT(""),
-		   ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
 	{
-		QueryTag = TAG_TEMP;
 		QueryValueName = FName("Struct");
 		QueryValueType = ESussContextValueType::Struct;
 	}
+	// Because we're using temp tags we can't store this in QueryTag at startup (StaticClass is too early)
+	virtual FGameplayTag GetQueryTag() const override
+	{
+		return FSussTestQueryTagHolder::Instance.GetTag(TagName);
+	}
 protected:
-	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
-	FSussTempNativeGameplayTag TAG_TEMP;
 
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 							  AActor* Self,
@@ -212,13 +213,7 @@ public:
 	static const FName TagName;
 
 	USussTestNamedStructRawPointerQueryProvider()
-	: TAG_TEMP(UE_PLUGIN_NAME,
-		   UE_MODULE_NAME,
-		   TagName,
-		   TEXT(""),
-		   ENativeGameplayTagToken::PRIVATE_USE_MACRO_INSTEAD)
 	{
-		QueryTag = TAG_TEMP;
 		QueryValueName = FName("Struct");
 		QueryValueType = ESussContextValueType::Struct;
 
@@ -229,9 +224,12 @@ public:
 		ArrayOfStructs.Add(FSussTestContextValueStruct(200, 123.4f));
 		ArrayOfStructs.Add(FSussTestContextValueStruct(-30, 785.2f));
 	}
+	// Because we're using temp tags we can't store this in QueryTag at startup (StaticClass is too early)
+	virtual FGameplayTag GetQueryTag() const override
+	{
+		return FSussTestQueryTagHolder::Instance.GetTag(TagName);
+	}
 protected:
-	// Define this locally so that it is destroyed after test finishes & doesn't show up in tag browser
-	FSussTempNativeGameplayTag TAG_TEMP;
 
 	TArray<FSussTestContextValueStruct> ArrayOfStructs;
 	
@@ -272,4 +270,6 @@ inline void UnregisterTestQueryProviders(UWorld* World)
 		SUSS->UnregisterQueryProviderClass(USussTestNamedStructSharedValueQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestNamedStructRawPointerQueryProvider::StaticClass());
 	}
+
+	FSussTestQueryTagHolder::Instance.UnregisterTags();
 }

@@ -213,7 +213,7 @@ TSubclassOf<USussAction> USussGameSubsystem::GetActionClass(FGameplayTag ActionT
 
 void USussGameSubsystem::RegisterInputProvider(USussInputProvider* Provider)
 {
-	auto& Tag = Provider->GetInputTag();
+	const auto Tag = Provider->GetInputTag();
 	if (Tag.IsValid())
 	{
 		if (auto pExisting = InputProviders.Find(Tag))
@@ -266,7 +266,7 @@ USussInputProvider* USussGameSubsystem::GetInputProvider(const FGameplayTag& Tag
 
 void USussGameSubsystem::RegisterQueryProvider(USussQueryProvider* Provider)
 {
-	auto& Tag = Provider->GetQueryTag();
+	const auto Tag = Provider->GetQueryTag();
 	if (Tag.IsValid())
 	{
 		if (auto pExisting = QueryProviders.Find(Tag))
@@ -304,7 +304,7 @@ void USussGameSubsystem::RegisterQueryProviderClass(TSubclassOf<USussQueryProvid
 
 void USussGameSubsystem::UnregisterQueryProvider(USussQueryProvider* Provider)
 {
-	auto& Tag = Provider->GetQueryTag();
+	const auto Tag = Provider->GetQueryTag();
 	if (Tag.IsValid())
 	{
 		if (auto pExisting = QueryProviders.Find(Tag))
@@ -349,7 +349,7 @@ USussQueryProvider* USussGameSubsystem::GetQueryProvider(const FGameplayTag& Tag
 
 void USussGameSubsystem::RegisterParameterProvider(USussParameterProvider* Provider)
 {
-	auto& Tag = Provider->GetParameterTag();
+	const auto Tag = Provider->GetParameterTag();
 	if (Tag.IsValid())
 	{
 		if (auto pExisting = ParameterProviders.Find(Tag))
@@ -387,7 +387,7 @@ void USussGameSubsystem::RegisterParameterProviderClass(TSubclassOf<USussParamet
 
 void USussGameSubsystem::UnregisterParameterProvider(USussParameterProvider* Provider)
 {
-	auto& Tag = Provider->GetParameterTag();
+	const auto Tag = Provider->GetParameterTag();
 	if (Tag.IsValid())
 	{
 		if (auto pExisting = ParameterProviders.Find(Tag))
