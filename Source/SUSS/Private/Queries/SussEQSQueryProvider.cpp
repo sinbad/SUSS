@@ -24,6 +24,7 @@ bool USussEQSQueryProvider::ShouldIncludeResult(const FEnvQueryItem& Item) const
 void USussEQSTargetQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                                AActor* Self,
                                                const TMap<FName, FSussParameter>& Params,
+                                               const FSussContext& Context,
                                                TArray<TWeakObjectPtr<AActor>>& OutResults)
 {
 	const auto Result = RunEQSQuery(Brain, Self, Params);
@@ -43,6 +44,7 @@ void USussEQSTargetQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 void USussEQSLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                                  AActor* Self,
                                                  const TMap<FName, FSussParameter>& Params,
+                                                 const FSussContext& Context,
                                                  TArray<FVector>& OutResults)
 {
 	const auto Result = RunEQSQuery(Brain, Self, Params);

@@ -461,6 +461,57 @@ void FSussBrainTestContextsSpec::Define()
 			}
 		});
 
+		It("Correlated query: locations -> named floats", [this]()
+		{
+			AActor* Self = WorldFixture->GetWorld()->SpawnActor<AActor>();
+			auto Brain = Cast<USussBrainComponent>(
+				Self->AddComponentByClass(USussBrainComponent::StaticClass(), false, FTransform::Identity, false));
+
+			FSussActionDef Action;
+			// Ordering is important, locations first then correlated floats
+			Action.Queries.Add(FSussQuery {FGameplayTag::RequestGameplayTag(USussTestMultipleLocationQueryProvider::TagName) });
+			Action.Queries.Add(FSussQuery {FGameplayTag::RequestGameplayTag(USussTestCorrelatedNamedFloatValueQueryProvider::TagName) }); 
+			TArray<FSussContext> Contexts;
+			Brain->GenerateContexts(Self, Action, Contexts);
+
+			// There are 3 locations generated, then the correlated query generates:
+			//  - Location 1 generates 1 context
+			//  - Location 2 generates NO contexts (and gets removed since correlation requires at least 1 intersecting result)
+			//  - Location 3 generates 3 contexts
+			// So there should be 4 contexts in total
+			if (TestEqual("Number of contexts", Contexts.Num(), 4))
+			{
+				TestEqual("Self reference 0", Contexts[0].ControlledActor, Self);
+				TestEqual("Location 0", Contexts[0].Location, FVector(10, -20, 50));
+				if (TestTrue("Named Distance 0",Contexts[0].NamedValues.Contains("Distance")))
+				{
+					TestEqual("Named 0", Contexts[0].NamedValues["Distance"].Value.Get<float>(), 10.0f);
+				}
+
+				TestEqual("Self reference 1", Contexts[1].ControlledActor, Self);
+				TestEqual("Location 1", Contexts[1].Location, FVector(-40, 220, 750));
+				if (TestTrue("Named Distance 1",Contexts[1].NamedValues.Contains("Distance")))
+				{
+					TestEqual("Named 1", Contexts[1].NamedValues["Distance"].Value.Get<float>(), -40.0f);
+				}
+
+				TestEqual("Self reference 2", Contexts[2].ControlledActor, Self);
+				TestEqual("Location 2", Contexts[2].Location, FVector(-40, 220, 750));
+				if (TestTrue("Named Distance 2",Contexts[2].NamedValues.Contains("Distance")))
+				{
+					TestEqual("Named 2", Contexts[2].NamedValues["Distance"].Value.Get<float>(), 220.0f);
+				}
+
+				TestEqual("Self reference 3", Contexts[3].ControlledActor, Self);
+				TestEqual("Location 3", Contexts[3].Location, FVector(-40, 220, 750));
+				if (TestTrue("Named Distance 3",Contexts[3].NamedValues.Contains("Distance")))
+				{
+					TestEqual("Named 3", Contexts[3].NamedValues["Distance"].Value.Get<float>(), 750.0f);
+				}
+				
+			}
+		});		
+
 		It("Query caching works as intended", [this]()
 		{
 		   	AActor* Self = WorldFixture->GetWorld()->SpawnActor<AActor>();

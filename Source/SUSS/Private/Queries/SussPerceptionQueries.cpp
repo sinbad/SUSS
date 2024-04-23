@@ -55,6 +55,7 @@ USussPerceptionKnownTargetsQueryProvider::USussPerceptionKnownTargetsQueryProvid
 void USussPerceptionKnownTargetsQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                                             AActor* Self,
                                                             const TMap<FName, FSussParameter>& Params,
+                                                            const FSussContext& Context,
                                                             TArray<TWeakObjectPtr<AActor>>& OutResults)
 {
 	if (const auto Perception = Brain->GetPerceptionComponent())
@@ -90,6 +91,7 @@ USussPerceptionKnownHostilesQueryProvider::USussPerceptionKnownHostilesQueryProv
 void USussPerceptionKnownHostilesQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                                        AActor* Self,
                                                        const TMap<FName, FSussParameter>& Params,
+                                                       const FSussContext& Context,
                                                        TArray<TWeakObjectPtr<AActor>>& OutResults)
 {
 	if (const auto Perception = Brain->GetPerceptionComponent())
@@ -121,6 +123,7 @@ USussPerceptionKnownNonHostilesQueryProvider::USussPerceptionKnownNonHostilesQue
 void USussPerceptionKnownNonHostilesQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 													   AActor* Self,
 													   const TMap<FName, FSussParameter>& Params,
+													   const FSussContext& Context,
 													   TArray<TWeakObjectPtr<AActor>>& OutResults)
 {
 	if (const auto Perception = Brain->GetPerceptionComponent())

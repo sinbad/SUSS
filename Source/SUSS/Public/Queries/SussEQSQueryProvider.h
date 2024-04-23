@@ -54,14 +54,32 @@ class USussEQSTargetQueryProvider : public USussEQSQueryProvider
 {
 	GENERATED_BODY()
 protected:
-	/// Should be overridden by subclasses
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults);
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, const FSussContext& BaseContext, TArray<TWeakObjectPtr<AActor>>& OutResults);
 
 	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
 		InitResults<TWeakObjectPtr<AActor>>(OutResults);
-		ExecuteQuery(Brain, Self, Params, GetResultsArray<TWeakObjectPtr<AActor>>(OutResults));
+		ExecuteQuery(Brain, Self, Params, FSussContext {Self}, GetResultsArray<TWeakObjectPtr<AActor>>(OutResults));
 	}
+
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain,
+		AActor* Self,
+		const FSussContext& Context,
+		const TMap<FName, FSussParameter>& Params,
+		TArray<TWeakObjectPtr<AActor>>& OutResults) override final
+	{
+		ExecuteQuery(Brain, Self, Params, Context, OutResults);
+	}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain,
+		AActor* Self,
+		const FSussContext& Context,
+		const TMap<FName, FSussParameter>& Params,
+		TArray<FVector>& OutResults) override final {}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain,
+		AActor* Self,
+		const FSussContext& Context,
+		const TMap<FName, FSussParameter>& Params,
+		TArray<FSussContextValue>& OutResults) override final {}
 
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Target; }
@@ -74,13 +92,32 @@ class USussEQSLocationQueryProvider : public USussEQSQueryProvider
 	GENERATED_BODY()
 protected:
 	/// Should be overridden by subclasses
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults);
+	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, const FSussContext& BaseContext, TArray<FVector>& OutResults);
 
 	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
 		InitResults<FVector>(OutResults);
-		ExecuteQuery(Brain, Self, Params, GetResultsArray<FVector>(OutResults));
+		ExecuteQuery(Brain, Self, Params, FSussContext {Self}, GetResultsArray<FVector>(OutResults));
 	}
+
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain,
+		AActor* Self,
+		const FSussContext& Context,
+		const TMap<FName, FSussParameter>& Params,
+		TArray<TWeakObjectPtr<AActor>>& OutResults) override final {}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain,
+		AActor* Self,
+		const FSussContext& Context,
+		const TMap<FName, FSussParameter>& Params,
+		TArray<FVector>& OutResults) override final
+	{
+		ExecuteQuery(Brain, Self, Params, Context, OutResults);
+	}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain,
+		AActor* Self,
+		const FSussContext& Context,
+		const TMap<FName, FSussParameter>& Params,
+		TArray<FSussContextValue>& OutResults) override final {}
 
 public:
 	virtual ESussQueryContextElement GetProvidedContextElement() const override { return ESussQueryContextElement::Location; }

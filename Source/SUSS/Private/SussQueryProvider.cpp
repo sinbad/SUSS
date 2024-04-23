@@ -44,42 +44,23 @@ bool USussQueryProvider::ParamsMatch(const TMap<FName, FSussParameter>& Params1,
 void USussTargetQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                             AActor* Self,
                                             const TMap<FName, FSussParameter>& Params,
+                                            const FSussContext& Context,
                                             TArray<TWeakObjectPtr<AActor>>& OutResults)
 {
 	// Subclasses can override; this one needs to proxy to BP-compatible (non-weak pointer) version
 	TArray<AActor*> BPArray;
-	ExecuteQueryBP(Brain, Self, Params, BPArray);
-	OutResults.Append(BPArray);
-}
-
-void USussTargetQueryProvider::ExecuteQueryInContext(USussBrainComponent* Brain,
-	AActor* Self,
-	const FSussContext& Context,
-	const TMap<FName, FSussParameter>& Params,
-	TArray<TWeakObjectPtr<AActor>>& OutResults)
-{
-	TArray<AActor*> BPArray;
-	ExecuteQueryInContextBP(Brain, Self, Context, Params, BPArray);
+	ExecuteQueryBP(Brain, Self, Params, Context, BPArray);
 	OutResults.Append(BPArray);
 }
 
 void USussLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                               AActor* Self,
                                               const TMap<FName, FSussParameter>& Params,
+                                              const FSussContext& Context,
                                               TArray<FVector>& OutResults)
 {
 	// Subclasses can override this, call BP version by default
-	ExecuteQueryBP(Brain, Self, Params, OutResults);
-}
-
-void USussLocationQueryProvider::ExecuteQueryInContext(USussBrainComponent* Brain,
-	AActor* Self,
-	const FSussContext& Context,
-	const TMap<FName, FSussParameter>& Params,
-	TArray<FVector>& OutResults)
-{
-	// Subclasses can override this, call BP version by default
-	ExecuteQueryInContextBP(Brain, Self, Context, Params, OutResults);
+	ExecuteQueryBP(Brain, Self, Params, Context, OutResults);
 }
 
 void USussNamedValueQueryProvider::AddValueStruct(const TSharedPtr<const FSussContextValueStructBase>& Struct)
@@ -97,24 +78,16 @@ void USussNamedValueQueryProvider::AddValueStruct(const FSussContextValueStructB
 }
 
 void USussNamedValueQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
-                                                AActor* Self,
-                                                const TMap<FName, FSussParameter>& Params,
-                                                TArray<FSussContextValue>& OutResults)
-{
-
-	// Subclasses can override this, call BP version  by default
-	// Array is not passed because it's BP-incompatible, use utility methods AddNamedValue.. 
-	ExecuteQueryBP(Brain, Self, Params);
-}
-
-void USussNamedValueQueryProvider::ExecuteQueryInContext(USussBrainComponent* Brain,
 	AActor* Self,
-	const FSussContext& Context,
 	const TMap<FName, FSussParameter>& Params,
+	const FSussContext& Context,
 	TArray<FSussContextValue>& OutResults)
 {
+
 	// Subclasses can override this, call BP version  by default
 	// Array is not passed because it's BP-incompatible, use utility methods AddNamedValue.. 
-	ExecuteQueryInContextBP(Brain, Self, Context, Params);
+	ExecuteQueryBP(Brain, Self, Params, Context);
 }
+
+
 

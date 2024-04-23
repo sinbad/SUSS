@@ -49,6 +49,7 @@ protected:
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
 		const TMap<FName, FSussParameter>& Params,
+		const FSussContext& Context,
 		TArray<FVector>& OutResults) override
 	{
 		float X = 10;
@@ -89,6 +90,7 @@ protected:
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
 		const TMap<FName, FSussParameter>& Params,
+		const FSussContext& Context,
 		TArray<FVector>& OutResults) override
 	{
 		OutResults.Add(FVector(10, -20, 50));
@@ -120,6 +122,7 @@ protected:
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 	                          AActor* Self,
 	                          const TMap<FName, FSussParameter>& Params,
+	                          const FSussContext& Context,
 	                          TArray<FSussContextValue>& OutResults) override
 	{
 		OutResults.Add(FVector(120, -450, 80));
@@ -148,9 +151,10 @@ public:
 protected:
 
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
-							  AActor* Self,
-							  const TMap<FName, FSussParameter>& Params,
-							  TArray<FSussContextValue>& OutResults) override
+	                          AActor* Self,
+	                          const TMap<FName, FSussParameter>& Params,
+	                          const FSussContext& Context,
+	                          TArray<FSussContextValue>& OutResults) override
 	{
 		// The .f is very important so this does become a float value not an int value
 		// Could have used AddValueFloat for clarity
@@ -196,9 +200,10 @@ public:
 protected:
 
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
-							  AActor* Self,
-							  const TMap<FName, FSussParameter>& Params,
-							  TArray<FSussContextValue>& OutResults) override
+	                          AActor* Self,
+	                          const TMap<FName, FSussParameter>& Params,
+	                          const FSussContext& Context,
+	                          TArray<FSussContextValue>& OutResults) override
 	{
 		AddValueStruct(MakeShareable(new FSussTestContextValueStruct(200, 123.4f)));
 		AddValueStruct(MakeShareable(new FSussTestContextValueStruct(-30, 785.2f)));
@@ -234,14 +239,63 @@ protected:
 	TArray<FSussTestContextValueStruct> ArrayOfStructs;
 	
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
-							  AActor* Self,
-							  const TMap<FName, FSussParameter>& Params,
-							  TArray<FSussContextValue>& OutResults) override
+	                          AActor* Self,
+	                          const TMap<FName, FSussParameter>& Params,
+	                          const FSussContext& Context,
+	                          TArray<FSussContextValue>& OutResults) override
 	{
 		// We're going to use some structs that are NOT passed by shared pointer but are kept on this class
 		// In real cases these structs would probably be on other classes (hence the lack of cacheing)
 		AddValueStruct(&ArrayOfStructs[0]);
 		AddValueStruct(&ArrayOfStructs[1]);
+	}
+};
+
+/// float values which are correlated with locations
+UCLASS()
+class USussTestCorrelatedNamedFloatValueQueryProvider : public USussNamedValueQueryProvider
+{
+	GENERATED_BODY()
+public:
+	static const FName TagName;
+
+	USussTestCorrelatedNamedFloatValueQueryProvider()
+	{
+		QueryValueName = FName("Distance");
+		QueryValueType = ESussContextValueType::Float;
+		bIsCorrelatedWithContext = true;
+	}
+	// Because we're using temp tags we can't store this in QueryTag at startup (StaticClass is too early)
+	virtual FGameplayTag GetQueryTag() const override
+	{
+		return FSussTestQueryTagHolder::Instance.GetTag(TagName);
+	}
+protected:
+	virtual void ExecuteQuery(USussBrainComponent* Brain,
+		AActor* Self,
+		const TMap<FName, FSussParameter>& Params,
+		const FSussContext& Context,
+		TArray<FSussContextValue>& OutResults) override
+	{
+		// On the assumption that we get called with the 3 locations from USussTestMultipleLocationQueryProvider
+		if (Context.Location.Equals(FVector(10, -20, 50)))
+		{
+			// Add a single entry for this one
+			OutResults.Add(static_cast<float>(Context.Location.X));
+		}
+		else if (Context.Location.Equals(FVector(20, 100, -2)))
+		{
+			// Add no entries for this, it should be removed from the results
+		}
+		else if (Context.Location.Equals(FVector(-40, 220, 750)))
+		{
+			// Add 3 entries for this
+			OutResults.Add(static_cast<float>(Context.Location.X));
+			OutResults.Add(static_cast<float>(Context.Location.Y));
+			OutResults.Add(static_cast<float>(Context.Location.Z));
+			
+		}
+		
 	}
 };
 
@@ -256,6 +310,7 @@ inline void RegisterTestQueryProviders(UWorld* World)
 		SUSS->RegisterQueryProviderClass(USussTestNamedFloatValueQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestNamedStructSharedValueQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestNamedStructRawPointerQueryProvider::StaticClass());
+		SUSS->RegisterQueryProviderClass(USussTestCorrelatedNamedFloatValueQueryProvider::StaticClass());
 	}
 }
 
@@ -269,6 +324,7 @@ inline void UnregisterTestQueryProviders(UWorld* World)
 		SUSS->UnregisterQueryProviderClass(USussTestNamedFloatValueQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestNamedStructSharedValueQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestNamedStructRawPointerQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProviderClass(USussTestCorrelatedNamedFloatValueQueryProvider::StaticClass());
 	}
 
 	FSussTestQueryTagHolder::Instance.UnregisterTags();

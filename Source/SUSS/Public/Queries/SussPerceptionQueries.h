@@ -30,6 +30,7 @@ protected:
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
 		const TMap<FName, FSussParameter>& Params,
+		const FSussContext& Context,
 		TArray<TWeakObjectPtr<AActor>>& OutResults) override;
 };
 
@@ -51,6 +52,7 @@ protected:
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
 		const TMap<FName, FSussParameter>& Params,
+		const FSussContext& Context,
 		TArray<TWeakObjectPtr<AActor>>& OutResults) override;
 };
 
@@ -72,5 +74,6 @@ protected:
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
 		const TMap<FName, FSussParameter>& Params,
+		const FSussContext& Context,
 		TArray<TWeakObjectPtr<AActor>>& OutResults) override;
 };

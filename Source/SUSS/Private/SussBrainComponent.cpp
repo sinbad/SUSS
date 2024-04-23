@@ -747,62 +747,37 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 				continue;
 			}
 			ContextElements.Add(Element);
-		
-			switch (Element)
+
+			if (Element == ESussQueryContextElement::NamedValue)
 			{
-			case ESussQueryContextElement::Target:
+				if (auto NQP = Cast<USussNamedValueQueryProvider>(QueryProvider))
 				{
-					FSussScopeReservedArray Targets = Pool->ReserveArray<TWeakObjectPtr<AActor>>();
-					Targets.Get<TWeakObjectPtr<AActor>>()->Append(QueryProvider->GetResults<TWeakObjectPtr<AActor>>(this, Self, Query.MaxFrequency, ResolvedParams));
-					AppendContexts<TWeakObjectPtr<AActor>>(Self, Targets,
-											   OutContexts,
-											   [](const TWeakObjectPtr<AActor>& Target, FSussContext& Ctx)
-											   {
-												   Ctx.Target = Target;
-											   });
-					break;
-				}
-			case ESussQueryContextElement::Location:
-				{
-					FSussScopeReservedArray Locations = Pool->ReserveArray<FVector>();
-					Locations.Get<FVector>()->Append(QueryProvider->GetResults<FVector>(this, Self, Query.MaxFrequency, ResolvedParams));
-					AppendContexts<FVector>(Self, Locations,
-											OutContexts,
-											[](const FVector& Loc, FSussContext& Ctx)
-											{
-												Ctx.Location = Loc;
-											});
-					
-					break;
-				}
-			case ESussQueryContextElement::NamedValue:
-				{
-					if (auto NQP = Cast<USussNamedValueQueryProvider>(QueryProvider))
+					const FName ValueName = NQP->GetQueryValueName();
+					// Make sure we haven't seen this name before; since we allow multiple named type queries
+					if (NamedQueryValues.Contains(ValueName))
 					{
-						const FName ValueName = NQP->GetQueryValueName();
-						// Make sure we haven't seen this name before; since we allow multiple named type queries
-						if (NamedQueryValues.Contains(ValueName))
-						{
-							UE_LOG(LogSuss,
-							       Warning,
-							       TEXT("Action %s has more than one query returning named value %s, ignoring extra one %s"),
-							       *Action.ActionTag.ToString(),
-							       *ValueName.ToString(),
-							       *Query.QueryTag.ToString());
-							continue;
-						}
-						FSussScopeReservedArray NamedValues = Pool->ReserveArray<FSussContextValue>();
-						NamedValues.Get<FSussContextValue>()->Append(QueryProvider->GetResults<FSussContextValue>(this, Self, Query.MaxFrequency, ResolvedParams));
-						AppendContexts<FSussContextValue>(Self, NamedValues,
-												 OutContexts,
-												 [ValueName](const FSussContextValue& Value, FSussContext& Ctx)
-												 {
-													 Ctx.NamedValues.Add(ValueName, Value);
-												 });
+						UE_LOG(LogSuss,
+							   Warning,
+							   TEXT("Action %s has more than one query returning named value %s, ignoring extra one %s"),
+							   *Action.ActionTag.ToString(),
+							   *ValueName.ToString(),
+							   *Query.QueryTag.ToString());
+						continue;
 					}
-					break;
+					NamedQueryValues.Add(ValueName);
 				}
 			}
+
+			if (QueryProvider->IsCorrelatedWithContext())
+			{
+				IntersectCorrelatedContexts(Self, Query, QueryProvider, ResolvedParams, OutContexts);
+			}
+			else
+			{
+				AppendUncorrelatedContexts(Self, Query, QueryProvider, ResolvedParams, OutContexts);
+			}
+		
+			
 		}
 	}
 	else
@@ -811,6 +786,163 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 		OutContexts.Add(FSussContext { Self });
 	}
 	
+}
+
+void USussBrainComponent::IntersectCorrelatedContexts(AActor* Self,
+                                                   const FSussQuery& Query,
+                                                   USussQueryProvider* QueryProvider,
+                                                   const TMap<FName, FSussParameter>& Params,
+                                                   TArray<FSussContext>& InOutContexts)
+{
+	// Correlated results run a query once for each existing context generated from previous queries, then combine the
+	// results with that one context, meaning that instead of C * N contexts, you get N(C1) + N(C2) + .. N(Cx) contexts
+
+	auto Pool = GetSussPool(GetWorld());
+	const auto Element = QueryProvider->GetProvidedContextElement();
+
+	int InContextCount = InOutContexts.Num();
+
+	for (int i = 0; i < InContextCount; ++i)
+	{
+		FSussContext& SourceContext = InOutContexts[i];
+		int NumResults = 0;
+		switch(Element)
+		{
+		case ESussQueryContextElement::Target:
+			{
+				FSussScopeReservedArray Targets = Pool->ReserveArray<TWeakObjectPtr<AActor>>();
+				QueryProvider->GetResultsInContext<TWeakObjectPtr<AActor>>(this, Self, SourceContext, Params, *Targets.Get<TWeakObjectPtr<AActor>>());
+
+				NumResults = Targets.Get<TWeakObjectPtr<AActor>>()->Num();
+				if (NumResults > 0)
+				{
+					AppendCorrelatedContexts<TWeakObjectPtr<AActor>>(Self,
+					                                                 Targets,
+					                                                 SourceContext,
+					                                                 InOutContexts,
+					                                                 [](const TWeakObjectPtr<AActor>& Target,
+					                                                    FSussContext& Ctx)
+					                                                 {
+						                                                 Ctx.Target = Target;
+					                                                 });
+				}
+				break;
+			}
+		case ESussQueryContextElement::Location:
+			{
+				FSussScopeReservedArray Targets = Pool->ReserveArray<FVector>();
+				QueryProvider->GetResultsInContext<FVector>(this, Self, SourceContext, Params, *Targets.Get<FVector>());
+
+				NumResults = Targets.Get<FVector>()->Num();
+				if (NumResults > 0)
+				{
+					AppendCorrelatedContexts<FVector>(Self,
+													  Targets,
+													  SourceContext,
+													  InOutContexts,
+													  [](const FVector& Location, FSussContext& Ctx)
+													  {
+														  Ctx.Location = Location;
+													  });
+				}
+				break;
+			}
+		case ESussQueryContextElement::NamedValue:
+			{
+				if (auto NQP = Cast<USussNamedValueQueryProvider>(QueryProvider))
+				{
+					const FName ValueName = NQP->GetQueryValueName();
+					FSussScopeReservedArray NamedValues = Pool->ReserveArray<FSussContextValue>();
+					QueryProvider->GetResultsInContext<FSussContextValue>(this, Self, SourceContext, Params, *NamedValues.Get<FSussContextValue>());
+					NumResults = NamedValues.Get<FSussContextValue>()->Num();
+					if (NumResults > 0)
+					{
+						AppendCorrelatedContexts<FSussContextValue>(Self,
+																	NamedValues,
+																	SourceContext,
+																	InOutContexts,
+																	[ValueName](const FSussContextValue& Value,
+																				FSussContext& Ctx)
+																	{
+																		Ctx.NamedValues.Add(ValueName, Value);
+																	});
+					}
+				}
+				break;
+			}
+		}
+
+		if (NumResults == 0)
+		{
+			// Correlated queries require results from BOTH (intersection). If this query didn't return any
+			// results, it means that we must remove this incoming context because it's not valid
+			InOutContexts.RemoveAt(i);
+			--i;
+			--InContextCount;
+		}
+	}
+}
+
+void USussBrainComponent::AppendUncorrelatedContexts(AActor* Self,
+                                                     const FSussQuery& Query,
+                                                     USussQueryProvider* QueryProvider,
+                                                     const TMap<FName, FSussParameter>& Params,
+                                                     TArray<FSussContext>& OutContexts)
+{
+	// Uncorrelated results run a query once, and combine the results in every combination with any existing
+
+	auto Pool = GetSussPool(GetWorld());
+	const auto Element = QueryProvider->GetProvidedContextElement();
+	switch (Element)
+	{
+	case ESussQueryContextElement::Target:
+		{
+			FSussScopeReservedArray Targets = Pool->ReserveArray<TWeakObjectPtr<AActor>>();
+			Targets.Get<TWeakObjectPtr<AActor>>()->Append(
+				QueryProvider->GetResults<TWeakObjectPtr<AActor>>(this, Self, Query.MaxFrequency, Params));
+			AppendUncorrelatedContexts<TWeakObjectPtr<AActor>>(Self,
+			                                       Targets,
+			                                       OutContexts,
+			                                       [](const TWeakObjectPtr<AActor>& Target, FSussContext& Ctx)
+			                                       {
+				                                       Ctx.Target = Target;
+			                                       });
+			break;
+		}
+	case ESussQueryContextElement::Location:
+		{
+			FSussScopeReservedArray Locations = Pool->ReserveArray<FVector>();
+			Locations.Get<FVector>()->Append(
+				QueryProvider->GetResults<FVector>(this, Self, Query.MaxFrequency, Params));
+			AppendUncorrelatedContexts<FVector>(Self,
+			                        Locations,
+			                        OutContexts,
+			                        [](const FVector& Loc, FSussContext& Ctx)
+			                        {
+				                        Ctx.Location = Loc;
+			                        });
+
+			break;
+		}
+	case ESussQueryContextElement::NamedValue:
+		{
+			if (auto NQP = Cast<USussNamedValueQueryProvider>(QueryProvider))
+			{
+				const FName ValueName = NQP->GetQueryValueName();
+				FSussScopeReservedArray NamedValues = Pool->ReserveArray<FSussContextValue>();
+				NamedValues.Get<FSussContextValue>()->Append(
+					QueryProvider->GetResults<FSussContextValue>(this, Self, Query.MaxFrequency, Params));
+				AppendUncorrelatedContexts<FSussContextValue>(Self,
+				                                  NamedValues,
+				                                  OutContexts,
+				                                  [ValueName](const FSussContextValue& Value, FSussContext& Ctx)
+				                                  {
+					                                  Ctx.NamedValues.Add(ValueName, Value);
+				                                  });
+			}
+			break;
+		}
+	}
 }
 
 

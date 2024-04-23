@@ -148,6 +148,7 @@ public:
 	
 	virtual FGameplayTag GetQueryTag() const { return QueryTag; }
 
+	bool IsCorrelatedWithContext() const { return bIsCorrelatedWithContext; }
 	bool GetSelfIsRelevant() const { return bSelfIsRelevant; }
 
 	// I'd prefer to make this pure virtual but UCLASS doesn't allow that
@@ -193,7 +194,7 @@ public:
 	void GetResultsInContext(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<T>& OutResults)
 	{
 		// No caching, direct call through
-		ExecuteQueryInContext(Brain, Self, Context, Params, OutResults);
+		ExecuteQueryInContextInternal(Brain, Self, Context, Params, OutResults);
 	}
 
 protected:
@@ -276,29 +277,54 @@ class SUSS_API USussTargetQueryProvider : public USussQueryProvider
 	GENERATED_BODY()
 protected:
 	
-	/// Should be overridden by subclasses for uncorrelated queries
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults);
-	/// Should be overridden by subclasses for correlated queries
-	virtual void ExecuteQueryInContext(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults);
+	/**
+	 * Query execution function which should be overridden for C++ subclasses
+	 * @param Brain The brain executing this query
+	 * @param Self The pawn controlled by the brain
+	 * @param Params Any parameters supplied to the query
+	 * @param BaseContext If this query is correlated with results from a previous query, this is the context to base the query on.
+	 *   If uncorrelated, this context will only contain Self.
+	 * @param OutResults Array that new query results should be appended to
+	 */
+	virtual void ExecuteQuery(USussBrainComponent* Brain,
+							  AActor* Self,
+							  const TMap<FName, FSussParameter>& Params,
+							  const FSussContext& BaseContext,
+							  TArray<TWeakObjectPtr<AActor>>& OutResults);
 
-	/// Implement query for uncorrelated queries
-	// BPs cannot use weak object pointers so this has to proxy
+	/**
+	 * Query execution function which should be overridden in Blueprints
+	 * @param Brain The brain executing this query
+	 * @param ControlledActor The pawn controlled by the brain
+	 * @param Params Any parameters supplied to the query
+	 * @param BaseContext If this query is correlated with results from a previous query, this is the context to base the query on.
+	 *   If uncorrelated, this context will only contain ControlledActor.
+	 * @param OutResults Array that new query results should be appended to
+	 */
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
-	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<AActor*>& OutResults);
-	/// Implement query for correlated queries (based on previous contexts)
-	// BPs cannot use weak object pointers so this has to proxy
-	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQueryInContext")
-	void ExecuteQueryInContextBP(USussBrainComponent* Brain, AActor* ControlledActor, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<AActor*>& OutResults);
+	void ExecuteQueryBP(USussBrainComponent* Brain,
+	                    AActor* ControlledActor,
+	                    const TMap<FName, FSussParameter>& Params,
+	                    const FSussContext& BaseContext,
+	                    UPARAM(ref) TArray<AActor*>& OutResults);
 
 	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
 		InitResults<TWeakObjectPtr<AActor>>(OutResults);
-		ExecuteQuery(Brain, Self, Params, GetResultsArray<TWeakObjectPtr<AActor>>(OutResults));
+		ExecuteQuery(Brain, Self, Params, FSussContext { Self }, GetResultsArray<TWeakObjectPtr<AActor>>(OutResults));
 	}
 
 	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults) override final
 	{
-		ExecuteQueryInContext(Brain, Self, Context, Params, OutResults);
+		ExecuteQuery(Brain, Self, Params, Context, OutResults);
+	}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults) override final
+	{
+		// N/A: final disallows further override
+	}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FSussContextValue>& OutResults) override final
+	{
+		// N/A: final disallows further override
 	}
 
 public:
@@ -312,28 +338,55 @@ class SUSS_API USussLocationQueryProvider : public USussQueryProvider
 {
 	GENERATED_BODY()
 protected:
+	/**
+	 * Query execution function which should be overridden for C++ subclasses
+	 * @param Brain The brain executing this query
+	 * @param Self The pawn controlled by the brain
+	 * @param Params Any parameters supplied to the query
+	 * @param BaseContext If this query is correlated with results from a previous query, this is the context to base the query on.
+	 *   If uncorrelated, this context will only contain Self.
+	 * @param OutResults Array that new query results should be appended to
+	 */
+	virtual void ExecuteQuery(USussBrainComponent* Brain,
+	                          AActor* Self,
+	                          const TMap<FName, FSussParameter>& Params,
+	                          const FSussContext& BaseContext,
+	                          TArray<FVector>& OutResults);
 
-	/// Should be overridden by subclasses for uncorrelated queries
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults);
-	/// Should be overridden by subclasses for correlated queries
-	virtual void ExecuteQueryInContext(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults);
-
-	/// Implement for uncorrelated queries
+	/**
+	 * Query execution function which should be overridden in Blueprints
+	 * @param Brain The brain executing this query
+	 * @param ControlledActor The pawn controlled by the brain
+	 * @param Params Any parameters supplied to the query
+	 * @param BaseContext If this query is correlated with results from a previous query, this is the context to base the query on.
+	 *   If uncorrelated, this context will only contain ControlledActor.
+	 * @param OutResults Array that new query results should be appended to
+	 */
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
-	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<FVector>& OutResults);
-	/// Implement for correlated queries
-	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQueryInContext")
-	void ExecuteQueryInContextBP(USussBrainComponent* Brain, AActor* ControlledActor, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, UPARAM(ref) TArray<FVector>& OutResults);
+	void ExecuteQueryBP(USussBrainComponent* Brain,
+	                    AActor* ControlledActor,
+	                    const TMap<FName, FSussParameter>& Params,
+	                    const FSussContext& BaseContext,
+	                    UPARAM(ref) TArray<FVector>& OutResults);
+	
 
 	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
 		InitResults<FVector>(OutResults);
-		ExecuteQuery(Brain, Self, Params, GetResultsArray<FVector>(OutResults));
+		ExecuteQuery(Brain, Self, Params, FSussContext {Self}, GetResultsArray<FVector>(OutResults));
 	}
 
 	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults) override final
 	{
-		ExecuteQueryInContext(Brain, Self, Context, Params, OutResults);
+		ExecuteQuery(Brain, Self, Params, Context, OutResults);
+	}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults) override final
+	{
+		// N/A: final disallows further override
+	}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FSussContextValue>& OutResults) override final
+	{
+		// N/A: final disallows further override
 	}
 
 public:
@@ -381,24 +434,40 @@ protected:
 	void AddValueStruct(const FSussContextValueStructBase* Struct);
 
 
-	/// Should be overridden by subclasses
-	virtual void ExecuteQuery(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TArray<FSussContextValue>& OutResults);
-	/// Should be overridden by subclasses
-	virtual void ExecuteQueryInContext(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FSussContextValue>& OutResults);
+	
+	/**
+	 * Query execution function which should be overridden for C++ subclasses
+	 * @param Brain The brain executing this query
+	 * @param Self The pawn controlled by the brain
+	 * @param Params Any parameters supplied to the query
+	 * @param Context If this query is correlated with results from a previous query, this is the context to base the query on.
+	 *   If uncorrelated, this context will only contain Self.
+	 * @param OutResults Array that new query results should be appended to
+	 */
+	virtual void ExecuteQuery(USussBrainComponent* Brain,
+	                          AActor* Self,
+	                          const TMap<FName, FSussParameter>& Params,
+	                          const FSussContext& Context,
+	                          TArray<FSussContextValue>& OutResults);
 
-	// Implement in BP to execute uncorrelated query
+	
+	/**
+	 * Query execution function which should be overridden in Blueprints
+	 * @param Brain The brain executing this query
+	 * @param ControlledActor The pawn controlled by the brain
+	 * @param Params Any parameters supplied to the query
+	 * @param BaseContext If this query is correlated with results from a previous query, this is the context to base the query on.
+	 *   If uncorrelated, this context will only contain ControlledActor.
+	 */
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
-	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params);
-	// Implement in BP to execute correlated query
-	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQueryInContext")
-	void ExecuteQueryInContextBP(USussBrainComponent* Brain, AActor* ControlledActor, const FSussContext& Context, const TMap<FName, FSussParameter>& Params);
+	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, const FSussContext& BaseContext);
 
 	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
 		InitResults<FSussContextValue>(OutResults);
 		// We have to store local version so BP can interact using helper functions
 		TempOutArray = &(OutResults.Get<TArray<FSussContextValue>>());
-		ExecuteQuery(Brain, Self, Params, GetResultsArray<FSussContextValue>(OutResults));
+		ExecuteQuery(Brain, Self, Params, FSussContext {Self}, GetResultsArray<FSussContextValue>(OutResults));
 		TempOutArray = nullptr;
 
 	}
@@ -407,9 +476,17 @@ protected:
 	{
 		// We have to store local version so BP can interact using helper functions
 		TempOutArray = &OutResults;
-		ExecuteQueryInContext(Brain, Self, Context, Params, OutResults);
+		ExecuteQuery(Brain, Self, Params, Context, OutResults);
 		TempOutArray = nullptr;
 
+	}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<TWeakObjectPtr<AActor>>& OutResults) override final
+	{
+		// N/A: final disallows further override
+	}
+	virtual void ExecuteQueryInContextInternal(USussBrainComponent* Brain, AActor* Self, const FSussContext& Context, const TMap<FName, FSussParameter>& Params, TArray<FVector>& OutResults) override final
+	{
+		// N/A: final disallows further override
 	}
 
 public:

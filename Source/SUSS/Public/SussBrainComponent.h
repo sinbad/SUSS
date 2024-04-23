@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "SussActionSetAsset.h"
 #include "SussContext.h"
+#include "SussGameSubsystem.h"
 #include "SussPoolSubsystem.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Runtime/AIModule/Classes/BrainComponent.h"
@@ -230,7 +231,7 @@ protected:
 	void OnGameplayTagEvent(const FGameplayTag InTag, int32 NewCount);
 
 	template<typename T>
-	static void AppendContexts(AActor* Self, const TArray<T>& InValues, TArray<FSussContext>& OutContexts, TFunctionRef<void(const T&, FSussContext&)> ValueSetter)
+	static void AppendUncorrelatedContexts(AActor* Self, const TArray<T>& InValues, TArray<FSussContext>& OutContexts, TFunctionRef<void(const T&, FSussContext&)> ValueSetter)
 	{
 		if (InValues.IsEmpty())
 			return;
@@ -278,12 +279,50 @@ protected:
 		}
 	}
 	template<typename T>
-	static void AppendContexts(AActor* Self, FSussScopeReservedArray& ReservedArray, TArray<FSussContext>& OutContexts, TFunctionRef<void(const T&, FSussContext&)> ValueSetter)
+	static void AppendUncorrelatedContexts(AActor* Self, FSussScopeReservedArray& ReservedArray, TArray<FSussContext>& OutContexts, TFunctionRef<void(const T&, FSussContext&)> ValueSetter)
 	{
-		AppendContexts<T>(Self, *ReservedArray.Get<T>(), OutContexts, ValueSetter);
+		AppendUncorrelatedContexts<T>(Self, *ReservedArray.Get<T>(), OutContexts, ValueSetter);
+	}
+
+	template<typename T>
+	static void AppendCorrelatedContexts(AActor* Self, const TArray<T>& InValues, FSussContext& SourceContext, TArray<FSussContext>& OutContexts, TFunctionRef<void(const T&, FSussContext&)> ValueSetter)
+	{
+		if (InValues.IsEmpty())
+			return;
+
+		// The first value from InValues is combined with the SourceContext
+		// Every other value generates a new copy of SourceContext with that value added
+		// So we expand 1 SourceContext to 1..N contexts with the InValues set
+
+		ValueSetter(InValues[0], SourceContext);
+
+		const int OldSize = OutContexts.Num();
+		const int InValueCount = InValues.Num();
+		if (InValueCount > 1)
+		{
+			OutContexts.AddDefaulted(InValueCount - 1);
+
+			int OutIndex = OldSize;
+			for (int i = 1; i < InValues.Num(); ++i, ++OutIndex)
+			{
+				FSussContext* OutContext = &OutContexts[OutIndex];
+				// Init all values, then set new one
+				*OutContext = SourceContext;
+
+				ValueSetter(InValues[i], *OutContext);
+
+			}
+		}
+	}
+	template<typename T>
+	static void AppendCorrelatedContexts(AActor* Self, FSussScopeReservedArray& ReservedArray, FSussContext& SourceContext, TArray<FSussContext>& OutContexts, TFunctionRef<void(const T&, FSussContext&)> ValueSetter)
+	{
+		AppendCorrelatedContexts<T>(Self, *ReservedArray.Get<T>(), SourceContext, OutContexts, ValueSetter);
 	}
 
 	void GenerateContexts(AActor* Self, const FSussActionDef& Action, TArray<FSussContext>& OutContexts);
+	void IntersectCorrelatedContexts(AActor* Self, const FSussQuery& Query, USussQueryProvider* QueryProvider, const TMap<FName, FSussParameter>& Params, TArray<FSussContext>& InOutContexts);
+	void AppendUncorrelatedContexts(AActor* Self, const FSussQuery& Query, USussQueryProvider* QueryProvider, const TMap<FName, FSussParameter>& Params, TArray<FSussContext>& OutContexts);
 	FSussParameter ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const;
 	void ResolveParameters(AActor* Self, const TMap<FName, FSussParameter>& InParams, TMap<FName, FSussParameter>& OutParams);
 };
