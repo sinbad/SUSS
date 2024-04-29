@@ -43,8 +43,9 @@ public:
 
 protected:
 	TSharedPtr<FEnvQueryResult> RunEQSQuery(USussBrainComponent* Brain,
-	                 AActor* Self,
-	                 const TMap<FName, FSussParameter>& Params);
+	                                        AActor* Self,
+	                                        const TMap<FName, FSussParameter>& Params,
+	                                        const FSussContext& Context);
 	bool ShouldIncludeResult(const FEnvQueryItem& Item) const;
 };
 

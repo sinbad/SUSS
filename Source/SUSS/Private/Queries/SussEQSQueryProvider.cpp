@@ -1,19 +1,43 @@
 ﻿
 #include "Queries/SussEQSQueryProvider.h"
 
+#include "SussBrainComponent.h"
 #include "SussUtility.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_ActorBase.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_VectorBase.h"
 #include "Misc/TransactionObjectEvent.h"
+#include "Queries/SussEQSWorldSubsystem.h"
 
 TSharedPtr<FEnvQueryResult> USussEQSQueryProvider::RunEQSQuery(USussBrainComponent* Brain,
-                                        AActor* Self,
-                                        const TMap<FName, FSussParameter>& Params)
+                                                               AActor* Self,
+                                                               const TMap<FName, FSussParameter>& Params,
+                                                               const FSussContext& Context)
 {
 	TArray<FEnvNamedValue> QueryParams = QueryConfig;
 	USussUtility::AddEQSParams(Params, QueryParams);
-	return USussUtility::RunEQSQuery(Self, EQSQuery, QueryParams, QueryMode);
+
+	// unfortunately we have no place to store any extra EQS context values like current target
+	// we use this subsystem hack instead
+	bool bClearTargetContext = false;
+	if (bIsCorrelatedWithContext)
+	{
+		auto EQSSub = Self->GetWorld()->GetSubsystem<USussEQSWorldSubsystem>();
+		if (Context.Target.IsValid())
+		{
+			EQSSub->SetTargetInfo(Self, Context.Target.Get());
+			bClearTargetContext = true;
+		}
+	}
+	TSharedPtr<FEnvQueryResult> Ret = USussUtility::RunEQSQuery(Self, EQSQuery, QueryParams, QueryMode);
+
+	// Clear temp context info
+	if (bClearTargetContext)
+	{
+		auto EQSSub = Self->GetWorld()->GetSubsystem<USussEQSWorldSubsystem>();
+		EQSSub->ClearTargetInfo(Self);
+	}
+	return Ret;
 }
 
 bool USussEQSQueryProvider::ShouldIncludeResult(const FEnvQueryItem& Item) const
@@ -27,7 +51,7 @@ void USussEQSTargetQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                                const FSussContext& Context,
                                                TArray<TWeakObjectPtr<AActor>>& OutResults)
 {
-	const auto Result = RunEQSQuery(Brain, Self, Params);
+	const auto Result = RunEQSQuery(Brain, Self, Params, Context);
 	if (Result->ItemType->IsChildOf(UEnvQueryItemType_ActorBase::StaticClass()))
 	{
 		const UEnvQueryItemType_ActorBase* DefTypeOb =  Result->ItemType->GetDefaultObject<UEnvQueryItemType_ActorBase>();
@@ -47,7 +71,7 @@ void USussEQSLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                                  const FSussContext& Context,
                                                  TArray<FVector>& OutResults)
 {
-	const auto Result = RunEQSQuery(Brain, Self, Params);
+	const auto Result = RunEQSQuery(Brain, Self, Params, Context);
 	if (Result->ItemType->IsChildOf(UEnvQueryItemType_VectorBase::StaticClass()))
 	{
 		const UEnvQueryItemType_VectorBase* DefTypeOb =  Result->ItemType->GetDefaultObject<UEnvQueryItemType_VectorBase>();
