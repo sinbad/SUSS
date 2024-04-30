@@ -7,6 +7,7 @@
 #include "SussSettings.h"
 #include "AIController.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
+#include "Queries/SussEQSWorldSubsystem.h"
 
 
 bool USussUtility::IsActionEnabled(FGameplayTag ActionTag)
@@ -449,6 +450,29 @@ const TArray<FVector>& USussUtility::RunLocationQuery(AActor* Querier, FGameplay
 
 	static TArray<FVector> DummyResults;
 	return DummyResults;
+}
+
+const TArray<FVector>& USussUtility::RunLocationQueryWithTargetContext(AActor* Querier,
+	FGameplayTag Tag,
+	AActor* Target,
+	const TMap<FName, FSussParameter>& Params,
+	float UseCachedResultsFor)
+{
+	// unfortunately we have no place to store any extra EQS context values like current target
+	// we use this subsystem hack instead
+	auto EQSSub = Querier->GetWorld()->GetSubsystem<USussEQSWorldSubsystem>();
+	if (Target)
+	{
+		EQSSub->SetTargetInfo(Querier, Target);
+	}
+
+	const TArray<FVector>& Ret =RunLocationQuery(Querier, Tag, Params, UseCachedResultsFor);
+
+	// Clear temp context info
+	EQSSub->ClearTargetInfo(Querier);
+
+	return Ret;
+
 }
 
 TArray<AActor*> USussUtility::RunTargetQuery(AActor* Querier,
