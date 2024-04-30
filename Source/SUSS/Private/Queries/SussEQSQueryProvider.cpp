@@ -55,11 +55,23 @@ void USussEQSTargetQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 	if (Result->ItemType->IsChildOf(UEnvQueryItemType_ActorBase::StaticClass()))
 	{
 		const UEnvQueryItemType_ActorBase* DefTypeOb =  Result->ItemType->GetDefaultObject<UEnvQueryItemType_ActorBase>();
-		for (const auto& Item : Result->Items)
+
+		if (QueryMode == EEnvQueryRunMode::AllMatching)
 		{
-			if (ShouldIncludeResult(Item))
+			for (const auto& Item : Result->Items)
 			{
-				OutResults.Add(DefTypeOb->GetActor(Result->RawData.GetData() + Item.DataOffset));
+				if (ShouldIncludeResult(Item))
+				{
+					OutResults.Add(DefTypeOb->GetActor(Result->RawData.GetData() + Item.DataOffset));
+				}
+			}
+		}
+		else
+		{
+			// For Modes that aren't "all", we still have all the items, but the best one has been swapped to item 0
+			if (Result->Items.Num() > 0)
+			{
+				OutResults.Add(DefTypeOb->GetActor(Result->RawData.GetData() + Result->Items[0].DataOffset));
 			}
 		}
 	}
@@ -75,11 +87,22 @@ void USussEQSLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
 	if (Result->ItemType->IsChildOf(UEnvQueryItemType_VectorBase::StaticClass()))
 	{
 		const UEnvQueryItemType_VectorBase* DefTypeOb =  Result->ItemType->GetDefaultObject<UEnvQueryItemType_VectorBase>();
-		for (const auto& Item : Result->Items)
+		if (QueryMode == EEnvQueryRunMode::AllMatching)
 		{
-			if (ShouldIncludeResult(Item))
+			for (const auto& Item : Result->Items)
 			{
-				OutResults.Add(DefTypeOb->GetItemLocation(Result->RawData.GetData() + Item.DataOffset));
+				if (ShouldIncludeResult(Item))
+				{
+					OutResults.Add(DefTypeOb->GetItemLocation(Result->RawData.GetData() + Item.DataOffset));
+				}
+			}
+		}
+		else
+		{
+			// For Modes that aren't "all", we still have all the items, but the best one has been swapped to item 0
+			if (Result->Items.Num() > 0)
+			{
+				OutResults.Add(DefTypeOb->GetItemLocation(Result->RawData.GetData() + Result->Items[0].DataOffset));
 			}
 		}
 	}
