@@ -11,6 +11,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SussUtility.generated.h"
 
+class AAIController;
 /**
  * 
  */
@@ -195,5 +196,24 @@ public:
 	static float EvalExponentialCurve(float Input, const FVector4f& Params);
 	static float EvalLogisticCurve(float Input, const FVector4f& Params);
 	static float EvalCurve(ESussCurveType CurveType, float Input, const FVector4f& Params);
+
+	/**
+	 * Get the distance along navmesh paths from an actor's current location to a desired location.
+	 * @param Agent The actor in question
+	 * @param Location The desired location 
+	 * @return Distance, or BIG_NUMBER if unreachable
+	 */
+	UFUNCTION(BlueprintCallable)
+	static float GetPathDistanceTo(AAIController* Agent, const FVector& Location);
+
+	/**
+	 * Get the distance along navmesh paths between 2 locations, for an actor.
+	 * @param Agent The actor in question
+	 * @param FromLocation The location to measure from
+	 * @param ToLocation The desired location 
+	 * @return Distance, or BIG_NUMBER if unreachable
+	 */
+	UFUNCTION(BlueprintCallable)
+	static float GetPathDistanceFromTo(AAIController* Agent, const FVector& FromLocation, const FVector& ToLocation);
 
 };

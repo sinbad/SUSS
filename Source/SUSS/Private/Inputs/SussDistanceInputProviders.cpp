@@ -1,10 +1,17 @@
 ﻿
 #include "Inputs/SussDistanceInputProviders.h"
 
+#include "AIController.h"
+#include "NavigationSystem.h"
+#include "SussBrainComponent.h"
+#include "SussUtility.h"
+
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputTargetDistance, "Suss.Input.Distance.ToTarget", "Get the 3D distance to a target")
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputLocationDistance, "Suss.Input.Distance.ToLocation", "Get the 3D distance to a target")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputLocationDistance, "Suss.Input.Distance.ToLocation", "Get the 3D distance to a location")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputTargetDistance2D, "Suss.Input.Distance.ToTarget2D", "Get the 2D (XY) distance to a target")
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputLocationDistance2D, "Suss.Input.Distance.ToLocation2D", "Get the 2D (XY) distance to a target")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputLocationDistance2D, "Suss.Input.Distance.ToLocation2D", "Get the 2D (XY) distance to a location")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputTargetDistancePath, "Suss.Input.Distance.ToTargetPath", "Get the distance to a target along navmesh paths")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputLocationDistancePath, "Suss.Input.Distance.ToLocationPath", "Get the distance to a location along navmesh paths")
 
 USussTargetDistanceInputProvider::USussTargetDistanceInputProvider()
 {
@@ -67,4 +74,32 @@ float USussLocationDistance2DInputProvider::Evaluate_Implementation(const class 
 	return FVector::Dist2D(
 		Ctx.ControlledActor ? Ctx.ControlledActor->GetActorLocation() : FVector::ZeroVector,
 		Ctx.Location);
+}
+
+USussTargetDistancePathInputProvider::USussTargetDistancePathInputProvider()
+{
+	InputTag = TAG_SussInputTargetDistancePath;
+}
+
+float USussTargetDistancePathInputProvider::Evaluate_Implementation(const USussBrainComponent* Brain,
+	const FSussContext& Context,
+	const TMap<FName, FSussParameter>& Parameters) const
+{
+	if (Context.Target.IsValid())
+	{
+		return USussUtility::GetPathDistanceTo(Brain->GetAIController(), Context.Target->GetActorLocation());
+	}
+	return BIG_NUMBER;
+}
+
+USussLocationDistancePathInputProvider::USussLocationDistancePathInputProvider()
+{
+	InputTag = TAG_SussInputLocationDistancePath;
+}
+
+float USussLocationDistancePathInputProvider::Evaluate_Implementation(const USussBrainComponent* Brain,
+	const FSussContext& Context,
+	const TMap<FName, FSussParameter>& Parameters) const
+{
+	return USussUtility::GetPathDistanceTo(Brain->GetAIController(), Context.Location);
 }

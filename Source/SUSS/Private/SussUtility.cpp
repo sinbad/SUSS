@@ -2,11 +2,12 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "NavigationSystem.h"
 #include "SussGameSubsystem.h"
 #include "SussSettings.h"
+#include "AIController.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 
-UE_DISABLE_OPTIMIZATION
 
 bool USussUtility::IsActionEnabled(FGameplayTag ActionTag)
 {
@@ -542,4 +543,47 @@ float USussUtility::EvalCurve(ESussCurveType CurveType, float Input, const FVect
 	return 0;
 }
 
-UE_ENABLE_OPTIMIZATION
+float USussUtility::GetPathDistanceTo(AAIController* Agent, const FVector& Location)
+{
+	if (Agent && Agent->GetPawn())
+	{
+		return GetPathDistanceFromTo(Agent, Agent->GetPawn()->GetActorLocation(), Location);
+	}
+	return BIG_NUMBER;
+}
+
+float USussUtility::GetPathDistanceFromTo(AAIController* Agent, const FVector& FromLocation, const FVector& ToLocation)
+{
+	if (!Agent)
+	{
+		return BIG_NUMBER;
+	}
+	if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(Agent->GetWorld()))
+	{
+		const ANavigationData* NavData = nullptr;
+		INavAgentInterface* NavAgent = Cast<INavAgentInterface>(Agent);
+		if (NavAgent)
+		{
+			NavData = NavSys->GetNavDataForProps(NavAgent->GetNavAgentPropertiesRef(), NavAgent->GetNavAgentLocation());
+		}
+		else
+		{
+			NavData = NavSys->GetDefaultNavDataInstance(FNavigationSystem::DontCreate);
+		}
+	
+		if (NavData)
+		{
+			FSharedConstNavQueryFilter NavFilter = UNavigationQueryFilter::GetQueryFilter(*NavData, Agent->GetDefaultNavigationFilterClass());
+			FPathFindingQuery Query(Agent, *NavData, FromLocation, ToLocation, NavFilter);
+			Query.SetAllowPartialPaths(false);
+			auto Result = NavSys->FindPathSync(Query);
+
+			if (Result.IsSuccessful())
+			{
+				return Result.Path->GetLength();
+			}
+		}
+	}
+
+	return BIG_NUMBER;
+}

@@ -11,6 +11,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussInputTargetDistance);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussInputLocationDistance);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussInputTargetDistance2D);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussInputLocationDistance2D);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussInputTargetDistancePath);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussInputLocationDistancePath);
 
 /**
  * Input that provides the distance from the AI to a given target 
@@ -67,6 +69,36 @@ class SUSS_API USussLocationDistance2DInputProvider : public USussInputProvider
 
 public:
 	USussLocationDistance2DInputProvider();
+	virtual float Evaluate_Implementation(const class USussBrainComponent* Brain,
+		const FSussContext& Context,
+		const TMap<FName, FSussParameter>& Parameters) const override;
+};
+
+/**
+ * Input that provides the distance from the AI to a given target along available paths 
+ */
+UCLASS()
+class SUSS_API USussTargetDistancePathInputProvider : public USussInputProvider
+{
+	GENERATED_BODY()
+
+public:
+	USussTargetDistancePathInputProvider();
+	virtual float Evaluate_Implementation(const class USussBrainComponent* Brain,
+		const FSussContext& Context,
+		const TMap<FName, FSussParameter>& Parameters) const override;
+};
+
+/**
+ * Input that provides the distance from the AI to a given location along available paths
+ */
+UCLASS()
+class SUSS_API USussLocationDistancePathInputProvider : public USussInputProvider
+{
+	GENERATED_BODY()
+
+public:
+	USussLocationDistancePathInputProvider();
 	virtual float Evaluate_Implementation(const class USussBrainComponent* Brain,
 		const FSussContext& Context,
 		const TMap<FName, FSussParameter>& Parameters) const override;
