@@ -1,12 +1,10 @@
 ﻿// 
-
-
 #include "Queries/SussEQSWorldSubsystem.h"
 
 void USussEQSWorldSubsystem::SetTargetInfo(const AActor* Owner, AActor* Target)
 {
 	const uint32 Key = GetTargetKey(Owner);
-	TargetContextMap[Key] = Target;
+	TargetContextMap.Add(Key, Target);
 }
 
 void USussEQSWorldSubsystem::ClearTargetInfo(const AActor* Owner)
