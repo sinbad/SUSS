@@ -120,7 +120,7 @@ void USussEQSQueryProvider::OnPropertyChanged(const FName PropName)
 	static const FName NAME_Query = GET_MEMBER_NAME_CHECKED(USussEQSQueryProvider, EQSQuery);
 	static const FName NAME_QueryConfig = GET_MEMBER_NAME_CHECKED(USussEQSQueryProvider, QueryConfig);
 
-	if (PropName == NAME_Query || PropName == NAME_QueryConfig)
+	if (PropName == NAME_Query)
 	{
 		if (EQSQuery)
 		{
