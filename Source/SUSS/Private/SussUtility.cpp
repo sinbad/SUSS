@@ -556,20 +556,26 @@ const TArray<FVector>& USussUtility::RunLocationQueryWithTargetContext(AActor* Q
 	const TMap<FName, FSussParameter>& Params,
 	float UseCachedResultsFor)
 {
-	// unfortunately we have no place to store any extra EQS context values like current target
-	// we use this subsystem hack instead
-	auto EQSSub = Querier->GetWorld()->GetSubsystem<USussEQSWorldSubsystem>();
-	if (Target)
+	if (IsValid(Querier))
 	{
-		EQSSub->SetTargetInfo(Querier, Target);
+		// unfortunately we have no place to store any extra EQS context values like current target
+		// we use this subsystem hack instead
+		auto EQSSub = Querier->GetWorld()->GetSubsystem<USussEQSWorldSubsystem>();
+		if (Target)
+		{
+			EQSSub->SetTargetInfo(Querier, Target);
+		}
+
+		const TArray<FVector>& Ret =RunLocationQuery(Querier, Tag, Params, UseCachedResultsFor);
+
+		// Clear temp context info
+		EQSSub->ClearTargetInfo(Querier);
+
+		return Ret;
 	}
 
-	const TArray<FVector>& Ret =RunLocationQuery(Querier, Tag, Params, UseCachedResultsFor);
-
-	// Clear temp context info
-	EQSSub->ClearTargetInfo(Querier);
-
-	return Ret;
+	static TArray<FVector> DummyResults;
+	return DummyResults;
 
 }
 
