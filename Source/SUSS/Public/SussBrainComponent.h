@@ -208,6 +208,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool IsActionInProgress();
 
+	// Helper method to make logs easier to read
+	const UObject* GetLogOwner() const;
 
 protected:
 	// Called when the game starts

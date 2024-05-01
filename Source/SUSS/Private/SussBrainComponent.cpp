@@ -366,7 +366,7 @@ void USussBrainComponent::ChooseActionFromCandidates()
 	if (BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::HighestScoring)
 	{
 #if ENABLE_VISUAL_LOG
-		UE_VLOG(this, LogSuss, Log, TEXT("Choice method: Highest Scoring"));
+		UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("Choice method: Highest Scoring"));
 #endif
 		ChooseAction(CandidateActions[0]);
 	}
@@ -407,7 +407,7 @@ void USussBrainComponent::ChooseActionFromCandidates()
 			if (Rand < ScoreAccum)
 			{
 #if ENABLE_VISUAL_LOG
-				UE_VLOG(this, LogSuss, Log,
+				UE_VLOG(GetLogOwner(), LogSuss, Log,
 				        TEXT("Choice method: %s (%d) [%4.2f/%4.2f]"),
 				        *StaticEnum<ESussActionChoiceMethod>()->GetDisplayNameTextByValue((int64)BrainConfig.
 					        ActionChoiceMethod).ToString(),
@@ -454,7 +454,7 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	{
 		// We're already running it, so just continue
 #if ENABLE_VISUAL_LOG
-		UE_VLOG(this, LogSuss, Log, TEXT("No Action Change, continue: %s %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description, *ActionResult.Context.ToString());
+		UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("No Action Change, continue: %s %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description, *ActionResult.Context.ToString());
 #endif
 		CurrentActionInstance->ContinueAction(ActionResult.Context, Def.ActionParams);
 		return;
@@ -464,7 +464,7 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	const TSubclassOf<USussAction> ActionClass = SUSS->GetActionClass(Def.ActionTag);
 
 #if ENABLE_VISUAL_LOG
-	UE_VLOG(this, LogSuss, Log, TEXT("Chose NEW action: %s %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description, *ActionResult.Context.ToString());
+	UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("Chose NEW action: %s %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description, *ActionResult.Context.ToString());
 #endif
 
 	TSubclassOf<USussAction> PreviousActionClass = nullptr;
@@ -530,7 +530,7 @@ void USussBrainComponent::Update()
 		return;
 
 #if ENABLE_VISUAL_LOG
-	UE_VLOG(this, LogSuss, Log, TEXT("Brain Update"));
+	UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("Brain Update"));
 #endif
 
 	auto SUSS = GetSUSS(GetWorld());
@@ -589,7 +589,7 @@ void USussBrainComponent::Update()
 		GenerateContexts(Self, NextAction, Contexts);
 
 #if ENABLE_VISUAL_LOG
-		UE_VLOG(this, LogSuss, Log, TEXT("Action: %s  Priority: %d Weight: %4.2f Contexts: %d"),
+		UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("Action: %s  Priority: %d Weight: %4.2f Contexts: %d"),
 			NextAction.Description.IsEmpty() ? *NextAction.ActionTag.ToString() : *NextAction.Description,
 			NextAction.Priority,
 			NextAction.Weight,
@@ -600,7 +600,7 @@ void USussBrainComponent::Update()
 		for (const auto& Ctx : Contexts)
 		{
 #if ENABLE_VISUAL_LOG
-			UE_VLOG(this, LogSuss, Log, TEXT(" - %s"), *Ctx.ToString());
+			UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT(" - %s"), *Ctx.ToString());
 #endif
 			float Score = NextAction.Weight;
 			for (auto& Consideration : NextAction.Considerations)
@@ -630,7 +630,7 @@ void USussBrainComponent::Update()
 					const float ConScore = Consideration.EvaluateCurve(NormalisedInput);
 
 #if ENABLE_VISUAL_LOG
-					UE_VLOG(this, LogSuss, Log, TEXT("  * Consideration: %s  Input: %4.2f  Normalised: %4.2f  Final: %4.2f"),
+					UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Consideration: %s  Input: %4.2f  Normalised: %4.2f  Final: %4.2f"),
 						Consideration.Description.IsEmpty() ? *Consideration.InputTag.ToString() : *Consideration.Description,
 						RawInputValue, NormalisedInput, ConScore);
 #endif
@@ -652,12 +652,12 @@ void USussBrainComponent::Update()
 			{
 				Score += CurrentActionInertia;
 #if ENABLE_VISUAL_LOG
-				UE_VLOG(this, LogSuss, Log, TEXT("  * Current Action Inertia: %4.2f"), CurrentActionInertia);
+				UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Current Action Inertia: %4.2f"), CurrentActionInertia);
 #endif
 			}
 
 #if ENABLE_VISUAL_LOG
-			UE_VLOG(this, LogSuss, Log, TEXT(" - TOTAL: %4.2f"), Score);
+			UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT(" - TOTAL: %4.2f"), Score);
 #endif
 
 			if (!FMath::IsNearlyZero(Score))
@@ -681,6 +681,16 @@ void USussBrainComponent::ResolveParameters(AActor* Self,
 	{
 		OutParams.Add(Param.Key, ResolveParameter(SelfContext, Param.Value));
 	}
+}
+
+const UObject* USussBrainComponent::GetLogOwner() const
+{
+	// VLog on pawn rather than AI controller for ease of use
+	if (const auto Pawn = GetPawn())
+	{
+		return Pawn;
+	}
+	return this;
 }
 
 FSussParameter USussBrainComponent::ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const
