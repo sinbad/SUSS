@@ -9,6 +9,8 @@
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussInputSelfSightRange);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussInputSelfHearingRange);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussInputLineOfSightToTarget);
+
 /**
  * Input providing the sight range of the controlled actor (self)
  */
@@ -32,6 +34,19 @@ class SUSS_API USussSelfHearingRangeInputProvider : public USussInputProvider
 	GENERATED_BODY()
 public:
 	USussSelfHearingRangeInputProvider();
+	virtual float Evaluate_Implementation(const class USussBrainComponent* Brain, const FSussContext& Context,
+		const TMap<FName, FSussParameter>& Parameters) const override;
+};
+
+/**
+ * Input providing the a line of sight score to target
+ */
+UCLASS()
+class SUSS_API USussLineOfSightToTargetInputProvider : public USussInputProvider
+{
+	GENERATED_BODY()
+public:
+	USussLineOfSightToTargetInputProvider();
 	virtual float Evaluate_Implementation(const class USussBrainComponent* Brain, const FSussContext& Context,
 		const TMap<FName, FSussParameter>& Parameters) const override;
 };

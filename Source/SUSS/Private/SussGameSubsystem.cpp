@@ -134,6 +134,7 @@ void USussGameSubsystem::RegisterNativeProviders()
 	RegisterInputProviderClass(USussLocationDistancePathInputProvider::StaticClass());
 	RegisterInputProviderClass(USussSelfSightRangeInputProvider::StaticClass());
 	RegisterInputProviderClass(USussSelfHearingRangeInputProvider::StaticClass());
+	RegisterInputProviderClass(USussLineOfSightToTargetInputProvider::StaticClass());
 	RegisterInputProviderClass(USussBlackboardAutoInputProvider::StaticClass());
 	RegisterInputProviderClass(USussBlackboardBoolInputProvider::StaticClass());
 	RegisterInputProviderClass(USussBlackboardFloatInputProvider::StaticClass());
