@@ -784,9 +784,13 @@ void USussBrainComponent::GenerateContexts(AActor* Self, const FSussActionDef& A
 			}
 			else
 			{
-				AppendUncorrelatedContexts(Self, Query, QueryProvider, ResolvedParams, OutContexts);
+				if (!AppendUncorrelatedContexts(Self, Query, QueryProvider, ResolvedParams, OutContexts))
+				{
+					// This query generated no results, therefore instead of NxM it's Nx0 == no results at all
+					OutContexts.Empty();
+					return;
+				}
 			}
-		
 			
 		}
 	}
@@ -893,7 +897,7 @@ void USussBrainComponent::IntersectCorrelatedContexts(AActor* Self,
 	}
 }
 
-void USussBrainComponent::AppendUncorrelatedContexts(AActor* Self,
+bool USussBrainComponent::AppendUncorrelatedContexts(AActor* Self,
                                                      const FSussQuery& Query,
                                                      USussQueryProvider* QueryProvider,
                                                      const TMap<FName, FSussParameter>& Params,
@@ -903,12 +907,14 @@ void USussBrainComponent::AppendUncorrelatedContexts(AActor* Self,
 
 	auto Pool = GetSussPool(GetWorld());
 	const auto Element = QueryProvider->GetProvidedContextElement();
+	bool bAnyResults = false;
 	switch (Element)
 	{
 	case ESussQueryContextElement::Target:
 		{
 			FSussScopeReservedArray Targets = Pool->ReserveArray<TWeakObjectPtr<AActor>>();
-			Targets.Get<TWeakObjectPtr<AActor>>()->Append(
+			const auto TargetArray = Targets.Get<TWeakObjectPtr<AActor>>();
+			TargetArray->Append(
 				QueryProvider->GetResults<TWeakObjectPtr<AActor>>(this, Self, Query.MaxFrequency, Params));
 			AppendUncorrelatedContexts<TWeakObjectPtr<AActor>>(Self,
 			                                       Targets,
@@ -917,12 +923,14 @@ void USussBrainComponent::AppendUncorrelatedContexts(AActor* Self,
 			                                       {
 				                                       Ctx.Target = Target;
 			                                       });
+			bAnyResults = TargetArray->Num() > 0;
 			break;
 		}
 	case ESussQueryContextElement::Location:
 		{
 			FSussScopeReservedArray Locations = Pool->ReserveArray<FVector>();
-			Locations.Get<FVector>()->Append(
+			const auto LocationArray = Locations.Get<FVector>();
+			LocationArray->Append(
 				QueryProvider->GetResults<FVector>(this, Self, Query.MaxFrequency, Params));
 			AppendUncorrelatedContexts<FVector>(Self,
 			                        Locations,
@@ -931,7 +939,7 @@ void USussBrainComponent::AppendUncorrelatedContexts(AActor* Self,
 			                        {
 				                        Ctx.Location = Loc;
 			                        });
-
+			bAnyResults = LocationArray->Num() > 0;
 			break;
 		}
 	case ESussQueryContextElement::NamedValue:
@@ -940,7 +948,8 @@ void USussBrainComponent::AppendUncorrelatedContexts(AActor* Self,
 			{
 				const FName ValueName = NQP->GetQueryValueName();
 				FSussScopeReservedArray NamedValues = Pool->ReserveArray<FSussContextValue>();
-				NamedValues.Get<FSussContextValue>()->Append(
+				const auto ValArray = NamedValues.Get<FSussContextValue>();
+				ValArray->Append(
 					QueryProvider->GetResults<FSussContextValue>(this, Self, Query.MaxFrequency, Params));
 				AppendUncorrelatedContexts<FSussContextValue>(Self,
 				                                  NamedValues,
@@ -949,10 +958,13 @@ void USussBrainComponent::AppendUncorrelatedContexts(AActor* Self,
 				                                  {
 					                                  Ctx.NamedValues.Add(ValueName, Value);
 				                                  });
+				bAnyResults = ValArray->Num() > 0;
 			}
 			break;
 		}
 	}
+
+	return bAnyResults;
 }
 
 

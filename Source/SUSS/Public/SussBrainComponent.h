@@ -324,7 +324,11 @@ protected:
 
 	void GenerateContexts(AActor* Self, const FSussActionDef& Action, TArray<FSussContext>& OutContexts);
 	void IntersectCorrelatedContexts(AActor* Self, const FSussQuery& Query, USussQueryProvider* QueryProvider, const TMap<FName, FSussParameter>& Params, TArray<FSussContext>& InOutContexts);
-	void AppendUncorrelatedContexts(AActor* Self, const FSussQuery& Query, USussQueryProvider* QueryProvider, const TMap<FName, FSussParameter>& Params, TArray<FSussContext>& OutContexts);
+	bool AppendUncorrelatedContexts(AActor* Self,
+	                                const FSussQuery& Query,
+	                                USussQueryProvider* QueryProvider,
+	                                const TMap<FName, FSussParameter>& Params,
+	                                TArray<FSussContext>& OutContexts);
 	FSussParameter ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const;
 	void ResolveParameters(AActor* Self, const TMap<FName, FSussParameter>& InParams, TMap<FName, FSussParameter>& OutParams);
 };

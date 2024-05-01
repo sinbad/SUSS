@@ -7,6 +7,7 @@ const FName USussTestNamedFloatValueQueryProvider::TagName("Suss.Query.Test.Name
 const FName USussTestNamedStructSharedValueQueryProvider::TagName("Suss.Query.Test.Named.Struct.Shared");
 const FName USussTestNamedStructRawPointerQueryProvider::TagName("Suss.Query.Test.Named.Struct.NonShared");
 const FName USussTestCorrelatedNamedFloatValueQueryProvider::TagName("Suss.Query.Test.Named.Float.Correlated");
+const FName USussTestZeroTargetsQueryProvider::TagName("Suss.Query.Test.Targets.None");
 
 FSussTestQueryTagHolder FSussTestQueryTagHolder::Instance;
 

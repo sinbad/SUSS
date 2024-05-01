@@ -96,7 +96,22 @@ void FSussBrainTestContextsSpec::Define()
 
 			}
 		});
-		
+
+		It("Zero results from one dimension", [this]()
+		{
+			AActor* Self = WorldFixture->GetWorld()->SpawnActor<AActor>();
+			auto Brain = Cast<USussBrainComponent>(Self->AddComponentByClass(USussBrainComponent::StaticClass(), false, FTransform::Identity, false));
+
+			// Query multiple locations, and zero targets. Result should be nothing even though there are locations, because Nx0 = 0
+			FSussActionDef Action;
+			Action.Queries.Add(FSussQuery { FGameplayTag::RequestGameplayTag(USussTestMultipleLocationQueryProvider::TagName) });
+			Action.Queries.Add(FSussQuery { FGameplayTag::RequestGameplayTag(USussTestZeroTargetsQueryProvider::TagName) });
+			TArray<FSussContext> Contexts;
+			Brain->GenerateContexts(Self, Action, Contexts);
+
+			TestEqual("Number of contexts", Contexts.Num(), 0);
+		});
+
 		It("Named params combined with locations", [this]()
 		{
 			AActor* Self = WorldFixture->GetWorld()->SpawnActor<AActor>();

@@ -101,6 +101,32 @@ protected:
 
 
 UCLASS()
+class USussTestZeroTargetsQueryProvider : public USussTargetQueryProvider
+{
+	GENERATED_BODY()
+public:
+	static const FName TagName;
+
+	USussTestZeroTargetsQueryProvider()
+	{
+	}
+	// Because we're using temp tags we can't store this in QueryTag at startup (StaticClass is too early)
+	virtual FGameplayTag GetQueryTag() const override
+	{
+		return FSussTestQueryTagHolder::Instance.GetTag(TagName);
+	}
+protected:
+	virtual void ExecuteQuery(USussBrainComponent* Brain,
+		AActor* Self,
+		const TMap<FName, FSussParameter>& Params,
+		const FSussContext& BaseContext,
+		TArray<TWeakObjectPtr<AActor>>& OutResults) override
+	{
+		// We return none
+	}
+};
+
+UCLASS()
 class USussTestNamedLocationValueQueryProvider : public USussNamedValueQueryProvider
 {
 	GENERATED_BODY()
@@ -311,6 +337,7 @@ inline void RegisterTestQueryProviders(UWorld* World)
 		SUSS->RegisterQueryProviderClass(USussTestNamedStructSharedValueQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestNamedStructRawPointerQueryProvider::StaticClass());
 		SUSS->RegisterQueryProviderClass(USussTestCorrelatedNamedFloatValueQueryProvider::StaticClass());
+		SUSS->RegisterQueryProviderClass(USussTestZeroTargetsQueryProvider::StaticClass());
 	}
 }
 
@@ -325,6 +352,7 @@ inline void UnregisterTestQueryProviders(UWorld* World)
 		SUSS->UnregisterQueryProviderClass(USussTestNamedStructSharedValueQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestNamedStructRawPointerQueryProvider::StaticClass());
 		SUSS->UnregisterQueryProviderClass(USussTestCorrelatedNamedFloatValueQueryProvider::StaticClass());
+		SUSS->UnregisterQueryProviderClass(USussTestZeroTargetsQueryProvider::StaticClass());
 	}
 
 	FSussTestQueryTagHolder::Instance.UnregisterTags();
