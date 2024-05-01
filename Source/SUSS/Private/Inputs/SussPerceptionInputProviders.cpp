@@ -80,6 +80,10 @@ float USussLineOfSightToTargetInputProvider::Evaluate_Implementation(const USuss
 
 #if ENABLE_VISUAL_LOG
 		UE_VLOG_ARROW(Brain->GetLogOwner(), LogSuss, Verbose, Start, End, bHit ? FColor::Red : FColor::Green, TEXT(""));
+		if (bHit)
+		{
+			UE_VLOG_LOCATION(Brain->GetLogOwner(), LogSuss, Verbose, Hit.Location, 15, FColor::Red, TEXT(""));
+		}
 #endif
 
 		return bHit ? 0 : 1;
