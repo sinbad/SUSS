@@ -122,6 +122,97 @@ TSharedPtr<FEnvQueryResult> USussUtility::RunEQSQuery(UObject* WorldContextObjec
 	return nullptr;
 }
 
+UEnvQueryInstanceBlueprintWrapper* USussUtility::RunEQSQueryBP(AActor* Querier,
+	UEnvQuery* EQSQuery,
+	const TArray<FEnvNamedValue>& QueryParams,
+	EEnvQueryRunMode::Type QueryMode)
+{
+	UWorld* World = GEngine->GetWorldFromContextObject(Querier, EGetWorldErrorMode::LogAndReturnNull);
+
+	if (!EQSQuery || !World)
+		return nullptr;
+
+	if (UEnvQueryManager* EQS = UEnvQueryManager::GetCurrent(World))
+	{
+		auto Wrapper = NewObject<UEnvQueryInstanceBlueprintWrapper>(UEnvQueryManager::GetCurrent(Querier), UEnvQueryInstanceBlueprintWrapper::StaticClass());
+		check(Wrapper);
+		Wrapper->SetInstigator(Querier);
+
+		FEnvQueryRequest QueryRequest(EQSQuery, Querier);
+		QueryRequest.SetNamedParams(QueryParams);
+		Wrapper->RunQuery(QueryMode, QueryRequest);
+		return Wrapper;
+	}
+
+	return nullptr;
+	
+}
+
+TSharedPtr<FEnvQueryResult> USussUtility::RunEQSQueryWithTargetContext(AActor* Querier,
+                                                                       AActor* Target,
+                                                                       UEnvQuery* EQSQuery,
+                                                                       const TMap<FName, FSussParameter>& Params,
+                                                                       TEnumAsByte<EEnvQueryRunMode::Type> QueryMode)
+{
+	// unfortunately we have no place to store any extra EQS context values like current target
+	// we use this subsystem hack instead
+	bool bClearTargetContext = false;
+	if (IsValid(Target))
+	{
+		auto EQSSub = Querier->GetWorld()->GetSubsystem<USussEQSWorldSubsystem>();
+		EQSSub->SetTargetInfo(Querier, Target);
+		bClearTargetContext = true;
+	}
+	TArray<FEnvNamedValue> QueryParams;
+	USussUtility::AddEQSParams(Params, QueryParams);
+	TSharedPtr<FEnvQueryResult> Ret = RunEQSQuery(Querier, EQSQuery, QueryParams, QueryMode);
+
+	// Clear temp context info
+	if (bClearTargetContext)
+	{
+		auto EQSSub = Querier->GetWorld()->GetSubsystem<USussEQSWorldSubsystem>();
+		EQSSub->ClearTargetInfo(Querier);
+	}
+	return Ret;
+}
+
+UEnvQueryInstanceBlueprintWrapper* USussUtility::RunEQSQueryWithTargetContextBP(AActor* Querier,
+	AActor* Target,
+	UEnvQuery* EQSQuery,
+	const TMap<FName, FSussParameter>& Params,
+	TEnumAsByte<EEnvQueryRunMode::Type> QueryMode)
+{
+	UEnvQueryInstanceBlueprintWrapper* Wrapper = nullptr;
+
+	if (IsValid(Querier) && EQSQuery)
+	{
+		// unfortunately we have no place to store any extra EQS context values like current target
+		// we use this subsystem hack instead
+		auto EQSSub = Querier->GetWorld()->GetSubsystem<USussEQSWorldSubsystem>();
+		if (Target)
+		{
+			EQSSub->SetTargetInfo(Querier, Target);
+		}
+		TArray<FEnvNamedValue> QueryParams;
+		USussUtility::AddEQSParams(Params, QueryParams);
+		auto Ret = RunEQSQuery(Querier, EQSQuery, QueryParams, QueryMode);
+
+		// Clear temp context info
+		EQSSub->ClearTargetInfo(Querier);
+
+		Wrapper = NewObject<UEnvQueryInstanceBlueprintWrapper>(UEnvQueryManager::GetCurrent(Querier), UEnvQueryInstanceBlueprintWrapper::StaticClass());
+		check(Wrapper);
+		Wrapper->SetInstigator(Querier);
+
+		FEnvQueryRequest QueryRequest(EQSQuery, Querier);
+		QueryRequest.SetNamedParams(QueryParams);
+		Wrapper->RunQuery(QueryMode, QueryRequest);
+		
+	}
+	
+	return Wrapper;
+}
+
 
 bool USussUtility::GetSussParameterValueAsFloat(const FSussParameter& Parameter, float& Value)
 {
@@ -275,6 +366,7 @@ bool USussUtility::GetSussContextValueAsActor(const FSussContext& Context, FName
 		case ESussContextValueType::Rotator:
 		case ESussContextValueType::Tag:
 		case ESussContextValueType::Name:
+		case ESussContextValueType::Struct:
 			return false;
 		}
 	}
@@ -300,6 +392,7 @@ bool USussUtility::GetSussContextValueAsFloat(const FSussContext& Context, FName
 		case ESussContextValueType::Vector:
 		case ESussContextValueType::Rotator:
 		case ESussContextValueType::Tag:
+		case ESussContextValueType::Struct:
 		case ESussContextValueType::Name:
 			return false;
 		}
@@ -324,6 +417,7 @@ bool USussUtility::GetSussContextValueAsVector(const FSussContext& Context, FNam
 		case ESussContextValueType::Rotator:
 		case ESussContextValueType::Tag:
 		case ESussContextValueType::Name:
+		case ESussContextValueType::Struct:
 			return false;
 		}
 	}
@@ -347,6 +441,7 @@ bool USussUtility::GetSussContextValueAsRotator(const FSussContext& Context, FNa
 		case ESussContextValueType::Vector:
 		case ESussContextValueType::Tag:
 		case ESussContextValueType::Name:
+		case ESussContextValueType::Struct:
 			return false;
 		}
 	}
@@ -374,6 +469,7 @@ bool USussUtility::GetSussContextValueAsInt(const FSussContext& Context, FName N
 		case ESussContextValueType::Rotator:
 		case ESussContextValueType::Tag:
 		case ESussContextValueType::Name:
+		case ESussContextValueType::Struct:
 			return false;
 		}
 	}
@@ -401,6 +497,7 @@ bool USussUtility::GetSussContextValueAsName(const FSussContext& Context, FName 
 		case ESussContextValueType::Actor:
 		case ESussContextValueType::Vector:
 		case ESussContextValueType::Rotator:
+		case ESussContextValueType::Struct:
 			return false;
 		}
 	}
@@ -425,6 +522,7 @@ bool USussUtility::GetSussContextValueAsTag(const FSussContext& Context, FName N
 		case ESussContextValueType::Actor:
 		case ESussContextValueType::Vector:
 		case ESussContextValueType::Rotator:
+		case ESussContextValueType::Struct:
 			return false;
 		}
 	}
@@ -584,7 +682,7 @@ float USussUtility::GetPathDistanceFromTo(AAIController* Agent, const FVector& F
 	}
 	if (UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(Agent->GetWorld()))
 	{
-		const ANavigationData* NavData = nullptr;
+		const ANavigationData* NavData;
 		INavAgentInterface* NavAgent = Cast<INavAgentInterface>(Agent);
 		if (NavAgent)
 		{

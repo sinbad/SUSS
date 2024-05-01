@@ -37,6 +37,37 @@ public:
 	                                               UEnvQuery* EQSQuery,
 	                                               const TArray<FEnvNamedValue>& QueryParams,
 	                                               EEnvQueryRunMode::Type QueryMode = EEnvQueryRunMode::AllMatching);
+	UFUNCTION(BlueprintCallable, DisplayName="Run EQS Query (SUSS)", meta=(WorldContext=WorldContextObject))
+	static UEnvQueryInstanceBlueprintWrapper* RunEQSQueryBP(AActor* Querier,
+	                                                        UEnvQuery* EQSQuery,
+	                                                        const TArray<FEnvNamedValue>& QueryParams,
+	                                                        EEnvQueryRunMode::Type QueryMode =
+		                                                        EEnvQueryRunMode::AllMatching);
+
+	static TSharedPtr<FEnvQueryResult> RunEQSQueryWithTargetContext(AActor* Querier,
+	                                                                AActor* Target,
+	                                                                UEnvQuery* EQSQuery,
+	                                                                const TMap<FName, FSussParameter>& Params,
+	                                                                TEnumAsByte<EEnvQueryRunMode::Type> QueryMode =
+		                                                                EEnvQueryRunMode::AllMatching);
+	/**
+	 * Manually run an EQS query with a target context.
+	 * You might want to do this if you want some query results to manually choose inside an action, rather than evaluating
+	 * all the results individually as contexts.
+	 * @param Querier The actor which is the "Querier", usually the controlled actor, or self.
+	 * @param Target The actor which is to be the "Target" as referenced in the EQS context
+	 * @param EQSQuery The EQS query
+	 * @param Params Any extra parameters you wish to supply to the query
+	 * @param QueryMode What to return
+	 * @return EQS query results
+	 */
+	UFUNCTION(BlueprintCallable, DisplayName="Run EQS Query With Target Context (SUSS)", meta = (WorldContext = "WorldContextObject", AdvancedDisplay = "WrapperClass"))
+	static UEnvQueryInstanceBlueprintWrapper* RunEQSQueryWithTargetContextBP(AActor* Querier,
+	                                                                         AActor* Target,
+	                                                                         UEnvQuery* EQSQuery,
+	                                                                         const TMap<FName, FSussParameter>& Params,
+	                                                                         TEnumAsByte<EEnvQueryRunMode::Type> QueryMode =
+		                                                                         EEnvQueryRunMode::AllMatching);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FSussParameter MakeSussFloatParameter(float Val) { return FSussParameter(Val); }
@@ -201,8 +232,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	static TArray<AActor*> RunTargetQuery(AActor* Querier, FGameplayTag Tag, const TMap<FName, FSussParameter>& Params, float UseCachedResultsFor = 0);
-
-
+	
 	static void AddEQSParams(const TMap<FName, FSussParameter>& Params, TArray<FEnvNamedValue>& OutQueryParams);
 
 	static float EvalStepCurve(float Input, const FVector4f& Params);
