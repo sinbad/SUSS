@@ -715,3 +715,12 @@ float USussUtility::GetPathDistanceFromTo(AAIController* Agent, const FVector& F
 
 	return BIG_NUMBER;
 }
+
+ECollisionChannel USussUtility::GetLineOfSightTraceChannel()
+{
+	if (const auto Settings = GetDefault<USussSettings>())
+	{
+		return Settings->LineOfSightTraceChannel;
+	}
+	return ECC_Visibility;
+}

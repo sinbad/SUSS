@@ -1,8 +1,8 @@
 ﻿
-#include "..\..\Public\Inputs\SussPerceptionInputProviders.h"
+#include "../../Public/Inputs/SussPerceptionInputProviders.h"
 
 #include "SussBrainComponent.h"
-#include "Kismet/GameplayStatics.h"
+#include "SussUtility.h"
 #include "Perception/AISenseConfig_Hearing.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISense_Hearing.h"
@@ -71,9 +71,9 @@ float USussLineOfSightToTargetInputProvider::Evaluate_Implementation(const USuss
 		FRotator DummyRot;
 		Pawn->GetActorEyesViewPoint(Start, DummyRot);
 		End = Context.Target->GetActorLocation();
-		ECollisionChannel Channel = ECC_Visibility;
-		FCollisionQueryParams Params;
-		Params.AddIgnoredActor(Pawn);
+		ECollisionChannel Channel = USussUtility::GetLineOfSightTraceChannel();
+
+		FCollisionQueryParams Params(SCENE_QUERY_STAT(LineOfSight), true, Pawn);
 		Params.AddIgnoredActor(Context.Target.Get());
 		FHitResult Hit;
 		bool bHit = World->LineTraceSingleByChannel(Hit, Start, End, Channel, Params);

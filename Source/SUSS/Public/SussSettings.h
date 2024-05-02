@@ -73,4 +73,6 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = Optimisation, meta = (ToolTip = "The interval at which we'll re-calculate the distance to the players when the agent is beyond the far distance"))
 	float OutOfBoundsDistanceCheckInterval = 3;
 
+	UPROPERTY(config, EditAnywhere, Category = Collision, meta = (ToolTip = "The trace channel to use when determining Line of Sight tests. Defaults to Visibility but if you want AI to avoid shooting each other you might want to use a custom trace."))
+	TEnumAsByte<ECollisionChannel> LineOfSightTraceChannel = ECC_Visibility;
 };

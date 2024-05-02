@@ -202,7 +202,7 @@ public:
 	 *    running the query again, if it was already run within the last N seconds
 	 * @return A list of locations from the query
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="SUSS")
 	static const TArray<FVector>& RunLocationQuery(AActor* Querier, FGameplayTag Tag, const TMap<FName, FSussParameter>& Params, float UseCachedResultsFor = 0);
 
 	/**
@@ -217,7 +217,7 @@ public:
 	 *    running the query again, if it was already run within the last N seconds
 	 * @return A list of locations from the query
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="SUSS")
 	static const TArray<FVector>& RunLocationQueryWithTargetContext(AActor* Querier, FGameplayTag Tag, AActor* Target, const TMap<FName, FSussParameter>& Params, float UseCachedResultsFor = 0);
 	/**
 	 * Manually run a query that returns target actors, rather than use it to generate context for a brain decision.
@@ -230,7 +230,7 @@ public:
 	 *    running the query again, if it was already run within the last N seconds
 	 * @return A list of targets from the query
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="SUSS")
 	static TArray<AActor*> RunTargetQuery(AActor* Querier, FGameplayTag Tag, const TMap<FName, FSussParameter>& Params, float UseCachedResultsFor = 0);
 	
 	static void AddEQSParams(const TMap<FName, FSussParameter>& Params, TArray<FEnvNamedValue>& OutQueryParams);
@@ -248,7 +248,7 @@ public:
 	 * @param Location The desired location 
 	 * @return Distance, or BIG_NUMBER if unreachable
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="SUSS")
 	static float GetPathDistanceTo(AAIController* Agent, const FVector& Location);
 
 	/**
@@ -258,7 +258,9 @@ public:
 	 * @param ToLocation The desired location 
 	 * @return Distance, or BIG_NUMBER if unreachable
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="SUSS")
 	static float GetPathDistanceFromTo(AAIController* Agent, const FVector& FromLocation, const FVector& ToLocation);
 
+	UFUNCTION(Blueprintable, Category="SUSS")
+	static ECollisionChannel GetLineOfSightTraceChannel();
 };
