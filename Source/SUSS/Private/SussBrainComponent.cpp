@@ -647,8 +647,8 @@ void USussBrainComponent::Update()
 				}
 			}
 
-			// Add inertia if this is the current action
-			if (IsActionInProgress() && i == CurrentActionResult.ActionDefIndex)
+			// Add inertia if this is the current action + context
+			if (ShouldAddInertiaToProposedAction(i, Ctx))
 			{
 				Score += CurrentActionInertia;
 #if ENABLE_VISUAL_LOG
@@ -965,6 +965,56 @@ bool USussBrainComponent::AppendUncorrelatedContexts(AActor* Self,
 	}
 
 	return bAnyResults;
+}
+
+bool USussBrainComponent::ShouldAddInertiaToProposedAction(int NewActionIndex,
+                                                           const FSussContext& NewCtx)
+{
+	// Tolerance that locations must be within squared distance to be considered the same
+	// Allow more wiggle room than usual 
+	static const float LocationToleranceSq = 30*30;
+	if (IsActionInProgress() && NewActionIndex == CurrentActionResult.ActionDefIndex)
+	{
+		// OK this is the same action, but is the context the same or similar enough?
+		const auto& CurrCtx = CurrentActionResult.Context;
+
+		// Targets must match (use Get instead of direct != since that constructs temp ptr)
+		if (CurrCtx.Target.Get() != NewCtx.Target.Get())
+		{
+			return false;
+		}
+
+		// Locations must be close enough
+		if (FVector::DistSquared(CurrCtx.Location, NewCtx.Location) > LocationToleranceSq)
+		{
+			return false;
+		}
+
+		// Check named params, assume they're relevant
+		if (CurrCtx.NamedValues.Num() != NewCtx.NamedValues.Num())
+		{
+			return false;
+		}
+		for (const auto& KV : CurrCtx.NamedValues)
+		{
+			if (auto pVal = NewCtx.NamedValues.Find(KV.Key))
+			{
+				if (KV.Value != *pVal)
+				{
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	return false;
+				
 }
 
 

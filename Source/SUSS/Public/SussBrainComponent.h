@@ -329,6 +329,7 @@ protected:
 	                                USussQueryProvider* QueryProvider,
 	                                const TMap<FName, FSussParameter>& Params,
 	                                TArray<FSussContext>& OutContexts);
+	bool ShouldAddInertiaToProposedAction(int NewActionIndex, const FSussContext& NewContext);
 	FSussParameter ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const;
 	void ResolveParameters(AActor* Self, const TMap<FName, FSussParameter>& InParams, TMap<FName, FSussParameter>& OutParams);
 };
