@@ -377,7 +377,7 @@ void USussBrainComponent::ChooseActionFromCandidates()
 		int ChoiceCount = 0;
 		const float BestScore = CandidateActions[0].Score;
 		const float ScoreLimit = BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopNPercent ?
-			BestScore * 100.0f / (float)BrainConfig.ActionChoiceTopN : 0;
+			BestScore - (BestScore * ((float)BrainConfig.ActionChoiceTopN / 100.0f)): 0;
 		for (int i = 0; i < CandidateActions.Num(); ++i, ++ChoiceCount)
 		{
 			if (BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopN)
