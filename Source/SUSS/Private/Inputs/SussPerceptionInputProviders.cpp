@@ -10,7 +10,7 @@
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputSelfSightRange, "Suss.Input.Perception.Sight.RangeSelf", "Get the sight range of the controlled actor")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputSelfHearingRange, "Suss.Input.Perception.Hearing.RangeSelf", "Get the hearing range of the controlled actor")
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputLineOfSightToTarget, "Suss.Input.Perception.Sight.LineOfSightToTarget", "1 if the agent has line of sight to the target context, 0 if not")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussInputLineOfSightToTarget, "Suss.Input.Perception.Sight.LineOfSightToTarget", "1 if the agent has line of sight to the target context, 0 if not. \nOptional parameter 'Radius' to perform a sphere trace rather than a line trace.")
 
 USussSelfSightRangeInputProvider::USussSelfSightRangeInputProvider()
 {
@@ -73,13 +73,42 @@ float USussLineOfSightToTargetInputProvider::Evaluate_Implementation(const USuss
 		End = Context.Target->GetActorLocation();
 		ECollisionChannel Channel = USussUtility::GetLineOfSightTraceChannel();
 
+		float Radius = 0;
+		if (auto pRadiusParam = Parameters.Find(SUSS::RadiusParamName))
+		{
+			Radius = pRadiusParam->FloatValue;
+		}
+
 		FCollisionQueryParams Params(SCENE_QUERY_STAT(LineOfSight), true, Pawn);
 		Params.AddIgnoredActor(Context.Target.Get());
 		FHitResult Hit;
-		bool bHit = World->LineTraceSingleByChannel(Hit, Start, End, Channel, Params);
+		bool bHit = false;
+
+		if (Radius > 0)
+		{
+			bHit = World->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, Channel, FCollisionShape::MakeSphere(Radius), Params);
+#if ENABLE_VISUAL_LOG
+			// You'd think you could do UE_VLOG_CYLINDER with start/end but those are always vertical regardless
+			UE_VLOG_ARROW(Brain->GetLogOwner(), LogSuss, Verbose, Start, End, bHit ? FColor::Red : FColor::Green, TEXT(""));
+			// Display a sphere every X radii up to hit point
+			const FVector DebugEnd =  bHit ? Hit.Location : End;
+			int LogSphereCount = FVector::Distance(Start, DebugEnd) / (Radius * 4);
+			for (int c = 0; c <= LogSphereCount; ++c)
+			{
+				const FVector Pos = FMath::Lerp(Start, DebugEnd, (float)c / LogSphereCount);
+				UE_VLOG_LOCATION(Brain->GetLogOwner(), LogSuss, Verbose, Pos, Radius, bHit ? FColor::Red : FColor::Green, TEXT(""));
+			}
+#endif
+		}
+		else
+		{
+			bHit = World->LineTraceSingleByChannel(Hit, Start, End, Channel, Params);
+#if ENABLE_VISUAL_LOG
+			UE_VLOG_ARROW(Brain->GetLogOwner(), LogSuss, Verbose, Start, End, bHit ? FColor::Red : FColor::Green, TEXT(""));
+#endif
+		}
 
 #if ENABLE_VISUAL_LOG
-		UE_VLOG_ARROW(Brain->GetLogOwner(), LogSuss, Verbose, Start, End, bHit ? FColor::Red : FColor::Green, TEXT(""));
 		if (bHit)
 		{
 			UE_VLOG_LOCATION(Brain->GetLogOwner(), LogSuss, Verbose, Hit.Location, 15, FColor::Red, TEXT(""));

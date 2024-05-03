@@ -30,5 +30,6 @@ namespace SUSS
 	extern SUSS_API const FName AllowRemoteParamName;
 	extern SUSS_API const FName CompletionDelayParamName;
 	extern SUSS_API const FName WaitForEndParamName;
+	extern SUSS_API const FName RadiusParamName;
 }
 

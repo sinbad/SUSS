@@ -10,3 +10,4 @@ const FName SUSS::TagParamName("Tag");
 const FName SUSS::AllowRemoteParamName("AllowRemote");
 const FName SUSS::CompletionDelayParamName("CompletionDelay");
 const FName SUSS::WaitForEndParamName("WaitForEnd");
+const FName SUSS::RadiusParamName("Radius");
