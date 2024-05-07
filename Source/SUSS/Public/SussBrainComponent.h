@@ -78,6 +78,27 @@ public:
 };
 
 
+/// History of actions that were previously run
+USTRUCT()
+struct FSussActionHistory
+{
+	GENERATED_BODY()
+public:
+	/// The time at which this action was last started
+	double LastStartTime = -UE_DOUBLE_BIG_NUMBER;
+	/// The time at which this action was last completed or interrupted
+	double LastEndTime = -UE_DOUBLE_BIG_NUMBER;
+	/// The context which was last used to run this action
+	FSussContext LastContext;
+	/// The score this action received the last time it was run
+	float LastRunScore = 0;
+	/// Positive scoring bias which encourages continuing to do the currently active action with the same context, if it hasn't completed and can be interrupted (bleeds away over time)
+	float ContinueInertia = 0;
+	/// Negative scoring bias value which discourages running this action again after it completes (bleeds away over time)
+	float RepetitionPenalty = 0;
+	
+};
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SUSS_API USussBrainComponent : public UBrainComponent
 {
@@ -125,12 +146,10 @@ protected:
 	/// The instance of the action being executed
 	UPROPERTY()
 	USussAction* CurrentActionInstance = nullptr;
-	float CurrentActionInertia = 0;
-	float CurrentActionInertiaCooldown = 0;
 
 	TArray<FSussActionScoringResult> CandidateActions;
-	/// Record of when actions were last run, by class name
-	TMap<FGameplayTag, double> ActionsTimeLastPerformed;
+	/// Record of when each action in CombinedActionsByPriority order has been run & details 
+	TArray<FSussActionHistory> ActionHistory;
 
 	UPROPERTY(Transient)
 	UAIPerceptionComponent* PerceptionComp;
@@ -219,6 +238,7 @@ protected:
 	void QueueForUpdate();
 	void TimerCallback();
 	float GetDistanceToAnyPlayer() const;
+	void UpdateInertia(float DeltaTime);
 	void UpdateDistanceCategory();
 	bool IsUpdatePrevented() const;
 
@@ -226,6 +246,7 @@ protected:
 	void OnActionCompleted(USussAction* SussAction);
 	void ChooseActionFromCandidates();
 	void ChooseAction(const FSussActionScoringResult& ActionResult);
+	void RecordAndResetCurrentAction();
 	void CancelCurrentAction(TSubclassOf<USussAction> Interrupter);
 	UFUNCTION()
 	void OnPerceptionUpdated(const TArray<AActor*>& Actors);
@@ -330,6 +351,8 @@ protected:
 	                                const TMap<FName, FSussParameter>& Params,
 	                                TArray<FSussContext>& OutContexts);
 	bool ShouldAddInertiaToProposedAction(int NewActionIndex, const FSussContext& NewContext);
+	bool ShouldSubtractRepetitionPenaltyToProposedAction(int NewActionIndex, const FSussContext& NewContext);
+	
 	FSussParameter ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const;
 	void ResolveParameters(AActor* Self, const TMap<FName, FSussParameter>& InParams, TMap<FName, FSussParameter>& OutParams);
 };

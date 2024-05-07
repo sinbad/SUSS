@@ -86,15 +86,27 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer BlockingTags;
 
-	/// Once the decision has been made to perform this action, what additional "Inertia" score to add to it
-	/// to avoid the brain flip/flopping on a boundary condition. This inertia cools down over a period of time so eventually
-	/// a better scored decision can interrupt it, if the ActionClass allows interruptions.
+	/// Once the decision has been made to perform this action, what additional "Inertia" score to add to it when deciding
+	/// whether to continue doing it. This is to avoid the brain flip/flopping on a boundary condition. This inertia
+	/// cools down over a period of time so eventually a better scored decision can interrupt it, if the ActionClass
+	/// allows interruptions. If the action completes of its own volition, inertia is reset.
 	UPROPERTY(EditDefaultsOnly)
 	float Inertia = 1.0f;
-
+	/// The length of time it takes for the value in Inertia to cool down to 0 again
 	UPROPERTY(EditDefaultsOnly)
-	float InertiaCooldown = 5.0f;
-	
+	float InertiaCooldown = 3.0f;
+
+	/// After an action has stopped, either voluntarily completing, or being interrupted, this penalty is subtracted
+	/// from future evaluations of the action to discourage repetition. The value cools down over time so that after a while
+	/// the action is scored as usual. This penalty will be accumulated if an action is repeated anyway, so for example
+	/// a penalty of 0.1 that didn't stop repetition before the cooldown would accumulate to a higher value, increasingly
+	/// discouraging further repetition.
+	UPROPERTY(EditDefaultsOnly)
+	float RepetitionPenalty = 0;
+	/// The length of time it takes for the value of RepetitionPenalty to cool down to 0
+	UPROPERTY(EditDefaultsOnly)
+	float RepetitionPenaltyCooldown = 2;
+
 };
 /**
  * An action set is a re-usable collection of actions, to make it quicker & easier to build AIs from pre-built behaviours

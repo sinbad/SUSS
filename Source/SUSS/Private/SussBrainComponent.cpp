@@ -139,6 +139,34 @@ float USussBrainComponent::GetDistanceToAnyPlayer() const
 	return std::numeric_limits<float>::max();
 }
 
+void USussBrainComponent::UpdateInertia(float DeltaTime)
+{
+	for (int i = 0; i < ActionHistory.Num(); ++i)
+	{
+		auto& H = ActionHistory[i];
+		const auto& ActionDef = CombinedActionsByPriority[i];
+		if (H.ContinueInertia > 0)
+		{
+			if (i == CurrentActionResult.ActionDefIndex)
+			{
+				// Decay inertia
+				const float Decay = ActionDef.Inertia * (DeltaTime / ActionDef.InertiaCooldown);
+				H.ContinueInertia = FMath::Max(H.ContinueInertia - Decay, 0);
+			}
+		}
+		if (H.RepetitionPenalty > 0)
+		{
+			if (i != CurrentActionResult.ActionDefIndex)
+			{
+				// Not the current action anymore, bleed repetition penalty away
+				const float Decay = ActionDef.RepetitionPenalty * (DeltaTime / ActionDef.RepetitionPenaltyCooldown);
+				H.RepetitionPenalty = FMath::Max(H.RepetitionPenalty - Decay, 0);
+			}
+		}
+	}
+
+}
+
 void USussBrainComponent::UpdateDistanceCategory()
 {
 	const float Dist = GetDistanceToAnyPlayer();
@@ -271,6 +299,9 @@ void USussBrainComponent::InitActions()
 	{
 		return A.Priority < B.Priority;
 	});
+
+	// Init history
+	ActionHistory.SetNum(CombinedActionsByPriority.Num());
 }
 
 
@@ -336,11 +367,7 @@ void USussBrainComponent::OnGameplayTagEvent(const FGameplayTag InTag, int32 New
 
 void USussBrainComponent::TimerCallback()
 {
-	if (CurrentActionInertiaCooldown > 0)
-	{
-		CurrentActionInertiaCooldown = FMath::Max(CurrentActionInertiaCooldown - CurrentUpdateInterval, 0);
-	}
-
+	UpdateInertia(CurrentUpdateInterval);
 	UpdateDistanceCategory();
 
 	// We still get timer callbacks for being out of range, we simply check the distance
@@ -433,9 +460,23 @@ void USussBrainComponent::CancelCurrentAction(TSubclassOf<USussAction> Interrupt
 	{
 		CurrentActionInstance->InternalOnActionCompleted.Unbind();
 		CurrentActionInstance->CancelAction(Interrupter);
-		CurrentActionInstance = nullptr;
-		CurrentActionResult.ActionDefIndex = -1;
+		RecordAndResetCurrentAction();
 	}
+}
+
+void USussBrainComponent::RecordAndResetCurrentAction()
+{
+	auto& History = ActionHistory[CurrentActionResult.ActionDefIndex];
+	History.LastEndTime = GetWorld()->GetTimeSeconds();
+	// Repetition penalties are CUMULATIVE
+	History.RepetitionPenalty += CombinedActionsByPriority[CurrentActionResult.ActionDefIndex].RepetitionPenalty;
+	// once we're not the current action, inertia resets
+	History.ContinueInertia = 0;
+	
+	GetSussPool(GetWorld())->FreeAction(CurrentActionInstance);
+	CurrentActionInstance = nullptr;
+	CurrentActionResult.ActionDefIndex = -1;
+	CurrentActionResult.Score = 0;
 }
 
 bool USussBrainComponent::IsActionInProgress()
@@ -474,11 +515,16 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	}
 	StopCurrentAction();
 	CurrentActionResult = ActionResult;
-	CurrentActionInertiaCooldown = Def.InertiaCooldown;
-	ActionsTimeLastPerformed.Add(Def.ActionTag, GetWorld()->GetTimeSeconds());
 
 	if (ActionClass)
 	{
+		// Record the start of the action
+		auto& History = ActionHistory[ActionResult.ActionDefIndex];
+		History.LastStartTime = GetWorld()->GetTimeSeconds();
+		History.LastRunScore = ActionResult.Score;
+		History.LastContext = ActionResult.Context;
+		History.ContinueInertia = Def.Inertia;
+		
 		// Note that to allow BP classes we need to construct using the default object
 		CurrentActionInstance = GetSussPool(GetWorld())->ReserveAction(ActionClass, this, ActionClass->GetDefaultObject());
 		CurrentActionInstance->Init(this, ActionResult.Context);
@@ -502,15 +548,11 @@ void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 	// Sometimes possible for actions to call us back late when we've already abandoned them, ignore that
 	if (IsValid(CurrentActionInstance) && CurrentActionInstance == SussAction)
 	{
-		GetSussPool(GetWorld())->FreeAction(CurrentActionInstance);
-		CurrentActionInstance = nullptr;
-		CurrentActionResult.ActionDefIndex = -1;
-		CurrentActionResult.Score = 0;
-		CurrentActionInertiaCooldown = 0;
+		SussAction->InternalOnActionCompleted.Unbind();
+		RecordAndResetCurrentAction();
 		// Immediately queue for update so no hesitation after completion
 		QueueForUpdate();
 
-		SussAction->InternalOnActionCompleted.Unbind();
 	}
 
 }
@@ -538,15 +580,6 @@ void USussBrainComponent::Update()
 	AActor* Self = GetSelf();
 
 	const FSussActionDef* CurrentActionDef = IsActionInProgress() ? &CombinedActionsByPriority[CurrentActionResult.ActionDefIndex] : nullptr;
-	
-	if (CurrentActionDef && CurrentActionDef->Inertia > 0 && CurrentActionDef->InertiaCooldown > 0)
-	{
-		CurrentActionInertia = CurrentActionDef->Inertia * (CurrentActionInertiaCooldown / CurrentActionDef->InertiaCooldown);
-	}
-	else
-	{
-		CurrentActionInertia = 0;
-	}
 	
 	int CurrentPriority = CombinedActionsByPriority[0].Priority;
 	// Use reset not empty in order to keep memory stable
@@ -650,9 +683,17 @@ void USussBrainComponent::Update()
 			// Add inertia if this is the current action + context
 			if (ShouldAddInertiaToProposedAction(i, Ctx))
 			{
-				Score += CurrentActionInertia;
+				Score += ActionHistory[i].ContinueInertia;
 #if ENABLE_VISUAL_LOG
-				UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Current Action Inertia: %4.2f"), CurrentActionInertia);
+				UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Current Action Inertia: %4.2f"), ActionHistory[i].ContinueInertia);
+#endif
+			}
+			// Add repetition penalty if applicable
+			if (ShouldSubtractRepetitionPenaltyToProposedAction(i, Ctx))
+			{
+				Score -= ActionHistory[i].RepetitionPenalty;
+#if ENABLE_VISUAL_LOG
+				UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Repetition Penalty: -%4.2f"), ActionHistory[i].RepetitionPenalty);
 #endif
 			}
 
@@ -972,7 +1013,7 @@ bool USussBrainComponent::ShouldAddInertiaToProposedAction(int NewActionIndex,
 {
 	// Tolerance that locations must be within squared distance to be considered the same
 	// Allow more wiggle room than usual 
-	static const float LocationToleranceSq = 30*30;
+	static constexpr float LocationToleranceSq = 30*30;
 	if (IsActionInProgress() && NewActionIndex == CurrentActionResult.ActionDefIndex)
 	{
 		// OK this is the same action, but is the context the same or similar enough?
@@ -1015,6 +1056,17 @@ bool USussBrainComponent::ShouldAddInertiaToProposedAction(int NewActionIndex,
 
 	return false;
 				
+}
+
+bool USussBrainComponent::ShouldSubtractRepetitionPenaltyToProposedAction(int NewActionIndex,
+	const FSussContext& NewContext)
+{
+	// We only add repetition penalties to previously run actions
+	if (!IsActionInProgress() || NewActionIndex != CurrentActionResult.ActionDefIndex)
+	{
+		return ActionHistory[NewActionIndex].LastEndTime > 0;
+	}
+	return false;
 }
 
 
@@ -1077,12 +1129,18 @@ AActor* USussBrainComponent::GetSelf() const
 
 double USussBrainComponent::GetTimeSinceActionPerformed(FGameplayTag ActionTag) const
 {
-	if (auto pTime = ActionsTimeLastPerformed.Find(ActionTag))
+	double LastTime = -UE_DOUBLE_BIG_NUMBER;
+	
+	for (int i = 0; i < ActionHistory.Num(); ++i)
 	{
-		return GetWorld()->GetTimeSeconds() - *pTime;
+		const auto& H = ActionHistory[i];
+		const auto& Def = CombinedActionsByPriority[i];
+		if (Def.ActionTag == ActionTag)
+		{
+			LastTime = FMath::Max(LastTime, H.LastStartTime);
+		}
 	}
-
-	return 9999999.9;
+	return GetWorld()->GetTimeSeconds() - LastTime;
 }
 
 void USussBrainComponent::OnPerceptionUpdated(const TArray<AActor*>& Actors)
@@ -1100,6 +1158,7 @@ FString USussBrainComponent::GetDebugSummaryString() const
 		// Log all actions
 		// Log all considerations?
 		const FSussActionDef& Def = CombinedActionsByPriority[CurrentActionResult.ActionDefIndex];
+		const auto& H = ActionHistory[CurrentActionResult.ActionDefIndex];
 		Builder.Appendf(
 			TEXT(
 				"Current Action: {yellow}%s{white} Score: {yellow}%4.2f{white}\n"
@@ -1108,7 +1167,7 @@ FString USussBrainComponent::GetDebugSummaryString() const
 					*CurrentActionInstance->GetClass()->GetName() :
 					*Def.Description,
 				CurrentActionResult.Score,
-				CurrentActionInertia);
+				H.ContinueInertia);
 	}
 
 	return Builder.ToString();
