@@ -45,11 +45,11 @@ public:
 	 * @param ProjectileVelocity The velocity of projectiles, which will be used to calculate how much to
 	 *   lead by (together with actor velocity)
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="AI")
 	void SetFocusLeadTarget(float ProjectileVelocity) { LeadTargetProjectileVelocity = ProjectileVelocity; }
 
 	/// Stop leading focus targets and go back to focusing directly on them
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="AI")
 	void ClearFocusLeadTarget() { LeadTargetProjectileVelocity = 0; }
 
 	// Overriden to support leading moving targets
