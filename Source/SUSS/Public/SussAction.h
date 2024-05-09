@@ -107,6 +107,17 @@ public:
 	void DebugLocations(UPARAM(Ref) TArray<FVector>& OutLocations, bool bIncludeDetails) const;
 
 	/**
+	 * Set a temporary score adjustment to this action, so that future evaluations of this action
+	 * (with any context) will be temporarily up- or down-voted. While these things should ideally be
+	 * scored in considerations, sometimes you might want to just add a temporary "thumb on the scale". 
+	 * @param Value The scoring value adjustment to add to the usual score in future. This can be negative if you want to penalise
+	 * the running of this action for a while. This will override any previous adjustment
+	 * @param CooldownTime The time it should take for this adjustment to slowly reduce back to 0. 
+	 */
+	UFUNCTION(BlueprintCallable)
+	void SetTemporaryActionScoreAdjustment(float Value, float CooldownTime);
+
+	/**
 	 * Add a temporary score adjustment to this action, for this brain, so that future evaluations of this action
 	 * (with any context) will be temporarily up- or down-voted. This could be useful if there are conditions you might
 	 * encounter while executing this action that should alter its likelihood to be chosen again. While you could put these

@@ -235,6 +235,17 @@ public:
 	const UObject* GetLogOwner() const;
 
 	/**
+	 * Set a temporary score adjustment to an action, so that future evaluations of this action
+	 * (with any context) will be temporarily up- or down-voted. While these things should ideally be
+	 * scored in considerations, sometimes you might want to just add a temporary "thumb on the scale". 
+	 * @param ActionTag The tag of the action you want to change the score for
+	 * @param Value The scoring value adjustment to add to the usual score in future. This can be negative if you want to penalise
+	 * the running of this action for a while. This will override any previous adjustment
+	 * @param CooldownTime The time it should take for this adjustment to slowly reduce back to 0. 
+	 */
+	UFUNCTION(BlueprintCallable)
+	void SetTemporaryActionScoreAdjustment(FGameplayTag ActionTag, float Value, float CooldownTime);
+	/**
 	 * Add a temporary score adjustment to an action, so that future evaluations of this action
 	 * (with any context) will be temporarily up- or down-voted. While these things should ideally be
 	 * scored in considerations, sometimes you might want to just add a temporary "thumb on the scale". 
@@ -256,6 +267,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ResetAllTemporaryActionScoreAdjustments();
 	
+	void SetTemporaryActionScoreAdjustment(int ActionIndex, float Value, float CooldownTime);
 	void AddTemporaryActionScoreAdjustment(int ActionIndex, float Value, float CooldownTime);
 	void ResetTemporaryActionScoreAdjustment(int ActionIndex);
 

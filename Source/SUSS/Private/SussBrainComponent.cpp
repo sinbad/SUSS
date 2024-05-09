@@ -1174,6 +1174,18 @@ void USussBrainComponent::OnPerceptionUpdated(const TArray<AActor*>& Actors)
 	QueueForUpdate();
 }
 
+void USussBrainComponent::SetTemporaryActionScoreAdjustment(FGameplayTag ActionTag, float Value, float CooldownTime)
+{
+	// Can potentially apply to multiple actions, if the same tag is used multiple times with eg diff params
+	for (int i = 0; i < CombinedActionsByPriority.Num(); ++i)
+	{
+		if (CombinedActionsByPriority[i].ActionTag == ActionTag)
+		{
+			SetTemporaryActionScoreAdjustment(i, Value, CooldownTime);
+		}
+	}
+}
+
 void USussBrainComponent::AddTemporaryActionScoreAdjustment(FGameplayTag ActionTag, float Value, float CooldownTime)
 {
 	// Can potentially apply to multiple actions, if the same tag is used multiple times with eg diff params
@@ -1203,6 +1215,16 @@ void USussBrainComponent::ResetAllTemporaryActionScoreAdjustments()
 	for (int i = 0; i < ActionHistory.Num(); ++i)
 	{
 		ActionHistory[i].TempScoreAdjust = 0;
+	}
+}
+
+void USussBrainComponent::SetTemporaryActionScoreAdjustment(int ActionIndex, float Value, float CooldownTime)
+{
+	if (ActionHistory.IsValidIndex(ActionIndex))
+	{
+		auto& H = ActionHistory[ActionIndex];
+		H.TempScoreAdjust = Value;
+		H.TempScoreAdjustCooldownRate = Value / CooldownTime;
 	}
 }
 

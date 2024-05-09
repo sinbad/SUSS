@@ -41,6 +41,14 @@ void USussAction::ActionCompleted()
 	InternalOnActionCompleted.ExecuteIfBound(this);
 }
 
+void USussAction::SetTemporaryActionScoreAdjustment(float Value, float CooldownTime)
+{
+	if (IsValid(Brain))
+	{
+		Brain->SetTemporaryActionScoreAdjustment(BrainActionIndex, Value, CooldownTime);
+	}
+}
+
 void USussAction::AddTemporaryScoreAdjustment(float Value, float CooldownTime)
 {
 	if (IsValid(Brain))
