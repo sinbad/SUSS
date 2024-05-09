@@ -96,6 +96,10 @@ public:
 	float ContinueInertia = 0;
 	/// Negative scoring bias value which discourages running this action again after it completes (bleeds away over time)
 	float RepetitionPenalty = 0;
+	/// Positive or negative bias applied manually for a temporary period
+	float TempScoreAdjust = 0;
+	/// The speed that TempManualAdjust returns to 0
+	float TempScoreAdjustCooldownRate = 0;
 	
 };
 
@@ -229,6 +233,31 @@ public:
 
 	// Helper method to make logs easier to read
 	const UObject* GetLogOwner() const;
+
+	/**
+	 * Add a temporary score adjustment to an action, so that future evaluations of this action
+	 * (with any context) will be temporarily up- or down-voted. While these things should ideally be
+	 * scored in considerations, sometimes you might want to just add a temporary "thumb on the scale". 
+	 * @param ActionTag The tag of the action you want to change the score for
+	 * @param Value The scoring value to add to the usual score in future. This can be negative if you want to penalise
+	 * the running of this action for a while. This will be accumulated if called multiple times.
+	 * @param CooldownTime The time it should take for this adjustment to slowly reduce back to 0. If there is already
+	 * a score adjustment cooling down, the rate at which the combined value will cool down will be proportionate to
+	 * both the new cooldown time and the old one. For example if there was already an adjustment of +5 with a cooldown
+	 * of 1 second, adding another +5 with a cooldown of 2 seconds will result in a value of 10 which cools down over 3
+	 * seconds. It's a fixed cooldown rate though so won't be exactly the same as the 2 done separately.
+	 */
+	UFUNCTION(BlueprintCallable)
+	void AddTemporaryActionScoreAdjustment(FGameplayTag ActionTag, float Value, float CooldownTime);
+	/// Reset temporary score adjustments added with AddTemporaryActionScoreAdjustment
+	UFUNCTION(BlueprintCallable)
+	void ResetTemporaryActionScoreAdjustment(FGameplayTag ActionTag);
+	/// Reset all temporary action score adjustments
+	UFUNCTION(BlueprintCallable)
+	void ResetAllTemporaryActionScoreAdjustments();
+	
+	void AddTemporaryActionScoreAdjustment(int ActionIndex, float Value, float CooldownTime);
+	void ResetTemporaryActionScoreAdjustment(int ActionIndex);
 
 protected:
 	// Called when the game starts

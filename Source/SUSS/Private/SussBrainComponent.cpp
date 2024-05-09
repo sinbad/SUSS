@@ -163,6 +163,22 @@ void USussBrainComponent::UpdateInertia(float DeltaTime)
 				H.RepetitionPenalty = FMath::Max(H.RepetitionPenalty - Decay, 0);
 			}
 		}
+		// temp adjusts can be + or -
+		if (!FMath::IsNearlyZero(H.TempScoreAdjust) && !FMath::IsNearlyZero(H.TempScoreAdjustCooldownRate))
+		{
+			// temp adjusts always cool down
+			// always move towards 0
+			if (H.TempScoreAdjust > 0)
+			{
+				// positive
+				H.TempScoreAdjust = FMath::Max(H.TempScoreAdjust - H.TempScoreAdjustCooldownRate * DeltaTime, 0.0f);
+			}
+			else
+			{
+				// negative
+				H.TempScoreAdjust = FMath::Min(H.TempScoreAdjust + H.TempScoreAdjustCooldownRate * DeltaTime, 0.0f);
+			}
+		}
 	}
 
 }
@@ -527,7 +543,7 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 		
 		// Note that to allow BP classes we need to construct using the default object
 		CurrentActionInstance = GetSussPool(GetWorld())->ReserveAction(ActionClass, this, ActionClass->GetDefaultObject());
-		CurrentActionInstance->Init(this, ActionResult.Context);
+		CurrentActionInstance->Init(this, ActionResult.Context, ActionResult.ActionDefIndex);
 		CurrentActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
 		CurrentActionInstance->PerformAction(ActionResult.Context, Def.ActionParams, PreviousActionClass);
 	}
@@ -696,6 +712,8 @@ void USussBrainComponent::Update()
 				UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Repetition Penalty: -%4.2f"), ActionHistory[i].RepetitionPenalty);
 #endif
 			}
+			// Add temp adjustments
+			Score += ActionHistory[i].TempScoreAdjust;
 
 #if ENABLE_VISUAL_LOG
 			UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT(" - TOTAL: %4.2f"), Score);
@@ -1146,6 +1164,57 @@ double USussBrainComponent::GetTimeSinceActionPerformed(FGameplayTag ActionTag) 
 void USussBrainComponent::OnPerceptionUpdated(const TArray<AActor*>& Actors)
 {
 	QueueForUpdate();
+}
+
+void USussBrainComponent::AddTemporaryActionScoreAdjustment(FGameplayTag ActionTag, float Value, float CooldownTime)
+{
+	// Can potentially apply to multiple actions, if the same tag is used multiple times with eg diff params
+	for (int i = 0; i < CombinedActionsByPriority.Num(); ++i)
+	{
+		if (CombinedActionsByPriority[i].ActionTag == ActionTag)
+		{
+			AddTemporaryActionScoreAdjustment(i, Value, CooldownTime);
+		}
+	}
+}
+
+void USussBrainComponent::ResetTemporaryActionScoreAdjustment(FGameplayTag ActionTag)
+{
+	// Can potentially apply to multiple actions, if the same tag is used multiple times with eg diff params
+	for (int i = 0; i < CombinedActionsByPriority.Num(); ++i)
+	{
+		if (CombinedActionsByPriority[i].ActionTag == ActionTag)
+		{
+			ResetTemporaryActionScoreAdjustment(i);
+		}
+	}
+}
+
+void USussBrainComponent::ResetAllTemporaryActionScoreAdjustments()
+{
+	for (int i = 0; i < ActionHistory.Num(); ++i)
+	{
+		ActionHistory[i].TempScoreAdjust = 0;
+	}
+}
+
+void USussBrainComponent::AddTemporaryActionScoreAdjustment(int ActionIndex, float Value, float CooldownTime)
+{
+	if (ActionHistory.IsValidIndex(ActionIndex))
+	{
+		auto& H = ActionHistory[ActionIndex];
+		float PrevCooldownTimeRemaining = 0;
+		if (!FMath::IsNearlyZero(H.TempScoreAdjust) && !FMath::IsNearlyZero(H.TempScoreAdjustCooldownRate))
+		{
+			PrevCooldownTimeRemaining = H.TempScoreAdjust / H.TempScoreAdjustCooldownRate;
+		}
+		H.TempScoreAdjust += Value;
+		H.TempScoreAdjustCooldownRate = H.TempScoreAdjust / (CooldownTime + PrevCooldownTimeRemaining);
+	}
+}
+
+void USussBrainComponent::ResetTemporaryActionScoreAdjustment(int ActionIndex)
+{
 }
 
 FString USussBrainComponent::GetDebugSummaryString() const

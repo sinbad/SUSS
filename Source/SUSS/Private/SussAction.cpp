@@ -41,6 +41,22 @@ void USussAction::ActionCompleted()
 	InternalOnActionCompleted.ExecuteIfBound(this);
 }
 
+void USussAction::AddTemporaryScoreAdjustment(float Value, float CooldownTime)
+{
+	if (IsValid(Brain))
+	{
+		Brain->AddTemporaryActionScoreAdjustment(BrainActionIndex, Value, CooldownTime);
+	}
+}
+
+void USussAction::ResetTemporaryScoreAdjustment()
+{
+	if (IsValid(Brain))
+	{
+		Brain->ResetTemporaryActionScoreAdjustment(BrainActionIndex);
+	}
+}
+
 void USussAction::DebugLocations_Implementation(TArray<FVector>& OutLocations, bool bIncludeDetails) const
 {
 	// Subclasses should implement

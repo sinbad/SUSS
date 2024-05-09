@@ -36,9 +36,17 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	FSussContext CurrentContext;
+
+	UPROPERTY(BlueprintReadOnly, Transient)
+	int BrainActionIndex;
 public:
 
-	void Init(USussBrainComponent* InBrain, const FSussContext& InContext) { Brain = InBrain; CurrentContext = InContext; }
+	void Init(USussBrainComponent* InBrain, const FSussContext& InContext, int ActionIndex)
+	{
+		Brain = InBrain;
+		CurrentContext = InContext;
+		BrainActionIndex = ActionIndex;
+	}
 
 	const FGameplayTag& GetActionTag() const { return ActionTag; }
 	
@@ -97,6 +105,25 @@ public:
 	/// Implement this to output a series of locations in the gameplay debugger
 	UFUNCTION(BlueprintNativeEvent)
 	void DebugLocations(UPARAM(Ref) TArray<FVector>& OutLocations, bool bIncludeDetails) const;
+
+	/**
+	 * Add a temporary score adjustment to this action, for this brain, so that future evaluations of this action
+	 * (with any context) will be temporarily up- or down-voted. This could be useful if there are conditions you might
+	 * encounter while executing this action that should alter its likelihood to be chosen again. While you could put these
+	 * things in considerations, sometimes that's not practical because it requires more information specific to the
+	 * action execution. This allows an action to essentially "veto" itself for a while, by calling this function and
+	 * then ActionCompleted() to trigger the re-evaluation of alternatives.
+	 * @param Value The scoring value to add to the usual score in future. This can be negative if you want to penalise
+	 * the running of this action for a while (on this brain).
+	 * @param CooldownTime The time it should take for this adjustment to slowly reduce back to 0. If set to 0, this
+	 * score adjustment will not be removed until manually reset.
+	 */
+	UFUNCTION(BlueprintCallable)
+	void AddTemporaryScoreAdjustment(float Value, float CooldownTime);
+
+	/// Resets any score adjustments added via AddTemporaryScoreAdjustment immediately
+	UFUNCTION(BlueprintCallable)
+	void ResetTemporaryScoreAdjustment();
 
 	FSussOnActionCompleted InternalOnActionCompleted;
 };
