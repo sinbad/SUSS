@@ -697,23 +697,31 @@ void USussBrainComponent::Update()
 			}
 
 			// Add inertia if this is the current action + context
+			const auto& Hist = ActionHistory[i];
 			if (ShouldAddInertiaToProposedAction(i, Ctx))
 			{
-				Score += ActionHistory[i].ContinueInertia;
+				Score += Hist.ContinueInertia;
 #if ENABLE_VISUAL_LOG
-				UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Current Action Inertia: %4.2f"), ActionHistory[i].ContinueInertia);
+				UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Current Action Inertia: %4.2f"), Hist.ContinueInertia);
 #endif
 			}
 			// Add repetition penalty if applicable
 			if (ShouldSubtractRepetitionPenaltyToProposedAction(i, Ctx))
 			{
-				Score -= ActionHistory[i].RepetitionPenalty;
+				Score -= Hist.RepetitionPenalty;
 #if ENABLE_VISUAL_LOG
-				UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Repetition Penalty: -%4.2f"), ActionHistory[i].RepetitionPenalty);
+				UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Repetition Penalty: -%4.2f"), Hist.RepetitionPenalty);
 #endif
 			}
-			// Add temp adjustments
-			Score += ActionHistory[i].TempScoreAdjust;
+			if (!FMath::IsNearlyZero(Hist.TempScoreAdjust))
+			{
+				// Add temp adjustments
+				Score += Hist.TempScoreAdjust;
+#if ENABLE_VISUAL_LOG
+				UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Temp Adjust: %4.2f"), Hist.TempScoreAdjust);
+#endif
+				
+			}
 
 #if ENABLE_VISUAL_LOG
 			UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT(" - TOTAL: %4.2f"), Score);
