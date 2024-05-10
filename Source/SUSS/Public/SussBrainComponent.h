@@ -35,6 +35,25 @@ enum class ESussDistanceCategory : uint8
 	OutOfRange
 };
 
+/// Allows you to define how different priority groups make a choice between non-zero scoring actions
+USTRUCT(BlueprintType)
+struct FSussActionChoiceByPriorityConfig
+{
+	GENERATED_BODY()
+public:
+	/// The priority group that this choice config applies to
+	UPROPERTY(EditDefaultsOnly)
+	int Priority;
+
+	/// The method we use to choose an action in this priority group
+	UPROPERTY(EditDefaultsOnly)
+	ESussActionChoiceMethod ChoiceMethod = ESussActionChoiceMethod::HighestScoring;
+
+	/// When using the "Top N" or "Top N Percent" action choice methods, the value of "N"
+	UPROPERTY(EditDefaultsOnly)
+	int ChoiceTopN = 5;
+	
+};
 /// Collected configuration for a brain which can be plugged in as needed
 USTRUCT(BlueprintType)
 struct FSussBrainConfig
@@ -49,13 +68,17 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FSussActionDef> ActionDefs;
 
-	/// How to choose the action to take
+	/// How to choose the action to take by default (unless overridden by priority group)
 	UPROPERTY(EditDefaultsOnly)
 	ESussActionChoiceMethod ActionChoiceMethod = ESussActionChoiceMethod::HighestScoring;
 
 	/// When using the "Top N" or "Top N Percent" action choice methods, the value of "N"
 	UPROPERTY(EditDefaultsOnly)
 	int ActionChoiceTopN = 5;
+
+	/// Add items here to override how actions are chosen within specific priority groups
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FSussActionChoiceByPriorityConfig> PriorityGroupActionChoiceOverrides;
 
 	/// If any of these gameplay tags exist on the pawn being controlled by the brain, the brain will not be
 	/// updated. This is a simple way to avoid new actions being performed while an enemy is stunned, or staggered (this
@@ -276,6 +299,7 @@ protected:
 	virtual void BeginPlay() override;
 	void BrainConfigChanged();
 	void InitActions();
+	ESussActionChoiceMethod GetActionChoiceMethod(int Priority, int& OutTopN) const;
 	void QueueForUpdate();
 	void TimerCallback();
 	float GetDistanceToAnyPlayer() const;

@@ -320,6 +320,19 @@ void USussBrainComponent::InitActions()
 	ActionHistory.SetNum(CombinedActionsByPriority.Num());
 }
 
+ESussActionChoiceMethod USussBrainComponent::GetActionChoiceMethod(int Priority, int& OutTopN) const
+{
+	for (auto& C : BrainConfig.PriorityGroupActionChoiceOverrides)
+	{
+		if (C.Priority == Priority)
+		{
+			OutTopN = C.ChoiceTopN;
+			return C.ChoiceMethod;
+		}
+	}
+	OutTopN = BrainConfig.ActionChoiceTopN;
+	return BrainConfig.ActionChoiceMethod;
+}
 
 void USussBrainComponent::RequestUpdate()
 {
@@ -406,7 +419,12 @@ void USussBrainComponent::ChooseActionFromCandidates()
 		return L.Score > R.Score;
 	});
 
-	if (BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::HighestScoring)
+	// All actions in the candidate list will always be from the same priority group
+	const int Priority = CombinedActionsByPriority[CandidateActions[0].ActionDefIndex].Priority;
+	int TopN = 0;
+	ESussActionChoiceMethod ChoiceMethod = GetActionChoiceMethod(Priority, TopN);
+
+	if (ChoiceMethod == ESussActionChoiceMethod::HighestScoring)
 	{
 #if ENABLE_VISUAL_LOG
 		UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("Choice method: Highest Scoring"));
@@ -419,18 +437,18 @@ void USussBrainComponent::ChooseActionFromCandidates()
 		float TotalScores = 0;
 		int ChoiceCount = 0;
 		const float BestScore = CandidateActions[0].Score;
-		const float ScoreLimit = BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopNPercent ?
-			BestScore - (BestScore * ((float)BrainConfig.ActionChoiceTopN / 100.0f)): 0;
+		const float ScoreLimit = ChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopNPercent ?
+			BestScore - (BestScore * ((float)TopN / 100.0f)): 0;
 		for (int i = 0; i < CandidateActions.Num(); ++i, ++ChoiceCount)
 		{
-			if (BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopN)
+			if (ChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopN)
 			{
-				if (i == BrainConfig.ActionChoiceTopN)
+				if (i == TopN)
 				{
 					break;
 				}
 			}
-			else if (BrainConfig.ActionChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopNPercent)
+			else if (ChoiceMethod == ESussActionChoiceMethod::WeightedRandomTopNPercent)
 			{
 				if (CandidateActions[i].Score < ScoreLimit)
 				{
@@ -452,9 +470,8 @@ void USussBrainComponent::ChooseActionFromCandidates()
 #if ENABLE_VISUAL_LOG
 				UE_VLOG(GetLogOwner(), LogSuss, Log,
 				        TEXT("Choice method: %s (%d) [%4.2f/%4.2f]"),
-				        *StaticEnum<ESussActionChoiceMethod>()->GetDisplayNameTextByValue((int64)BrainConfig.
-					        ActionChoiceMethod).ToString(),
-					    BrainConfig.ActionChoiceTopN,
+				        *StaticEnum<ESussActionChoiceMethod>()->GetDisplayNameTextByValue((int64)ChoiceMethod).ToString(),
+					    TopN,
 				        Rand,
 				        TotalScores);
 #endif
