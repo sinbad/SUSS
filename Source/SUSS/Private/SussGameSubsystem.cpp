@@ -143,6 +143,7 @@ void USussGameSubsystem::RegisterNativeProviders()
 	RegisterQueryProviderClass(USussPerceptionKnownTargetsQueryProvider::StaticClass());
 	RegisterQueryProviderClass(USussPerceptionKnownHostilesQueryProvider::StaticClass());
 	RegisterQueryProviderClass(USussPerceptionKnownNonHostilesQueryProvider::StaticClass());
+	RegisterQueryProviderClass(USussPerceptionKnownHostilesExtendedQueryProvider::StaticClass());
 
 }
 

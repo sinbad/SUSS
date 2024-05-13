@@ -31,5 +31,8 @@ namespace SUSS
 	extern SUSS_API const FName CompletionDelayParamName;
 	extern SUSS_API const FName WaitForEndParamName;
 	extern SUSS_API const FName RadiusParamName;
+
+	extern SUSS_API const FName PerceptionInfoValueName;
+
 }
 

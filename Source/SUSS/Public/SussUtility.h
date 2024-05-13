@@ -11,6 +11,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SussUtility.generated.h"
 
+struct FSussActorPerceptionInfo;
 class AAIController;
 /**
  * 
@@ -263,4 +264,8 @@ public:
 
 	UFUNCTION(Blueprintable, Category="SUSS")
 	static ECollisionChannel GetLineOfSightTraceChannel();
+
+	/// Helper function to retrieve the "PerceptionInfo" named struct from a context
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static const FSussActorPerceptionInfo& GetPerceptionInfoFromContext(const FSussContext& Context, bool& bSuccess);
 };

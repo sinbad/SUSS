@@ -10,6 +10,7 @@
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussQueryPerceptionKnownTargets, "Suss.Query.Perception.Targets.AllKnown", "Query all targets known to this agent's perception system. Optional param 'Sense' to filter ('Sight', 'Hearing' etc)")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussQueryPerceptionKnownHostiles, "Suss.Query.Perception.Targets.HostilesKnown", "Query all hostiles known to this agent's perception system. Optional param 'Sense' to filter ('Sight', 'Hearing' etc)")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussQueryPerceptionKnownNonHostiles, "Suss.Query.Perception.Targets.NonHostilesKnown", "Query all non-hostiles known to this agent's perception system. Optional param 'Sense' to filter ('Sight', 'Hearing' etc)")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussQueryPerceptionKnownHostilesExtended, "Suss.Query.Perception.Targets.HostilesKnown.Extended", "Query all hostiles known to this agent's perception system, return named value struct 'PerceptionInfo' of type FSussActorPerceptionInfo. Optional param 'Sense' to filter ('Sight', 'Hearing' etc)")
 
 static const FName SussQuerySenseParam("Sense");
 static const FName SussQuerySenseSightValue("Sight");
@@ -149,5 +150,59 @@ void USussPerceptionKnownNonHostilesQueryProvider::ExecuteQuery(USussBrainCompon
 		{
 			OutResults.Add(Actor);
 		}
+	}
+}
+
+FSussActorPerceptionInfo::FSussActorPerceptionInfo(const FActorPerceptionInfo& Info): bIsSeen(0),
+	bIsHeard(0),
+	bIsHostile(Info.bIsHostile)
+{
+	Target = Info.Target;
+	const FAISenseID SightID = GetDefault<UAISense_Sight>()->GetSenseID();
+	const FAISenseID HearingID = GetDefault<UAISense_Hearing>()->GetSenseID();
+	bIsSeen = Info.HasKnownStimulusOfSense(SightID);
+	bIsHeard = Info.HasKnownStimulusOfSense(HearingID);
+	LastLocation = Info.GetLastStimulusLocation();
+	LastSensedStimuli = Info.LastSensedStimuli;
+}
+
+FString FSussActorPerceptionInfo::ToString() const
+{
+	return FString::Printf(TEXT("Target: %s  Seen: %d  Heard: %d At: %s"),
+		Target.IsValid() ? *Target->GetHumanReadableName() : TEXT("null"),
+		bIsSeen, bIsHeard, *LastLocation.ToString());
+}
+
+USussPerceptionKnownHostilesExtendedQueryProvider::USussPerceptionKnownHostilesExtendedQueryProvider()
+{
+	QueryTag = TAG_SussQueryPerceptionKnownHostilesExtended;
+	QueryValueName = SUSS::PerceptionInfoValueName;
+	QueryValueType = ESussContextValueType::Struct;
+}
+
+void USussPerceptionKnownHostilesExtendedQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
+	AActor* Self,
+	const TMap<FName, FSussParameter>& Params,
+	const FSussContext& Context,
+	TArray<FSussContextValue>& OutResults)
+{
+	if (const auto Perception = Brain->GetPerceptionComponent())
+	{
+		TArray<AActor*> PerceptionResults;
+		TSubclassOf<UAISense> SenseClass = GetSenseClassFromParams(Params);
+		const FAISenseID SenseID = UAISense::GetSenseID(SenseClass);
+		for (auto It = Perception->GetPerceptualDataConstIterator(); It; ++It)
+		{
+			const FActorPerceptionInfo& Info = It->Value;
+
+			if (Info.bIsHostile)
+			{
+				if (!SenseClass || Info.HasKnownStimulusOfSense(SenseID))
+				{
+					OutResults.Add(FSussContextValue(MakeShared<FSussActorPerceptionInfo>(Info)));
+				}
+			}
+		}
+		
 	}
 }

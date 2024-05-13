@@ -8,6 +8,7 @@
 #include "AIController.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "Queries/SussEQSWorldSubsystem.h"
+#include "Queries/SussPerceptionQueries.h"
 
 
 bool USussUtility::IsActionEnabled(FGameplayTag ActionTag)
@@ -723,4 +724,20 @@ ECollisionChannel USussUtility::GetLineOfSightTraceChannel()
 		return Settings->LineOfSightTraceChannel;
 	}
 	return ECC_Visibility;
+}
+
+const FSussActorPerceptionInfo& USussUtility::GetPerceptionInfoFromContext(const FSussContext& Context, bool& bSuccess)
+{
+	if (auto pVal = Context.NamedValues.Find(SUSS::PerceptionInfoValueName))
+	{
+		if (auto pStruct = pVal->GetStructValue())
+		{
+			bSuccess = true;
+			return *static_cast<const FSussActorPerceptionInfo*>(pStruct);
+		}
+	}
+
+	bSuccess = false;
+	static FSussActorPerceptionInfo Dummy;
+	return Dummy;
 }
