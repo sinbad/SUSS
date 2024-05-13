@@ -169,7 +169,7 @@ FSussActorPerceptionInfo::FSussActorPerceptionInfo(const FActorPerceptionInfo& I
 FString FSussActorPerceptionInfo::ToString() const
 {
 	return FString::Printf(TEXT("Target: %s  Seen: %d  Heard: %d At: %s"),
-		Target.IsValid() ? *Target->GetHumanReadableName() : TEXT("null"),
+		Target.IsValid() ? *Target->GetActorNameOrLabel() : TEXT("null"),
 		bIsSeen, bIsHeard, *LastLocation.ToString());
 }
 
