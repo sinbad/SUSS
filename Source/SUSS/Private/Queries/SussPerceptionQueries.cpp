@@ -195,7 +195,7 @@ void USussPerceptionKnownHostilesExtendedQueryProvider::ExecuteQuery(USussBrainC
 		{
 			const FActorPerceptionInfo& Info = It->Value;
 
-			if (Info.bIsHostile)
+			if (Info.bIsHostile && Info.HasAnyKnownStimulus())
 			{
 				if (!SenseClass || Info.HasKnownStimulusOfSense(SenseID))
 				{
