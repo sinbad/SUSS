@@ -529,6 +529,7 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 		// We're already running it, so just continue
 #if ENABLE_VISUAL_LOG
 		UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("No Action Change, continue: %s %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description, *ActionResult.Context.ToString());
+		ActionResult.Context.VisualLog(GetLogOwner());
 #endif
 		CurrentActionInstance->ContinueAction(ActionResult.Context, Def.ActionParams);
 		return;
@@ -539,6 +540,7 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 
 #if ENABLE_VISUAL_LOG
 	UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("Chose NEW action: %s %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description, *ActionResult.Context.ToString());
+		ActionResult.Context.VisualLog(GetLogOwner());
 #endif
 
 	TSubclassOf<USussAction> PreviousActionClass = nullptr;

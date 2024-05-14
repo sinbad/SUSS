@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "SussCommon.h"
 #include "UObject/Object.h"
 #include "SussContext.generated.h"
 
@@ -270,5 +271,19 @@ public:
 		Builder.Append(" }");
 		return Builder.ToString();
 		
+	}
+
+	void VisualLog(const UObject* LogOwner) const
+	{
+#if ENABLE_VISUAL_LOG
+		if (Target.IsValid())
+		{
+			UE_VLOG_LOCATION(LogOwner, LogSuss, VeryVerbose, Location, 30, FColor::Orange, TEXT("Target"));
+		}
+		if (!Location.IsNearlyZero())
+		{
+			UE_VLOG_LOCATION(LogOwner, LogSuss, VeryVerbose, Location, 30, FColor::Cyan, TEXT("Location"));
+		}
+#endif
 	}
 };
