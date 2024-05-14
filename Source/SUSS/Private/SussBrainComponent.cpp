@@ -15,6 +15,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
+#include "Queries/SussPerceptionQueries.h"
 
 
 // Sets default values for this component's properties
@@ -339,6 +340,28 @@ void USussBrainComponent::RequestUpdate()
 	if (GetOwner()->HasAuthority())
 	{
 		QueueForUpdate();
+	}
+}
+
+void USussBrainComponent::GetPerceptionInfo(TArray<FSussActorPerceptionInfo>& OutPerceptionInfo,
+	bool bIncludeKnownButNotCurrent,
+	TSubclassOf<UAISense> SenseClass)
+{
+	if (IsValid(PerceptionComp))
+	{
+		const FAISenseID SenseID = SenseClass ? UAISense::GetSenseID(SenseClass) : FAISenseID::InvalidID();
+		for (auto It = PerceptionComp->GetPerceptualDataConstIterator(); It; ++It)
+		{
+			const FActorPerceptionInfo& Info = It->Value;
+
+			if (SenseClass && !Info.HasKnownStimulusOfSense(SenseID))
+				continue;
+			
+			if (bIncludeKnownButNotCurrent || Info.HasAnyCurrentStimulus())
+			{
+				OutPerceptionInfo.Add(FSussActorPerceptionInfo(Info));
+			}
+		}
 	}
 }
 

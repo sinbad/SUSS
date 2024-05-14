@@ -238,7 +238,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RequestUpdate();
 
-
+	/**
+	 * Retrieves the current perception information, provided the AI controller has a perception component
+	 * @param OutPerceptionInfo Array of perception results. One entry is added for every actor being perceived by this brain.
+	 * @param bIncludeKnownButNotCurrent If true, include results for perception that is remembered but not currently sensed
+	 * @param SenseClass Optional sense class to limit the results to a specific kind of sense 
+	 */
+	UFUNCTION(BlueprintCallable)
+	void GetPerceptionInfo(TArray<FSussActorPerceptionInfo>& OutPerceptionInfo, bool bIncludeKnownButNotCurrent = true, TSubclassOf<UAISense> SenseClass = nullptr);
 
 	virtual void StartLogic() override;
 	virtual void RestartLogic() override;
