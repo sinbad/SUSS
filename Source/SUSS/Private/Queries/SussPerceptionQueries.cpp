@@ -188,7 +188,6 @@ void USussPerceptionKnownHostilesExtendedQueryProvider::ExecuteQuery(USussBrainC
 {
 	if (const auto Perception = Brain->GetPerceptionComponent())
 	{
-		TArray<AActor*> PerceptionResults;
 		TSubclassOf<UAISense> SenseClass = GetSenseClassFromParams(Params);
 		const FAISenseID SenseID = UAISense::GetSenseID(SenseClass);
 		for (auto It = Perception->GetPerceptualDataConstIterator(); It; ++It)
