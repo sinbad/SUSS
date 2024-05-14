@@ -30,6 +30,12 @@ protected:
 	/// Override this in subclasses if you want this action to not allow interruptions.
 	UPROPERTY(EditDefaultsOnly)
 	bool bAllowInterruptions = true;
+	/// If interruptions are allowed, set this to true to ONLY allow actions in higher priority groups to interrupt.
+	/// Usually actions in the same priority group could interrupt if their scores are higher. Lower priority groups could
+	/// also interrupt if the current score for this ongoing action is 0. This flag means regardless of scores only higher
+	/// priority actions can interrupt
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	bool bAllowInterruptionsFromHigherPriorityGroupsOnly = false;
 
 	UPROPERTY(BlueprintReadOnly)
 	USussBrainComponent* Brain;
@@ -64,6 +70,11 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool CanBeInterrupted() const;
+
+	bool AllowInterruptionsFromHigherPriorityGroupsOnly() const
+	{
+		return bAllowInterruptionsFromHigherPriorityGroupsOnly;
+	}
 
 	/**
 	 * Called when the action has been decided on, and the brain wishes it to be performed.

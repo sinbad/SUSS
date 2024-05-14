@@ -410,6 +410,22 @@ void USussBrainComponent::ChooseActionFromCandidates()
 {
 	if (CandidateActions.IsEmpty())
 	{
+#if ENABLE_VISUAL_LOG
+		UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("No candidate actions"));
+		if (IsActionInProgress())
+		{
+			const FSussActionDef& CurrentActionDef =  CombinedActionsByPriority[CurrentActionResult.ActionDefIndex];
+			UE_VLOG(GetLogOwner(),
+			        LogSuss,
+			        Log,
+			        TEXT("No Action Change, continue: %s %s"),
+			        CurrentActionDef.Description.IsEmpty() ? *CurrentActionDef.ActionTag.ToString() : *CurrentActionDef.
+			        Description,
+			        *CurrentActionResult.Context.ToString());
+			CurrentActionResult.Context.VisualLog(GetLogOwner());
+
+		}
+#endif
 		return;
 	}
 
@@ -622,6 +638,13 @@ void USussBrainComponent::Update()
 	for (int i = 0; i < CombinedActionsByPriority.Num(); ++i)
 	{
 		const FSussActionDef& NextAction = CombinedActionsByPriority[i];
+
+		if (IsValid(CurrentActionInstance) && CurrentActionInstance->AllowInterruptionsFromHigherPriorityGroupsOnly() && CurrentActionDef->Priority <= NextAction.Priority)
+		{
+			// Don't consider anything else of equal or lower priority
+			break;
+		}
+		
 		// Priority grouping - use the best option from the highest priority group first
 		if (CurrentPriority != NextAction.Priority)
 		{
