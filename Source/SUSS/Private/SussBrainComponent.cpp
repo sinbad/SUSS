@@ -344,8 +344,9 @@ void USussBrainComponent::RequestUpdate()
 }
 
 void USussBrainComponent::GetPerceptionInfo(TArray<FSussActorPerceptionInfo>& OutPerceptionInfo,
-	bool bIncludeKnownButNotCurrent,
-	TSubclassOf<UAISense> SenseClass)
+                                            bool bIncludeKnownButNotCurrent,
+                                            bool bHostileOnly,
+                                            TSubclassOf<UAISense> SenseClass)
 {
 	if (IsValid(PerceptionComp))
 	{
@@ -355,6 +356,9 @@ void USussBrainComponent::GetPerceptionInfo(TArray<FSussActorPerceptionInfo>& Ou
 			const FActorPerceptionInfo& Info = It->Value;
 
 			if (SenseClass && !Info.HasKnownStimulusOfSense(SenseID))
+				continue;
+
+			if (bHostileOnly && !Info.bIsHostile)
 				continue;
 			
 			if (bIncludeKnownButNotCurrent || Info.HasAnyCurrentStimulus())
