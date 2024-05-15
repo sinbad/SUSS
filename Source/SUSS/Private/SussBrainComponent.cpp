@@ -782,9 +782,9 @@ void USussBrainComponent::Update()
 			UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT(" - %s"), *Ctx.ToString());
 #endif
 			float Score = NextAction.Weight;
-			for (auto& Consideration : NextAction.Considerations)
+			for (const auto& Consideration : NextAction.Considerations)
 			{
-				if (auto InputProvider = SUSS->GetInputProvider(Consideration.InputTag))
+				if (const auto InputProvider = SUSS->GetInputProvider(Consideration.InputTag))
 				{
 					// Resolve parameters
 					FSussScopeReservedMap ResolvedQueryParamsScope = Pool->ReserveMap<FName, FSussParameter>();
