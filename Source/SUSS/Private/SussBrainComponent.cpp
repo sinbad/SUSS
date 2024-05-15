@@ -140,21 +140,22 @@ float USussBrainComponent::GetDistanceToAnyPlayer() const
 	return std::numeric_limits<float>::max();
 }
 
-void USussBrainComponent::UpdateInertia(float DeltaTime)
+void USussBrainComponent::UpdateCurrentActionScore(float DeltaTime)
 {
+	// Slowly reduce current score at a rate determined by its last run score (which includes inertia)
+	if (IsActionInProgress() && CurrentActionResult.Score > 0)
+	{
+		const auto& ActionDef = CombinedActionsByPriority[CurrentActionResult.ActionDefIndex];
+		auto& H = ActionHistory[CurrentActionResult.ActionDefIndex];
+		const float Decay = H.LastRunScore * (DeltaTime / ActionDef.ScoreCooldownTime);
+		CurrentActionResult.Score = FMath::Max(CurrentActionResult.Score - Decay, 0);
+	}
+
+	// Deal with repetition penalties and temp score adjustments
 	for (int i = 0; i < ActionHistory.Num(); ++i)
 	{
 		auto& H = ActionHistory[i];
 		const auto& ActionDef = CombinedActionsByPriority[i];
-		if (H.ContinueInertia > 0)
-		{
-			if (i == CurrentActionResult.ActionDefIndex)
-			{
-				// Decay inertia
-				const float Decay = ActionDef.Inertia * (DeltaTime / ActionDef.InertiaCooldown);
-				H.ContinueInertia = FMath::Max(H.ContinueInertia - Decay, 0);
-			}
-		}
 		if (H.RepetitionPenalty > 0)
 		{
 			if (i != CurrentActionResult.ActionDefIndex)
@@ -484,7 +485,7 @@ void USussBrainComponent::OnGameplayTagEvent(const FGameplayTag InTag, int32 New
 
 void USussBrainComponent::TimerCallback()
 {
-	UpdateInertia(CurrentUpdateInterval);
+	UpdateCurrentActionScore(CurrentUpdateInterval);
 	UpdateDistanceCategory();
 
 	// We still get timer callbacks for being out of range, we simply check the distance
@@ -607,8 +608,6 @@ void USussBrainComponent::RecordAndResetCurrentAction()
 	History.LastEndTime = GetWorld()->GetTimeSeconds();
 	// Repetition penalties are CUMULATIVE
 	History.RepetitionPenalty += CombinedActionsByPriority[CurrentActionResult.ActionDefIndex].RepetitionPenalty;
-	// once we're not the current action, inertia resets
-	History.ContinueInertia = 0;
 	
 	GetSussPool(GetWorld())->FreeAction(CurrentActionInstance);
 	CurrentActionInstance = nullptr;
@@ -626,11 +625,11 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	checkf(ActionResult.ActionDefIndex >= 0, TEXT("No supplied action def"));
 
 	const FSussActionDef& Def = CombinedActionsByPriority[ActionResult.ActionDefIndex];
-	if (IsValid(CurrentActionInstance) &&
-		ActionResult.ActionDefIndex == CurrentActionResult.ActionDefIndex &&
-		ActionResult.Context == CurrentActionResult.Context)
+	if (IsActionInProgress() && IsActionSameAsCurrent(ActionResult.ActionDefIndex, ActionResult.Context))
 	{
 		// We're already running it, so just continue
+		// However, update the score in case we've decided again
+		CurrentActionResult.Score = ActionResult.Score;
 #if ENABLE_VISUAL_LOG
 		UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("No Action Change, continue: %s %s"), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description, *ActionResult.Context.ToString());
 		ActionResult.Context.VisualLog(GetLogOwner());
@@ -655,6 +654,9 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 	StopCurrentAction();
 	CurrentActionResult = ActionResult;
 
+	// This is a new action, so we add inertia to the score now
+	CurrentActionResult.Score += Def.Inertia;
+
 	if (ActionClass)
 	{
 		// Record the start of the action
@@ -662,7 +664,6 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 		History.LastStartTime = GetWorld()->GetTimeSeconds();
 		History.LastRunScore = ActionResult.Score;
 		History.LastContext = ActionResult.Context;
-		History.ContinueInertia = Def.Inertia;
 		
 		// Note that to allow BP classes we need to construct using the default object
 		CurrentActionInstance = GetSussPool(GetWorld())->ReserveAction(ActionClass, this, ActionClass->GetDefaultObject());
@@ -723,6 +724,7 @@ void USussBrainComponent::Update()
 	int CurrentPriority = CombinedActionsByPriority[0].Priority;
 	// Use reset not empty in order to keep memory stable
 	CandidateActions.Reset();
+	bool bAddedCurrentAction = false;
 	for (int i = 0; i < CombinedActionsByPriority.Num(); ++i)
 	{
 		const FSussActionDef& NextAction = CombinedActionsByPriority[i];
@@ -825,16 +827,23 @@ void USussBrainComponent::Update()
 					
 				}
 			}
-
-			// Add inertia if this is the current action + context
-			const auto& Hist = ActionHistory[i];
-			if (ShouldAddInertiaToProposedAction(i, Ctx))
+			
+			const bool bIsCurrentAction = IsActionSameAsCurrent(i, Ctx);			
+			if (bIsCurrentAction)
 			{
-				Score += Hist.ContinueInertia;
+				// We preserve the previous score if better, which bleeds away over time
+				// This is so that if an action is decided on with a given score (plus inertia), even if it's not in the
+				// running anymore, we won't interrupt it without a much better option
+				if (CurrentActionResult.Score > Score)
+				{
 #if ENABLE_VISUAL_LOG
-				UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Current Action Inertia: %4.2f"), Hist.ContinueInertia);
+					UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("  * Current Action Score upgrade from %4.2f to %4.2f"), Score, CurrentActionResult.Score);
 #endif
+					Score = CurrentActionResult.Score;
+				}
 			}
+
+			const auto& Hist = ActionHistory[i];
 			// Add repetition penalty if applicable
 			if (ShouldSubtractRepetitionPenaltyToProposedAction(i, Ctx))
 			{
@@ -860,9 +869,21 @@ void USussBrainComponent::Update()
 			if (!FMath::IsNearlyZero(Score))
 			{
 				CandidateActions.Add(FSussActionScoringResult { i, Ctx, Score });
+				if (bIsCurrentAction)
+				{
+					bAddedCurrentAction = true;
+				}
 			}
 		}
 		
+	}
+
+	if (!bAddedCurrentAction && IsActionInProgress() && CurrentActionResult.Score > 0)
+	{
+		// If the current action wasn't added because it wasn't scoring > 0 right now, we should still add back
+		// the current action with its current score. This is to avoid cases where an action changes the state which
+		// made it valid in the first place, but it still has an ongoing task to do (but is interruptible as well)
+		CandidateActions.Add(CurrentActionResult);
 	}
 
 	ChooseActionFromCandidates();
@@ -1164,7 +1185,7 @@ bool USussBrainComponent::AppendUncorrelatedContexts(AActor* Self,
 	return bAnyResults;
 }
 
-bool USussBrainComponent::ShouldAddInertiaToProposedAction(int NewActionIndex,
+bool USussBrainComponent::IsActionSameAsCurrent(int NewActionIndex,
                                                            const FSussContext& NewCtx)
 {
 	// Tolerance that locations must be within squared distance to be considered the same
@@ -1390,13 +1411,12 @@ FString USussBrainComponent::GetDebugSummaryString() const
 		const auto& H = ActionHistory[CurrentActionResult.ActionDefIndex];
 		Builder.Appendf(
 			TEXT(
-				"Current Action: {yellow}%s{white} Score: {yellow}%4.2f{white}\n"
-				"Inertia: {yellow}%4.2f{white}"),
+				"Current Action: {yellow}%s{white}\nOriginal Score: {yellow}%4.2f{white}\nCurrent Score: {yellow}%4.2f{white}"),
 				Def.Description.IsEmpty() ? 
 					*CurrentActionInstance->GetClass()->GetName() :
 					*Def.Description,
-				CurrentActionResult.Score,
-				H.ContinueInertia);
+				H.LastRunScore,
+				CurrentActionResult.Score);
 	}
 
 	return Builder.ToString();

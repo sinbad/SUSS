@@ -91,10 +91,16 @@ public:
 	/// cools down over a period of time so eventually a better scored decision can interrupt it, if the ActionClass
 	/// allows interruptions. If the action completes of its own volition, inertia is reset.
 	UPROPERTY(EditDefaultsOnly)
-	float Inertia = 1.0f;
-	/// The length of time it takes for the value in Inertia to cool down to 0 again
+	float Inertia = 0.5f;
+	
+	/// The length of time it takes for the total score (including inertia) from a previously performed action to reduce to 0, if
+	/// the action isn't scored higher again. Once a decision is made to run an action, if in future updates the current
+	/// action is scored badly, it will be scored higher if the remainder of the old decision score (which reduces over this cooldown)
+	/// is higher. This means an action doesn't have to remain viable in its own right to continue, so long as this cooldown
+	/// is long enough to keep justifying doing it. If the action *is* scored positively in subsequent updates then that
+	/// score will be used if it's higher (but inertia won't be added on continuations, only when first performed)
 	UPROPERTY(EditDefaultsOnly)
-	float InertiaCooldown = 3.0f;
+	float ScoreCooldownTime = 2.0f;
 
 	/// After an action has stopped, either voluntarily completing, or being interrupted, this penalty is subtracted
 	/// from future evaluations of the action to discourage repetition. The value cools down over time so that after a while

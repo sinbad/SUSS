@@ -115,8 +115,6 @@ public:
 	FSussContext LastContext;
 	/// The score this action received the last time it was run
 	float LastRunScore = 0;
-	/// Positive scoring bias which encourages continuing to do the currently active action with the same context, if it hasn't completed and can be interrupted (bleeds away over time)
-	float ContinueInertia = 0;
 	/// Negative scoring bias value which discourages running this action again after it completes (bleeds away over time)
 	float RepetitionPenalty = 0;
 	/// Positive or negative bias applied manually for a temporary period
@@ -342,7 +340,7 @@ protected:
 	void QueueForUpdate();
 	void TimerCallback();
 	float GetDistanceToAnyPlayer() const;
-	void UpdateInertia(float DeltaTime);
+	void UpdateCurrentActionScore(float DeltaTime);
 	void UpdateDistanceCategory();
 	bool IsUpdatePrevented() const;
 
@@ -454,7 +452,7 @@ protected:
 	                                USussQueryProvider* QueryProvider,
 	                                const TMap<FName, FSussParameter>& Params,
 	                                TArray<FSussContext>& OutContexts);
-	bool ShouldAddInertiaToProposedAction(int NewActionIndex, const FSussContext& NewContext);
+	bool IsActionSameAsCurrent(int NewActionIndex, const FSussContext& NewContext);
 	bool ShouldSubtractRepetitionPenaltyToProposedAction(int NewActionIndex, const FSussContext& NewContext);
 	
 	FSussParameter ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const;
