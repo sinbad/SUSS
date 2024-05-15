@@ -301,7 +301,7 @@ public:
 	 * @param ActionTag The tag of the action you want to change the score for
 	 * @param Value The scoring value adjustment to add to the usual score in future. This can be negative if you want to penalise
 	 * the running of this action for a while. This will override any previous adjustment
-	 * @param CooldownTime The time it should take for this adjustment to slowly reduce back to 0. 
+	 * @param CooldownTime The time it should take for this adjustment to slowly reduce back to 0. If 0, stays until ResetTemporaryActionScoreAdjustment.
 	 */
 	UFUNCTION(BlueprintCallable)
 	void SetTemporaryActionScoreAdjustment(FGameplayTag ActionTag, float Value, float CooldownTime);
@@ -340,7 +340,7 @@ protected:
 	void QueueForUpdate();
 	void TimerCallback();
 	float GetDistanceToAnyPlayer() const;
-	void UpdateCurrentActionScore(float DeltaTime);
+	void UpdateActionScoreAdjustments(float DeltaTime);
 	void UpdateDistanceCategory();
 	bool IsUpdatePrevented() const;
 

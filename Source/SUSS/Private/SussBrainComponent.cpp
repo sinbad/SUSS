@@ -140,15 +140,22 @@ float USussBrainComponent::GetDistanceToAnyPlayer() const
 	return std::numeric_limits<float>::max();
 }
 
-void USussBrainComponent::UpdateCurrentActionScore(float DeltaTime)
+void USussBrainComponent::UpdateActionScoreAdjustments(float DeltaTime)
 {
 	// Slowly reduce current score at a rate determined by its last run score (which includes inertia)
 	if (IsActionInProgress() && CurrentActionResult.Score > 0)
 	{
 		const auto& ActionDef = CombinedActionsByPriority[CurrentActionResult.ActionDefIndex];
-		auto& H = ActionHistory[CurrentActionResult.ActionDefIndex];
-		const float Decay = H.LastRunScore * (DeltaTime / ActionDef.ScoreCooldownTime);
-		CurrentActionResult.Score = FMath::Max(CurrentActionResult.Score - Decay, 0);
+		if (ActionDef.ScoreCooldownTime > 0)
+		{
+			auto& H = ActionHistory[CurrentActionResult.ActionDefIndex];
+			const float Decay = H.LastRunScore * (DeltaTime / ActionDef.ScoreCooldownTime);
+			CurrentActionResult.Score = FMath::Max(CurrentActionResult.Score - Decay, 0);
+		}
+		else
+		{
+			CurrentActionResult.Score = 0;
+		}
 	}
 
 	// Deal with repetition penalties and temp score adjustments
@@ -160,9 +167,16 @@ void USussBrainComponent::UpdateCurrentActionScore(float DeltaTime)
 		{
 			if (i != CurrentActionResult.ActionDefIndex)
 			{
-				// Not the current action anymore, bleed repetition penalty away
-				const float Decay = ActionDef.RepetitionPenalty * (DeltaTime / ActionDef.RepetitionPenaltyCooldown);
-				H.RepetitionPenalty = FMath::Max(H.RepetitionPenalty - Decay, 0);
+				if (ActionDef.RepetitionPenaltyCooldown > 0)
+				{
+					// Not the current action anymore, bleed repetition penalty away
+					const float Decay = ActionDef.RepetitionPenalty * (DeltaTime / ActionDef.RepetitionPenaltyCooldown);
+					H.RepetitionPenalty = FMath::Max(H.RepetitionPenalty - Decay, 0);
+				}
+				else
+				{
+					H.RepetitionPenalty = 0;
+				}
 			}
 		}
 		// temp adjusts can be + or -
@@ -485,7 +499,7 @@ void USussBrainComponent::OnGameplayTagEvent(const FGameplayTag InTag, int32 New
 
 void USussBrainComponent::TimerCallback()
 {
-	UpdateCurrentActionScore(CurrentUpdateInterval);
+	UpdateActionScoreAdjustments(CurrentUpdateInterval);
 	UpdateDistanceCategory();
 
 	// We still get timer callbacks for being out of range, we simply check the distance
@@ -1375,7 +1389,7 @@ void USussBrainComponent::SetTemporaryActionScoreAdjustment(int ActionIndex, flo
 	{
 		auto& H = ActionHistory[ActionIndex];
 		H.TempScoreAdjust = Value;
-		H.TempScoreAdjustCooldownRate = Value / CooldownTime;
+		H.TempScoreAdjustCooldownRate = CooldownTime > 0 ? Value / CooldownTime : 0;
 	}
 }
 
@@ -1387,10 +1401,11 @@ void USussBrainComponent::AddTemporaryActionScoreAdjustment(int ActionIndex, flo
 		float PrevCooldownTimeRemaining = 0;
 		if (!FMath::IsNearlyZero(H.TempScoreAdjust) && !FMath::IsNearlyZero(H.TempScoreAdjustCooldownRate))
 		{
-			PrevCooldownTimeRemaining = H.TempScoreAdjust / H.TempScoreAdjustCooldownRate;
+			PrevCooldownTimeRemaining = H.TempScoreAdjustCooldownRate > 0 ? H.TempScoreAdjust / H.TempScoreAdjustCooldownRate : 0;
 		}
 		H.TempScoreAdjust += Value;
-		H.TempScoreAdjustCooldownRate = H.TempScoreAdjust / (CooldownTime + PrevCooldownTimeRemaining);
+		const float NewCooldownTime = CooldownTime + PrevCooldownTimeRemaining;
+		H.TempScoreAdjustCooldownRate = NewCooldownTime > 0 ? H.TempScoreAdjust / NewCooldownTime : 0;
 	}
 }
 

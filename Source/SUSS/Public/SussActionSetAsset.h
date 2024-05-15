@@ -98,7 +98,9 @@ public:
 	/// action is scored badly, it will be scored higher if the remainder of the old decision score (which reduces over this cooldown)
 	/// is higher. This means an action doesn't have to remain viable in its own right to continue, so long as this cooldown
 	/// is long enough to keep justifying doing it. If the action *is* scored positively in subsequent updates then that
-	/// score will be used if it's higher (but inertia won't be added on continuations, only when first performed)
+	/// score will be used if it's higher (but inertia won't be added on continuations, only when first performed).
+	/// If you set this to 0, performed actions will not retain any score value after their initial run and if interruptible,
+	/// will need to return a winning score in all future updates for their duration
 	UPROPERTY(EditDefaultsOnly)
 	float ScoreCooldownTime = 2.0f;
 
