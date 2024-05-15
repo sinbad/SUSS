@@ -243,13 +243,41 @@ public:
 	 * @param OutPerceptionInfo Array of perception results. One entry is added for every actor being perceived by this brain.
 	 * @param bIncludeKnownButNotCurrent If true, include results for perception that is remembered but not currently sensed
 	 * @param bHostileOnly If true, return only hostile results (default)
-	 * @param SenseClass Optional sense class to limit the results to a specific kind of sense 
+	 * @param SenseClass Optional sense class to limit the results
+	 * @param bSenseClassInclude If true, include only the SenseClass. If false, exclude it.
 	 */
-	UFUNCTION(BlueprintCallable)
 	void GetPerceptionInfo(TArray<FSussActorPerceptionInfo>& OutPerceptionInfo,
 	                       bool bIncludeKnownButNotCurrent = true,
 	                       bool bHostileOnly = true,
-	                       TSubclassOf<UAISense> SenseClass = nullptr);
+	                       TSubclassOf<UAISense> SenseClass = nullptr,
+						   bool bSenseClassInclude = true);
+
+	/**
+	 * Retrieves the current perception information, provided the AI controller has a perception component
+	 * @param OutPerceptionInfo Array of perception results. One entry is added for every actor being perceived by this brain.
+	 * @param bIncludeKnownButNotCurrent If true, include results for perception that is remembered but not currently sensed
+	 * @param bHostileOnly If true, return only hostile results (default)
+	 * @param SenseClass Optional sense class to limit the results
+	 * @param bSenseClassInclude If true, include only the SenseClass. If false, exclude it.
+	 */
+	UFUNCTION(BlueprintCallable)
+	TArray<FSussActorPerceptionInfo> GetPerceptionInfo(bool bIncludeKnownButNotCurrent = true,
+	                       bool bHostileOnly = true,
+	                       TSubclassOf<UAISense> SenseClass = nullptr,
+						   bool bSenseClassInclude = true);	
+
+	/**
+	 * Retrieves the most recently received perception information, if any, provided the AI controller has a perception component
+	 * @param bIsValid If true, there was perception information, if not, the return is blank
+	 * @param bHostileOnly If true, return only hostile results (default)
+	 * @param SenseClass Optional sense class to limit the results
+	 * @param bSenseClassInclude If true, include only the SenseClass. If false, exclude it.
+	 * @return 
+	 */
+	UFUNCTION(BlueprintCallable)
+	FSussActorPerceptionInfo GetMostRecentPerceptionInfo(bool& bIsValid, bool bHostileOnly = true,
+						   TSubclassOf<UAISense> SenseClass = nullptr,
+						   bool bSenseClassInclude = true);
 
 	virtual void StartLogic() override;
 	virtual void RestartLogic() override;

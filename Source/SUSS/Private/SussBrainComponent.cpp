@@ -346,7 +346,8 @@ void USussBrainComponent::RequestUpdate()
 void USussBrainComponent::GetPerceptionInfo(TArray<FSussActorPerceptionInfo>& OutPerceptionInfo,
                                             bool bIncludeKnownButNotCurrent,
                                             bool bHostileOnly,
-                                            TSubclassOf<UAISense> SenseClass)
+                                            TSubclassOf<UAISense> SenseClass,
+                                            bool bSenseClassInclude)
 {
 	if (IsValid(PerceptionComp))
 	{
@@ -355,9 +356,13 @@ void USussBrainComponent::GetPerceptionInfo(TArray<FSussActorPerceptionInfo>& Ou
 		{
 			const FActorPerceptionInfo& Info = It->Value;
 
-			if (SenseClass && !Info.HasKnownStimulusOfSense(SenseID))
-				continue;
-
+			if (SenseClass)
+			{
+				if (bSenseClassInclude && !Info.HasKnownStimulusOfSense(SenseID))
+					continue;
+				if (!bSenseClassInclude && Info.HasKnownStimulusOfSense(SenseID))
+					continue;
+			}
 			if (bHostileOnly && !Info.bIsHostile)
 				continue;
 			
@@ -369,6 +374,62 @@ void USussBrainComponent::GetPerceptionInfo(TArray<FSussActorPerceptionInfo>& Ou
 	}
 }
 
+TArray<FSussActorPerceptionInfo> USussBrainComponent::GetPerceptionInfo(bool bIncludeKnownButNotCurrent,
+	bool bHostileOnly,
+	TSubclassOf<UAISense> SenseClass,
+	bool bSenseClassInclude)
+{
+	// BP-friendly version
+	TArray<FSussActorPerceptionInfo> Ret;
+	GetPerceptionInfo(Ret, bIncludeKnownButNotCurrent, bHostileOnly, SenseClass, bSenseClassInclude);
+	return Ret;
+}
+UE_DISABLE_OPTIMIZATION
+FSussActorPerceptionInfo USussBrainComponent::GetMostRecentPerceptionInfo(bool& bIsValid, bool bHostileOnly,
+                                                                          TSubclassOf<UAISense> SenseClass,
+                                                                          bool bSenseClassInclude)
+{
+	float BestAge = FAIStimulus::NeverHappenedAge;
+	const FActorPerceptionInfo* BestInfo = nullptr;
+	
+	if (IsValid(PerceptionComp))
+	{
+		const FAISenseID SenseID = SenseClass ? UAISense::GetSenseID(SenseClass) : FAISenseID::InvalidID();
+		for (auto It = PerceptionComp->GetPerceptualDataConstIterator(); It; ++It)
+		{
+			const FActorPerceptionInfo& Info = It->Value;
+
+			if (SenseClass)
+			{
+				if (bSenseClassInclude && !Info.HasKnownStimulusOfSense(SenseID))
+					continue;
+				if (!bSenseClassInclude && Info.HasKnownStimulusOfSense(SenseID))
+					continue;
+			}
+			if (bHostileOnly && !Info.bIsHostile)
+				continue;
+
+			for (auto& Stim : Info.LastSensedStimuli)
+			{
+				if (Stim.WasSuccessfullySensed() && !Stim.IsExpired() && Stim.GetAge() < BestAge)
+				{
+					BestAge = Stim.GetAge();
+					BestInfo = &Info;
+					// Don't break, incase even better aged stimulus in this result
+				}
+			}
+		}
+	}
+
+	if (BestInfo)
+	{
+		bIsValid = true;
+		return FSussActorPerceptionInfo(*BestInfo);
+	}
+	bIsValid = false;
+	return FSussActorPerceptionInfo();
+}
+UE_ENABLE_OPTIMIZATION
 bool USussBrainComponent::IsUpdatePrevented() const
 {
 	if (BrainConfig.PreventBrainUpdateIfAnyTags.Num() > 0)
