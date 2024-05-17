@@ -48,20 +48,6 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TMap<FName, FSussParameter> ActionParams;
 
-	/// Queries to run to provide values for the Considerations. Beware: multiple queries that return different
-	/// information will geometrically multiply the number of variations that will need to be considered. E.g. if you
-	/// run a query for targets, and for locations, the number of variations will be the number of results from each
-	/// multiplied together.
-	/// You can have multiple queries for the same piece of context (e.g. 2 target queries) and the results will be combined.
-	/// If there are no queries, then the considerations will be executed only once with the "Self" context reference only
-	/// If you request queries and no results are returned, then this action will be discounted
-	UPROPERTY(EditDefaultsOnly)
-	TArray<FSussQuery> Queries;
-
-	/// Considerations score the action and will be run as many times as needed by the combination of results from the queries
-	UPROPERTY(EditDefaultsOnly)
-	TArray<FSussConsideration> Considerations;
-
 	/// Re-weighting applied to the final result of considerations, should you wish to adjust the final value
 	UPROPERTY(EditDefaultsOnly)
 	float Weight = 1;
@@ -115,6 +101,19 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float RepetitionPenaltyCooldown = 2;
 
+	/// Queries to run to provide values for the Considerations. Beware: multiple queries that return different
+	/// information will geometrically multiply the number of variations that will need to be considered. E.g. if you
+	/// run a query for targets, and for locations, the number of variations will be the number of results from each
+	/// multiplied together.
+	/// You can have multiple queries for the same piece of context (e.g. 2 target queries) and the results will be combined.
+	/// If there are no queries, then the considerations will be executed only once with the "Self" context reference only
+	/// If you request queries and no results are returned, then this action will be discounted
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FSussQuery> Queries;
+
+	/// Considerations score the action and will be run as many times as needed by the combination of results from the queries
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FSussConsideration> Considerations;
 };
 /**
  * An action set is a re-usable collection of actions, to make it quicker & easier to build AIs from pre-built behaviours

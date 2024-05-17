@@ -60,14 +60,6 @@ struct FSussBrainConfig
 {
 	GENERATED_BODY()
 public:
-	/// Re-use of pre-defined action sets
-	UPROPERTY(EditDefaultsOnly)
-	TArray<USussActionSetAsset*> ActionSets;
-	
-	/// Specific action definitions for this behaviour (if you don't want to re-use from sets)
-	UPROPERTY(EditDefaultsOnly)
-	TArray<FSussActionDef> ActionDefs;
-
 	/// How to choose the action to take by default (unless overridden by priority group)
 	UPROPERTY(EditDefaultsOnly)
 	ESussActionChoiceMethod ActionChoiceMethod = ESussActionChoiceMethod::HighestScoring;
@@ -79,13 +71,22 @@ public:
 	/// Add items here to override how actions are chosen within specific priority groups
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FSussActionChoiceByPriorityConfig> PriorityGroupActionChoiceOverrides;
-
+	
 	/// If any of these gameplay tags exist on the pawn being controlled by the brain, the brain will not be
 	/// updated. This is a simple way to avoid new actions being performed while an enemy is stunned, or staggered (this
 	/// is easier than checking in every action for this condition).
 	/// When none of these tags exist anymore the brain will perform an immediate update if any were queued
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer PreventBrainUpdateIfAnyTags;
+
+	/// Re-use of pre-defined action sets
+	UPROPERTY(EditDefaultsOnly)
+	TArray<USussActionSetAsset*> ActionSets;
+	
+	/// Specific action definitions for this behaviour (if you don't want to re-use from sets)
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FSussActionDef> ActionDefs;
+
 };
 
 /// Output result of an action+context pair being considered; only recorded if score > 0

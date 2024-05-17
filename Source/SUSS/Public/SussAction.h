@@ -28,7 +28,7 @@ protected:
 	FGameplayTag ActionTag;
 	
 	/// Override this in subclasses if you want this action to not allow interruptions.
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	bool bAllowInterruptions = true;
 	/// If interruptions are allowed, set this to true to ONLY allow actions in higher priority groups to interrupt.
 	/// Usually actions in the same priority group could interrupt if their scores are higher. Lower priority groups could
