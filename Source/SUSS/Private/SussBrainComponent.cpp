@@ -1336,7 +1336,10 @@ double USussBrainComponent::GetTimeSinceActionPerformed(FGameplayTag ActionTag) 
 
 void USussBrainComponent::OnPerceptionUpdated(const TArray<AActor*>& Actors)
 {
-	QueueForUpdate();
+	if (DistanceCategory != ESussDistanceCategory::OutOfRange)
+	{
+		QueueForUpdate();
+	}
 }
 
 void USussBrainComponent::SetTemporaryActionScoreAdjustment(FGameplayTag ActionTag, float Value, float CooldownTime)
