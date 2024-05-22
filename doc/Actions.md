@@ -24,6 +24,9 @@ Actions are identified by Gameplay Tags. Therefore one of the essential things
 you must do when defining a new action is to assign a unique value to its `ActionTag`
 property.
 
+> Action tags must be a sub-tag of `Suss.Action`. We use filters in our tag drop downs
+> to make it easier to pick things
+
 #### Implement Perform Action
 
 Actions MUST implement a minimum of the "Perform Action" function:
@@ -44,7 +47,7 @@ Previous Action Class is only populated if this action is interrupting another.
 In *almost* all cases you should call Action Completed when you're done. Your action
 can run over many updates if it wants to, provided it's not interrupted, but when
 it is finished, it should call Action Completed, which will tell the brain to 
-disable it and pick another action (immediately).
+finish with it and pick another action (immediately).
 
 #### Optional things
 
@@ -62,7 +65,7 @@ There are other functions you can override, including:
 ## Action Defs
 
 Action definitions are potential decisions in a brain. They use an Action to implement
-them, but define the way that the action will be scored in this insteance. They
+them, but define the way that the action will be scored in this instance. They
 may want to add parameters, decide what contexts we should evaluate them 
 against, and set considerations to use to calculate the score.
 
@@ -77,7 +80,7 @@ Here's the basic details of an Action definition:
 * Weight: A final weight to apply to this action's score. Can be used to add bias
 * Priority: Which [Priority Group](#priority-group) this action belongs to (see below)
 * Required Tags: If supplied, this action will not run unless the agent has ALL the tags in this list
-* Blocking Tags: If supplied, this action will not run if the agent has ANY the tags in this list
+* Blocking Tags: If supplied, this action will not run if the agent has ANY of the tags in this list
 * Inertia: Adds an additional weight to this action in future updates if it is run (see [Inertia and Score Cooldown](Inertia.md))
 * Score Cooldown Time: How long it takes for a score for this action to reduce down to 0 unless it's decided on again
 * Repetition Penalty: What value to *subtract* from the score in future updates once this action has been performed.
@@ -99,8 +102,12 @@ first one in this list, but you can add your own by creating a subclass of one
 of the query base classes related to the type of information you're supplying,
 e.g. `USussTargetQueryProvider` or `USussLocationQueryProvider`.
 
-Each query can only provide a single element of data, such as "Target" or "Location".
-When you combined more than one like this, then by default the results of each 
+> Queries always have a sub-tag of `Suss.Query` so that the query tag drop-down only includes
+> those and not all possible tags.
+
+Each query can by default only provide a single element of data, such as "Target" or "Location"
+(there are more complex versions that can provide a struct of related data).
+When you combine more than one query like this, then by default the results of each 
 query are combined with every result from the other query, in all combinations.
 So the result of these 2 queries will be:
 
@@ -110,6 +117,10 @@ So the result of these 2 queries will be:
 If 1. returned 2 targets, and 2. returned 3 attacks, then there would be 6
 contexts generated, in every combination, and each would be evaluated for this
 action. One of them will be picked based on those scores, and the action choice method.
+
+> It's also possible for queries to be *correlated*, so instead of all combinations
+> of results, later queries execute within the contexts created by earlier ones.
+> But this is out of scope for this introduction.
 
 But how are they scored? Read on...
 
@@ -124,9 +135,10 @@ Considerations might look like this:
 ![Considerations](img/Considerations.png)
 
 * Description: A user description of the consideration, for debugging
-* Input Tag: Inputs are identified by tags like everything else. An input provider class
+* Input Tag: Inputs are identified by tags too, in this case sub-tags of `Suss.Input`. An input provider class
   must take a context and return a single floating point value.
-* Parameters: If the input provider needs parameters, here's where you specify them
+* Parameters: If the input provider needs parameters, here's where you specify them.
+  They can either be literals, or Auto Parameters which provide values automatically.
 * Bookends: This is used to normalise the value returned from the input. They can 
   be specified manually, or bound to auto parameters (provided by Parameter Providers).
 * Curve Details: Used to define the curve which transforms the normalised input value
