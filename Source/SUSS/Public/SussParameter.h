@@ -23,6 +23,8 @@ enum class ESussParamType : uint8
 	Name,
 	/// The parameter is a literal gameplay tag
 	Tag,
+	/// The parameter is a literal gameplay tag container
+	TagContainer,
 	/// The parameter is provided automatically by either an Input Provider (floats only) or a Parameter Provider (all types)
 	AutoParameter
 
@@ -64,6 +66,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::Tag", EditConditionHides))
 	FGameplayTag Tag;
 
+	/// Literal tag value of the parameter
+	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="Type==ESussParamType::TagContainer", EditConditionHides))
+	FGameplayTagContainer TagContainer;
+	
+
 	/// Tag identifying the input or parameter provider we should use to populate into this parameter. 
 	UPROPERTY(EditDefaultsOnly, meta=(Categories="Suss.Input,Suss.Param", EditCondition="Type==ESussParamType::AutoParameter", EditConditionHides))
 	FGameplayTag InputOrParameterTag;
@@ -78,6 +85,7 @@ public:
 	explicit FSussParameter(bool Val) : Type(ESussParamType::Bool), BoolValue(Val) {}
 	FSussParameter(FName Val) : Type(ESussParamType::Name), NameValue(Val) {}
 	FSussParameter(FGameplayTag Val) : Type(ESussParamType::Tag), Tag(Val) {}
+	FSussParameter(const FGameplayTagContainer& Val) : Type(ESussParamType::TagContainer), TagContainer(Val) {}
 
 	friend bool operator==(const FSussParameter& Lhs, const FSussParameter& Rhs)
 	{
@@ -96,6 +104,8 @@ public:
 			return Lhs.NameValue == Rhs.NameValue;
 		case ESussParamType::Tag:
 			return Lhs.Tag == Rhs.Tag;
+		case ESussParamType::TagContainer:
+			return Lhs.TagContainer == Rhs.TagContainer;
 		case ESussParamType::AutoParameter:
 			return Lhs.InputOrParameterTag == Rhs.InputOrParameterTag;
 		case ESussParamType::Bool:
@@ -128,6 +138,16 @@ public:
 			break;
 		case ESussParamType::Tag:
 			Hash = HashCombine(Hash, GetTypeHash(Arg.Tag));
+			break;
+		case ESussParamType::TagContainer:
+			{
+				TArray<FGameplayTag> Tags;
+				Arg.TagContainer.GetGameplayTagArray(Tags);
+				for (auto& T : Tags)
+				{
+					Hash = HashCombine(Hash, GetTypeHash(T));
+				}
+			}
 			break;
 		case ESussParamType::AutoParameter:
 			Hash = HashCombine(Hash, GetTypeHash(Arg.InputOrParameterTag));

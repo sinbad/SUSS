@@ -89,6 +89,7 @@ void USussUtility::AddEQSParams(const TMap<FName, FSussParameter>& Params, TArra
 		case ESussParamType::Bool:
 		case ESussParamType::Vector:
 		case ESussParamType::Tag:
+		case ESussParamType::TagContainer:
 		case ESussParamType::Name:
 		case ESussParamType::AutoParameter:
 			// Not supported
@@ -234,6 +235,7 @@ bool USussUtility::GetSussParameterValueAsFloat(const FSussParameter& Parameter,
 	case ESussParamType::Tag:
 	case ESussParamType::AutoParameter:
 	case ESussParamType::Vector:
+	case ESussParamType::TagContainer:
 		return false;
 	};
 
@@ -254,6 +256,7 @@ bool USussUtility::GetSussParameterValueAsVector(const FSussParameter& Parameter
 	case ESussParamType::Name:
 	case ESussParamType::Tag:
 	case ESussParamType::AutoParameter:
+	case ESussParamType::TagContainer:
 		return false;
 	};
 
@@ -279,6 +282,7 @@ bool USussUtility::GetSussParameterValueAsBool(const FSussParameter& Parameter, 
 	case ESussParamType::Name:
 	case ESussParamType::Tag:
 	case ESussParamType::AutoParameter:
+	case ESussParamType::TagContainer:
 		return false;
 	};
 
@@ -304,6 +308,7 @@ bool USussUtility::GetSussParameterValueAsInt(const FSussParameter& Parameter, i
 	case ESussParamType::Tag:
 	case ESussParamType::AutoParameter:
 	case ESussParamType::Vector:
+	case ESussParamType::TagContainer:
 		return false;
 	};
 
@@ -323,6 +328,7 @@ bool USussUtility::GetSussParameterValueAsName(const FSussParameter& Parameter, 
 	case ESussParamType::AutoParameter:
 	case ESussParamType::Vector:
 	case ESussParamType::Bool:
+	case ESussParamType::TagContainer:
 		return false;
 	};
 
@@ -340,6 +346,27 @@ bool USussUtility::GetSussParameterValueAsTag(const FSussParameter& Parameter, F
 		// Allow conversion
 		Value = Parameter.InputOrParameterTag;
 		return true;
+	case ESussParamType::Float:
+	case ESussParamType::Int:
+	case ESussParamType::Tag:
+	case ESussParamType::Vector:
+	case ESussParamType::Bool:
+	case ESussParamType::TagContainer:
+		return false;
+	};
+
+	return false;
+}
+
+bool USussUtility::GetSussParameterValueAsTagContainer(const FSussParameter& Parameter, FGameplayTagContainer& Value)
+{
+	switch (Parameter.Type)
+	{
+	case ESussParamType::TagContainer:
+		Value = Parameter.TagContainer;
+		return true;
+	case ESussParamType::AutoParameter:
+	case ESussParamType::Name:
 	case ESussParamType::Float:
 	case ESussParamType::Int:
 	case ESussParamType::Tag:

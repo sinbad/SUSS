@@ -78,6 +78,8 @@ public:
 	static FSussParameter MakeSussNameParameter(FName Val) { return FSussParameter(Val); }
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FSussParameter MakeSussTagParameter(FGameplayTag Val) { return FSussParameter(Val); }
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FSussParameter MakeSussTagContainerParameter(const FGameplayTagContainer& Val) { return FSussParameter(Val); }
 	/**
 	 * Try to extract a float value from a parameter.
 	 * @param Parameter The parameter, which may contain many types of value
@@ -121,12 +123,19 @@ public:
 	/**
 	 * Try to extract a tag value from a parameter.
 	 * @param Parameter The parameter, which may contain many types of value
-	 * @param Value The name value
+	 * @param Value The tag value
 	 * @return True if the value was extracted correctly. False if not.
 	 */
 	UFUNCTION(BlueprintCallable, Category="SUSS")
 	static UPARAM(DisplayName="Success") bool GetSussParameterValueAsTag(const FSussParameter& Parameter, FGameplayTag& Value);
-
+	/**
+	 * Try to extract a tag container value from a parameter.
+	 * @param Parameter The parameter, which may contain many types of value
+	 * @param Value The tag container value
+	 * @return True if the value was extracted correctly. False if not.
+	 */
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static UPARAM(DisplayName="Success") bool GetSussParameterValueAsTagContainer(const FSussParameter& Parameter, FGameplayTagContainer& Value);
 	/**
 	 * Try to extract a named Actor value from a context.
 	 * @param Context The context

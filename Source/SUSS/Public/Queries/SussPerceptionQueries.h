@@ -18,7 +18,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussQueryPerceptionKnownHostilesExtended);
  * Requires that the agent's AI controller has a UAIPerceptionComponent.
  * "Known" means that the targets have been perceived at some point and have not yet been forgotten.
  * Optional parameters:
- *    "Sense": A name parameter identifying the single sense you want to test ("Sight", "Hearing", "Damage", "Touch")
+ *    "Sense": Identify the single sense you want to test ("Sight", "Hearing", "Damage", "Touch")
+ *    "IgnoreTags": TagContainer of tags which you want to ignore if the actor has (e.g. dead, invisible)
  */
 UCLASS()
 class SUSS_API USussPerceptionKnownTargetsQueryProvider : public USussTargetQueryProvider
@@ -43,6 +44,7 @@ protected:
  * not be *currently* perceived.
  * Optional parameters:
  *    "Sense": A name parameter identifying the single sense you want to test ("Sight", "Hearing", "Damage", "Touch")
+ *    "IgnoreTags": TagContainer of tags which you want to ignore if the actor has (e.g. dead, invisible)
  */
 UCLASS()
 class SUSS_API USussPerceptionKnownHostilesQueryProvider : public USussTargetQueryProvider
@@ -65,6 +67,7 @@ protected:
  * not be *currently* perceived.
  * Optional parameters:
  *    "Sense": A name parameter identifying the single sense you want to test ("Sight", "Hearing", "Damage", "Touch")
+ *    "IgnoreTags": TagContainer of tags which you want to ignore if the actor has (e.g. dead, invisible)
  */
 UCLASS()
 class SUSS_API USussPerceptionKnownNonHostilesQueryProvider : public USussTargetQueryProvider
@@ -128,6 +131,7 @@ public:
  * "Known" means that the targets have been perceived at some point and have not yet been forgotten.
  * Optional parameters:
  *    "Sense": A name parameter identifying the single sense you want to test ("Sight", "Hearing", "Damage", "Touch")
+ *    "IgnoreTags": TagContainer of tags which you want to ignore if the actor has (e.g. dead, invisible)
  */
 UCLASS()
 class SUSS_API USussPerceptionKnownHostilesExtendedQueryProvider : public USussNamedValueQueryProvider

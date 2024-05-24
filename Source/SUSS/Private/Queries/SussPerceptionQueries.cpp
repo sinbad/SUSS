@@ -1,6 +1,7 @@
 ﻿#include "Queries/SussPerceptionQueries.h"
 
 #include "SussBrainComponent.h"
+#include "SussUtility.h"
 #include "Perception/AISense_Damage.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Sight.h"
@@ -18,6 +19,7 @@ static const FName SussQuerySenseHearingValue("Hearing");
 static const FName SussQuerySenseDamageValue("Damage");
 static const FName SussQuerySenseTouchValue("Touch");
 static const FName SussQuerySenseTeamValue("Team");
+static const FName SussQueryIgnoreTagsParam("IgnoreTags");
 
 TSubclassOf<UAISense> GetSenseClassFromParams(const TMap<FName, FSussParameter>& Params)
 {
@@ -48,6 +50,17 @@ TSubclassOf<UAISense> GetSenseClassFromParams(const TMap<FName, FSussParameter>&
 	return nullptr;
 }
 
+void GetIgnoreTagsFromParams(const TMap<FName, FSussParameter>& Params, FGameplayTagContainer& OutTags)
+{
+	if (auto pTagContainer = Params.Find(SussQueryIgnoreTagsParam))
+	{
+		if (pTagContainer->Type == ESussParamType::TagContainer)
+		{
+			OutTags.AppendTags(pTagContainer->TagContainer);
+		}
+	}
+}
+
 USussPerceptionKnownTargetsQueryProvider::USussPerceptionKnownTargetsQueryProvider()
 {
 	QueryTag = TAG_SussQueryPerceptionKnownTargets;
@@ -63,6 +76,8 @@ void USussPerceptionKnownTargetsQueryProvider::ExecuteQuery(USussBrainComponent*
 	{
 		TArray<AActor*> PerceptionResults;
 		TSubclassOf<UAISense> SenseClass = GetSenseClassFromParams(Params);
+		FGameplayTagContainer IgnoreTags;
+		GetIgnoreTagsFromParams(Params, IgnoreTags);
 		if (SenseClass)
 		{
 			// Note that the "known" excludes forgotten actors but includes actors which are not *currently* perceived but
@@ -71,7 +86,6 @@ void USussPerceptionKnownTargetsQueryProvider::ExecuteQuery(USussBrainComponent*
 		}
 		else
 		{
-			// There's no "known" query for all senses? Odd
 			Perception->GetFilteredActors([](const FActorPerceptionInfo& Info)
 			{
 				return Info.HasAnyKnownStimulus();
@@ -79,7 +93,10 @@ void USussPerceptionKnownTargetsQueryProvider::ExecuteQuery(USussBrainComponent*
 		}
 		for (const auto Actor : PerceptionResults)
 		{
-			OutResults.Add(Actor);
+			if (!USussUtility::ActorHasAnyTags(Actor, IgnoreTags))
+			{
+				OutResults.Add(Actor);
+			}
 		}
 	}
 }
@@ -99,6 +116,8 @@ void USussPerceptionKnownHostilesQueryProvider::ExecuteQuery(USussBrainComponent
 	{
 		TArray<AActor*> PerceptionResults;
 		TSubclassOf<UAISense> SenseClass = GetSenseClassFromParams(Params);
+		FGameplayTagContainer IgnoreTags;
+		GetIgnoreTagsFromParams(Params, IgnoreTags);
 
 		if (SenseClass)
 		{
@@ -111,7 +130,10 @@ void USussPerceptionKnownHostilesQueryProvider::ExecuteQuery(USussBrainComponent
 
 		for (const auto Actor : PerceptionResults)
 		{
-			OutResults.Add(Actor);
+			if (!USussUtility::ActorHasAnyTags(Actor, IgnoreTags))
+			{
+				OutResults.Add(Actor);
+			}
 		}
 	}
 }
@@ -131,6 +153,8 @@ void USussPerceptionKnownNonHostilesQueryProvider::ExecuteQuery(USussBrainCompon
 	{
 		TArray<AActor*> PerceptionResults;
 		TSubclassOf<UAISense> SenseClass = GetSenseClassFromParams(Params);
+		FGameplayTagContainer IgnoreTags;
+		GetIgnoreTagsFromParams(Params, IgnoreTags);
 		if (SenseClass)
 		{
 			const FAISenseID SenseID = UAISense::GetSenseID(SenseClass);
@@ -148,7 +172,10 @@ void USussPerceptionKnownNonHostilesQueryProvider::ExecuteQuery(USussBrainCompon
 		}
 		for (const auto Actor : PerceptionResults)
 		{
-			OutResults.Add(Actor);
+			if (!USussUtility::ActorHasAnyTags(Actor, IgnoreTags))
+			{
+				OutResults.Add(Actor);
+			}
 		}
 	}
 }
@@ -190,6 +217,8 @@ void USussPerceptionKnownHostilesExtendedQueryProvider::ExecuteQuery(USussBrainC
 	{
 		TSubclassOf<UAISense> SenseClass = GetSenseClassFromParams(Params);
 		const FAISenseID SenseID = UAISense::GetSenseID(SenseClass);
+		FGameplayTagContainer IgnoreTags;
+		GetIgnoreTagsFromParams(Params, IgnoreTags);
 		for (auto It = Perception->GetPerceptualDataConstIterator(); It; ++It)
 		{
 			const FActorPerceptionInfo& Info = It->Value;
@@ -198,7 +227,10 @@ void USussPerceptionKnownHostilesExtendedQueryProvider::ExecuteQuery(USussBrainC
 			{
 				if (!SenseClass || Info.HasKnownStimulusOfSense(SenseID))
 				{
-					OutResults.Add(FSussContextValue(MakeShared<FSussActorPerceptionInfo>(Info)));
+					if (!USussUtility::ActorHasAnyTags(Info.Target.Get(), IgnoreTags))
+					{
+						OutResults.Add(FSussContextValue(MakeShared<FSussActorPerceptionInfo>(Info)));
+					}
 				}
 			}
 		}
