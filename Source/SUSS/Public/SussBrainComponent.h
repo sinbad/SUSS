@@ -181,6 +181,9 @@ protected:
 	UAIPerceptionComponent* PerceptionComp;
 	TMap<FGameplayTag, FDelegateHandle> TagDelegates;
 
+	bool bIsLogicStopped = false;
+	FString LogicStoppedReason;
+	
 public:
 	// Sets default values for this component's properties
 	USussBrainComponent();

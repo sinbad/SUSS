@@ -81,6 +81,9 @@ void USussBrainComponent::StartLogic()
 {
 	Super::StartLogic();
 
+	bIsLogicStopped = false;
+	LogicStoppedReason = "";
+
 	if (GetOwner()->HasAuthority())
 	{
 		UpdateDistanceCategory();
@@ -249,11 +252,15 @@ void USussBrainComponent::StopLogic(const FString& Reason)
 {
 	Super::StopLogic(Reason);
 
+	bIsLogicStopped = true;
+	LogicStoppedReason = Reason;
+	
 	StopCurrentAction();
 	if (UpdateRequestTimer.IsValid())
 	{
 		GetWorld()->GetTimerManager().ClearTimer(UpdateRequestTimer);
 	}
+	// Note: we could have already queued an update, so that will need to be handled on Update
 
 	if (TagDelegates.Num() > 0)
 	{
@@ -278,6 +285,9 @@ void USussBrainComponent::RestartLogic()
 {
 	Super::RestartLogic();
 
+	bIsLogicStopped = true;
+	LogicStoppedReason = "";
+
 	StopCurrentAction();
 	UpdateDistanceCategory();
 }
@@ -285,6 +295,9 @@ void USussBrainComponent::RestartLogic()
 void USussBrainComponent::PauseLogic(const FString& Reason)
 {
 	Super::PauseLogic(Reason);
+	
+	bIsLogicStopped = true;
+	LogicStoppedReason = Reason;
 
 	if (UpdateRequestTimer.IsValid())
 	{
@@ -302,6 +315,10 @@ EAILogicResuming::Type USussBrainComponent::ResumeLogic(const FString& Reason)
 		{
 			GetWorld()->GetTimerManager().UnPauseTimer(UpdateRequestTimer);
 		}
+
+		bIsLogicStopped = true;
+		LogicStoppedReason = "";
+
 	}
 	return Ret;
 }
@@ -716,6 +733,10 @@ void USussBrainComponent::Update()
 	bQueuedForUpdate = false;
 	
 	if (!GetOwner()->HasAuthority())
+		return;
+
+	// This is to catch updates called after StopLogic/PauseLogic because they were already queued
+	if (bIsLogicStopped)
 		return;
 
 	if (CombinedActionsByPriority.IsEmpty())
@@ -1420,6 +1441,10 @@ FString USussBrainComponent::GetDebugSummaryString() const
 {
 	TStringBuilder<256> Builder;
 	Builder.Appendf(TEXT("Distance Category: %s  UpdateFreq: %4.2f\n"), *StaticEnum<ESussDistanceCategory>()->GetValueAsString(DistanceCategory), CurrentUpdateInterval);
+	if (bIsLogicStopped)
+	{
+		Builder.Appendf(TEXT("Logic currently stopped, reason: %s\n"),*LogicStoppedReason);
+	}
 	
 	if (CombinedActionsByPriority.IsValidIndex(CurrentActionResult.ActionDefIndex))
 	{
