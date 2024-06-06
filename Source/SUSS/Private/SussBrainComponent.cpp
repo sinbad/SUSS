@@ -1351,7 +1351,9 @@ double USussBrainComponent::GetTimeSinceActionPerformed(FGameplayTag ActionTag) 
 			const auto& Def = CombinedActionsByPriority[i];
 			if (Def.ActionTag == ActionTag)
 			{
-				LastTime = FMath::Max(LastTime, H.LastStartTime);
+				// Use the last END time, that way an action can ask about its *own* last run during execution
+				// If we used the start time then if you did that you'd only ever get 0 seconds
+				LastTime = FMath::Max(LastTime, H.LastEndTime);
 			}
 		}
 	}
