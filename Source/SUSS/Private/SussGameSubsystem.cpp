@@ -9,6 +9,7 @@
 #include "Actions/SussAbilityActions.h"
 #include "Inputs/SussAbilityInputProviders.h"
 #include "Inputs/SussBlackboardInputProviders.h"
+#include "Inputs/SussBrainInfoInputProviders.h"
 #include "Inputs/SussDistanceInputProviders.h"
 #include "Queries/SussPerceptionQueries.h"
 
@@ -139,6 +140,7 @@ void USussGameSubsystem::RegisterNativeProviders()
 	RegisterInputProviderClass(USussBlackboardBoolInputProvider::StaticClass());
 	RegisterInputProviderClass(USussBlackboardFloatInputProvider::StaticClass());
 	RegisterInputProviderClass(USussCanActivateAbilityInputProvider::StaticClass());
+	RegisterInputProviderClass(USussTimeSinceActionPerformedInputProvider::StaticClass());
 	
 	RegisterQueryProviderClass(USussPerceptionKnownTargetsQueryProvider::StaticClass());
 	RegisterQueryProviderClass(USussPerceptionKnownHostilesQueryProvider::StaticClass());

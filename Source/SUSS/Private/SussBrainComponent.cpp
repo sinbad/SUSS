@@ -1342,14 +1342,17 @@ AActor* USussBrainComponent::GetSelf() const
 double USussBrainComponent::GetTimeSinceActionPerformed(FGameplayTag ActionTag) const
 {
 	double LastTime = -UE_DOUBLE_BIG_NUMBER;
-	
-	for (int i = 0; i < ActionHistory.Num(); ++i)
+
+	if (ActionTag.IsValid())
 	{
-		const auto& H = ActionHistory[i];
-		const auto& Def = CombinedActionsByPriority[i];
-		if (Def.ActionTag == ActionTag)
+		for (int i = 0; i < ActionHistory.Num(); ++i)
 		{
-			LastTime = FMath::Max(LastTime, H.LastStartTime);
+			const auto& H = ActionHistory[i];
+			const auto& Def = CombinedActionsByPriority[i];
+			if (Def.ActionTag == ActionTag)
+			{
+				LastTime = FMath::Max(LastTime, H.LastStartTime);
+			}
 		}
 	}
 	return GetWorld()->GetTimeSeconds() - LastTime;
