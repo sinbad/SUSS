@@ -7,6 +7,7 @@
 #include "SussSettings.h"
 #include "AIController.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
+#include "NavFilters/NavigationQueryFilter.h"
 #include "Queries/SussEQSWorldSubsystem.h"
 #include "Queries/SussPerceptionQueries.h"
 
