@@ -43,7 +43,7 @@ struct FSussActionChoiceByPriorityConfig
 public:
 	/// The priority group that this choice config applies to
 	UPROPERTY(EditDefaultsOnly)
-	int Priority;
+	int Priority = 100;
 
 	/// The method we use to choose an action in this priority group
 	UPROPERTY(EditDefaultsOnly)

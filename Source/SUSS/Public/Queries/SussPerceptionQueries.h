@@ -104,7 +104,7 @@ public:
 
 	/// Location that the actor was last seen or heard
 	UPROPERTY(BlueprintReadOnly)
-	FVector LastLocation;
+	FVector LastLocation = FVector::ZeroVector;
 
 	/// Full information about the actual senses
 	UPROPERTY(BlueprintReadOnly)
