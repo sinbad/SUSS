@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SussAction.h"
 #include "SussInputProvider.h"
 #include "SussParameterProvider.h"
 #include "SussQueryProvider.h"
