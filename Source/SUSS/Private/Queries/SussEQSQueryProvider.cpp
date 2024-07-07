@@ -52,7 +52,7 @@ void USussEQSTargetQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                                TArray<TWeakObjectPtr<AActor>>& OutResults)
 {
 	const auto Result = RunEQSQuery(Brain, Self, Params, Context);
-	if (Result->ItemType->IsChildOf(UEnvQueryItemType_ActorBase::StaticClass()))
+	if (Result && Result->ItemType->IsChildOf(UEnvQueryItemType_ActorBase::StaticClass()))
 	{
 		const UEnvQueryItemType_ActorBase* DefTypeOb =  Result->ItemType->GetDefaultObject<UEnvQueryItemType_ActorBase>();
 
@@ -84,7 +84,7 @@ void USussEQSLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                                  TArray<FVector>& OutResults)
 {
 	const auto Result = RunEQSQuery(Brain, Self, Params, Context);
-	if (Result->ItemType->IsChildOf(UEnvQueryItemType_VectorBase::StaticClass()))
+	if (Result && Result->ItemType->IsChildOf(UEnvQueryItemType_VectorBase::StaticClass()))
 	{
 		const UEnvQueryItemType_VectorBase* DefTypeOb =  Result->ItemType->GetDefaultObject<UEnvQueryItemType_VectorBase>();
 		if (QueryMode == EEnvQueryRunMode::AllMatching)
