@@ -340,16 +340,16 @@ bool USussUtility::GetSussParameterValueAsTag(const FSussParameter& Parameter, F
 {
 	switch (Parameter.Type)
 	{
-	case ESussParamType::Name:
+	case ESussParamType::Tag:
 		Value = Parameter.Tag;
 		return true;
 	case ESussParamType::AutoParameter:
 		// Allow conversion
 		Value = Parameter.InputOrParameterTag;
 		return true;
+	case ESussParamType::Name:
 	case ESussParamType::Float:
 	case ESussParamType::Int:
-	case ESussParamType::Tag:
 	case ESussParamType::Vector:
 	case ESussParamType::Bool:
 	case ESussParamType::TagContainer:
