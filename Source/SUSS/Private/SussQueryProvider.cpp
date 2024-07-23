@@ -47,9 +47,8 @@ void USussTargetQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                             const FSussContext& Context,
                                             TArray<TWeakObjectPtr<AActor>>& OutResults)
 {
-	// Subclasses can override; this one needs to proxy to BP-compatible (non-weak pointer) version
-	TArray<AActor*> BPArray;
-	ExecuteQueryBP(Brain, Self, Params, Context, BPArray);
+	// Subclasses can override this, call BP version by default
+	const TArray<AActor*> BPArray = ExecuteQueryBP(Brain, Self, Params, Context);
 	OutResults.Append(BPArray);
 }
 
@@ -60,7 +59,8 @@ void USussLocationQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
                                               TArray<FVector>& OutResults)
 {
 	// Subclasses can override this, call BP version by default
-	ExecuteQueryBP(Brain, Self, Params, Context, OutResults);
+	const TArray<FVector> BPArray = ExecuteQueryBP(Brain, Self, Params, Context);
+	OutResults.Append(BPArray);
 }
 
 void USussNamedValueQueryProvider::AddValueStruct(const TSharedPtr<const FSussContextValueStructBase>& Struct)

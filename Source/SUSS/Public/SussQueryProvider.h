@@ -302,11 +302,10 @@ protected:
 	 * @param OutResults Array that new query results should be appended to
 	 */
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
-	void ExecuteQueryBP(USussBrainComponent* Brain,
+	TArray<AActor*> ExecuteQueryBP(USussBrainComponent* Brain,
 	                    AActor* ControlledActor,
 	                    const TMap<FName, FSussParameter>& Params,
-	                    const FSussContext& BaseContext,
-	                    UPARAM(ref) TArray<AActor*>& OutResults);
+	                    const FSussContext& BaseContext);
 
 	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
@@ -363,12 +362,10 @@ protected:
 	 * @param OutResults Array that new query results should be appended to
 	 */
 	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
-	void ExecuteQueryBP(USussBrainComponent* Brain,
+	TArray<FVector> ExecuteQueryBP(USussBrainComponent* Brain,
 	                    AActor* ControlledActor,
 	                    const TMap<FName, FSussParameter>& Params,
-	                    const FSussContext& BaseContext,
-	                    UPARAM(ref) TArray<FVector>& OutResults);
-	
+	                    const FSussContext& BaseContext);
 
 	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
 	{
