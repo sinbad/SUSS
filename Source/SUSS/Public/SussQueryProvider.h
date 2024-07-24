@@ -301,7 +301,7 @@ protected:
 	 *   If uncorrelated, this context will only contain ControlledActor.
 	 * @param OutResults Array that new query results should be appended to
 	 */
-	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
+	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery", meta=(ForceAsFunction))
 	void ExecuteQueryBP(USussBrainComponent* Brain,
 	                    AActor* ControlledActor,
 	                    const TMap<FName, FSussParameter>& Params,
@@ -362,7 +362,7 @@ protected:
 	 *   If uncorrelated, this context will only contain ControlledActor.
 	 * @param OutResults Array that new query results should be appended to
 	 */
-	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
+	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery", meta=(ForceAsFunction))
 	void ExecuteQueryBP(USussBrainComponent* Brain,
 	                    AActor* ControlledActor,
 	                    const TMap<FName, FSussParameter>& Params,
@@ -459,7 +459,7 @@ protected:
 	 * @param BaseContext If this query is correlated with results from a previous query, this is the context to base the query on.
 	 *   If uncorrelated, this context will only contain ControlledActor.
 	 */
-	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery")
+	UFUNCTION(BlueprintImplementableEvent, DisplayName="ExecuteQuery", meta=(ForceAsFunction))
 	void ExecuteQueryBP(USussBrainComponent* Brain, AActor* ControlledActor, const TMap<FName, FSussParameter>& Params, const FSussContext& BaseContext);
 
 	virtual void ExecuteQueryInternal(USussBrainComponent* Brain, AActor* Self, const TMap<FName, FSussParameter>& Params, TSussResultsArray& OutResults) override final
