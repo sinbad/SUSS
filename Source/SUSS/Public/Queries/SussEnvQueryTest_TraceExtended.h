@@ -24,6 +24,64 @@ class SUSS_API USussEnvQueryTest_TraceExtended : public UEnvQueryTest_Trace
 	UPROPERTY(EditDefaultsOnly, Category=Trace, AdvancedDisplay)
 	FAIDataProviderFloatValue ContextTraceOffset;
 
+	DECLARE_DELEGATE_RetVal_SevenParams(bool, FDoTraceSignature, const FVector&, const FVector&, AActor*, UWorld*, enum ECollisionChannel, const FCollisionQueryParams&, const FVector&);
+	bool DoLineTraceTo(const FVector& ItemPos,
+	                          const FVector& ContextPos,
+	                          AActor* ItemActor,
+	                          UWorld* World,
+	                          ECollisionChannel Channel,
+	                          const FCollisionQueryParams& Params,
+	                          const FVector& Extent);
+	bool DoLineTraceFrom(const FVector& ItemPos,
+	                     const FVector& ContextPos,
+	                     AActor* ItemActor,
+	                     UWorld* World,
+	                     ECollisionChannel Channel,
+	                     const FCollisionQueryParams& Params,
+	                     const FVector& Extent);
+	bool DoBoxTraceTo(const FVector& ItemPos,
+	                  const FVector& ContextPos,
+	                  AActor* ItemActor,
+	                  UWorld* World,
+	                  ECollisionChannel Channel,
+	                  const FCollisionQueryParams& Params,
+	                  const FVector& Extent);
+	bool DoBoxTraceFrom(const FVector& ItemPos,
+	                    const FVector& ContextPos,
+	                    AActor* ItemActor,
+	                    UWorld* World,
+	                    ECollisionChannel Channel,
+	                    const FCollisionQueryParams& Params,
+	                    const FVector& Extent);
+	bool DoSphereTraceTo(const FVector& ItemPos,
+	                     const FVector& ContextPos,
+	                     AActor* ItemActor,
+	                     UWorld* World,
+	                     ECollisionChannel Channel,
+	                     const FCollisionQueryParams& Params,
+	                     const FVector& Extent);
+	bool DoSphereTraceFrom(const FVector& ItemPos,
+	                       const FVector& ContextPos,
+	                       AActor* ItemActor,
+	                       UWorld* World,
+	                       ECollisionChannel Channel,
+	                       const FCollisionQueryParams& Params,
+	                       const FVector& Extent);
+	bool DoCapsuleTraceTo(const FVector& ItemPos,
+	                      const FVector& ContextPos,
+	                      AActor* ItemActor,
+	                      UWorld* World,
+	                      ECollisionChannel Channel,
+	                      const FCollisionQueryParams& Params,
+	                      const FVector& Extent);
+	bool DoCapsuleTraceFrom(const FVector& ItemPos,
+	                        const FVector& ContextPos,
+	                        AActor* ItemActor,
+	                        UWorld* World,
+	                        ECollisionChannel Channel,
+	                        const FCollisionQueryParams& Params,
+	                        const FVector& Extent);
+
 public:
 	virtual void RunTest(FEnvQueryInstance& QueryInstance) const override;
 };

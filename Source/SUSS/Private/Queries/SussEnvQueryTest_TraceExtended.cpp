@@ -1,9 +1,81 @@
 ﻿
 #include "Queries/SussEnvQueryTest_TraceExtended.h"
 
+bool USussEnvQueryTest_TraceExtended::DoLineTraceTo(const FVector& ItemPos, const FVector& ContextPos, AActor* ItemActor, UWorld* World, enum ECollisionChannel Channel, const FCollisionQueryParams& Params, const FVector& Extent)
+{
+	FCollisionQueryParams TraceParams(Params);
+	TraceParams.AddIgnoredActor(ItemActor);
+
+	const bool bHit = World->LineTraceTestByChannel(ContextPos, ItemPos, Channel, TraceParams);
+	return bHit;
+}
+
+bool USussEnvQueryTest_TraceExtended::DoLineTraceFrom(const FVector& ItemPos, const FVector& ContextPos, AActor* ItemActor, UWorld* World, enum ECollisionChannel Channel, const FCollisionQueryParams& Params, const FVector& Extent)
+{
+	FCollisionQueryParams TraceParams(Params);
+	TraceParams.AddIgnoredActor(ItemActor);
+
+	const bool bHit = World->LineTraceTestByChannel(ItemPos, ContextPos, Channel, TraceParams);
+	return bHit;
+}
+
+bool USussEnvQueryTest_TraceExtended::DoBoxTraceTo(const FVector& ItemPos, const FVector& ContextPos, AActor* ItemActor, UWorld* World, enum ECollisionChannel Channel, const FCollisionQueryParams& Params, const FVector& Extent)
+{
+	FCollisionQueryParams TraceParams(Params);
+	TraceParams.AddIgnoredActor(ItemActor);
+
+	const bool bHit = World->SweepTestByChannel(ContextPos, ItemPos, FQuat((ItemPos - ContextPos).Rotation()), Channel, FCollisionShape::MakeBox(Extent), TraceParams);
+	return bHit;
+}
+
+bool USussEnvQueryTest_TraceExtended::DoBoxTraceFrom(const FVector& ItemPos, const FVector& ContextPos, AActor* ItemActor, UWorld* World, enum ECollisionChannel Channel, const FCollisionQueryParams& Params, const FVector& Extent)
+{
+	FCollisionQueryParams TraceParams(Params);
+	TraceParams.AddIgnoredActor(ItemActor);
+
+	const bool bHit = World->SweepTestByChannel(ItemPos, ContextPos, FQuat((ContextPos - ItemPos).Rotation()), Channel, FCollisionShape::MakeBox(Extent), TraceParams);
+	return bHit;
+}
+
+bool USussEnvQueryTest_TraceExtended::DoSphereTraceTo(const FVector& ItemPos, const FVector& ContextPos, AActor* ItemActor, UWorld* World, enum ECollisionChannel Channel, const FCollisionQueryParams& Params, const FVector& Extent)
+{
+	FCollisionQueryParams TraceParams(Params);
+	TraceParams.AddIgnoredActor(ItemActor);
+
+	const bool bHit = World->SweepTestByChannel(ContextPos, ItemPos, FQuat::Identity, Channel, FCollisionShape::MakeSphere(FloatCastChecked<float>(Extent.X, UE::LWC::DefaultFloatPrecision)), TraceParams);
+	return bHit;
+}
+
+bool USussEnvQueryTest_TraceExtended::DoSphereTraceFrom(const FVector& ItemPos, const FVector& ContextPos, AActor* ItemActor, UWorld* World, enum ECollisionChannel Channel, const FCollisionQueryParams& Params, const FVector& Extent)
+{
+	FCollisionQueryParams TraceParams(Params);
+	TraceParams.AddIgnoredActor(ItemActor);
+
+	const bool bHit = World->SweepTestByChannel(ItemPos, ContextPos, FQuat::Identity, Channel, FCollisionShape::MakeSphere(FloatCastChecked<float>(Extent.X, UE::LWC::DefaultFloatPrecision)), TraceParams);
+	return bHit;
+}
+
+bool USussEnvQueryTest_TraceExtended::DoCapsuleTraceTo(const FVector& ItemPos, const FVector& ContextPos, AActor* ItemActor, UWorld* World, enum ECollisionChannel Channel, const FCollisionQueryParams& Params, const FVector& Extent)
+{
+	FCollisionQueryParams TraceParams(Params);
+	TraceParams.AddIgnoredActor(ItemActor);
+
+	const bool bHit = World->SweepTestByChannel(ContextPos, ItemPos, FQuat::Identity, Channel, FCollisionShape::MakeCapsule(FloatCastChecked<float>(Extent.X, UE::LWC::DefaultFloatPrecision), FloatCastChecked<float>(Extent.Z, UE::LWC::DefaultFloatPrecision)), TraceParams);
+	return bHit;
+}
+
+bool USussEnvQueryTest_TraceExtended::DoCapsuleTraceFrom(const FVector& ItemPos, const FVector& ContextPos, AActor* ItemActor, UWorld* World, enum ECollisionChannel Channel, const FCollisionQueryParams& Params, const FVector& Extent)
+{
+	FCollisionQueryParams TraceParams(Params);
+	TraceParams.AddIgnoredActor(ItemActor);
+
+	const bool bHit = World->SweepTestByChannel(ItemPos, ContextPos, FQuat::Identity, Channel, FCollisionShape::MakeCapsule(FloatCastChecked<float>(Extent.X, UE::LWC::DefaultFloatPrecision), FloatCastChecked<float>(Extent.Z, UE::LWC::DefaultFloatPrecision)), TraceParams);
+	return bHit;
+}
+
 void USussEnvQueryTest_TraceExtended::RunTest(FEnvQueryInstance& QueryInstance) const
 {
-	// Copied from superclass since we can't call it
+	// Overridden, similar to old 5.3 version because has changed and lost the places we needed to modify to implement this
 	UObject* DataOwner = QueryInstance.Owner.Get();
 	BoolValue.BindData(DataOwner, QueryInstance.QueryID);
 	TraceFromContext.BindData(DataOwner, QueryInstance.QueryID);
@@ -15,12 +87,10 @@ void USussEnvQueryTest_TraceExtended::RunTest(FEnvQueryInstance& QueryInstance) 
 	float ItemZ = ItemHeightOffset.GetValue();
 	float ContextZ = ContextHeightOffset.GetValue();
 
-	// SUSS begin
 	ContextTraceOffset.BindData(DataOwner, QueryInstance.QueryID);
 	ItemTraceOffset.BindData(DataOwner, QueryInstance.QueryID);
 	const float ContextOffsetVal = ContextTraceOffset.GetValue();
 	const float ItemOffsetVal = ItemTraceOffset.GetValue();
-	// SUSS end
 
 	TArray<FVector> ContextLocations;
 	if (!QueryInstance.PrepareContext(Context, ContextLocations))
@@ -38,23 +108,23 @@ void USussEnvQueryTest_TraceExtended::RunTest(FEnvQueryInstance& QueryInstance) 
 	
 	ECollisionChannel TraceCollisionChannel = UEngineTypes::ConvertToCollisionChannel(TraceData.TraceChannel);	
 	FVector TraceExtent(TraceData.ExtentX, TraceData.ExtentY, TraceData.ExtentZ);
-	FRunTraceSignature TraceFunc;
+	FDoTraceSignature TraceFunc;
 	switch (TraceData.TraceShape)
 	{
 	case EEnvTraceShape::Line:
-		TraceFunc.BindUObject(const_cast<USussEnvQueryTest_TraceExtended*>(this), bTraceToItem ? &USussEnvQueryTest_TraceExtended::RunLineTraceTo : &USussEnvQueryTest_TraceExtended::RunLineTraceFrom);
+		TraceFunc.BindUObject(const_cast<USussEnvQueryTest_TraceExtended*>(this), bTraceToItem ? &USussEnvQueryTest_TraceExtended::DoLineTraceTo : &USussEnvQueryTest_TraceExtended::DoLineTraceFrom);
 		break;
 
 	case EEnvTraceShape::Box:
-		TraceFunc.BindUObject(const_cast<USussEnvQueryTest_TraceExtended*>(this), bTraceToItem ? &USussEnvQueryTest_TraceExtended::RunBoxTraceTo : &USussEnvQueryTest_TraceExtended::RunBoxTraceFrom);
+		TraceFunc.BindUObject(const_cast<USussEnvQueryTest_TraceExtended*>(this), bTraceToItem ? &USussEnvQueryTest_TraceExtended::DoBoxTraceTo : &USussEnvQueryTest_TraceExtended::DoBoxTraceFrom);
 		break;
 
 	case EEnvTraceShape::Sphere:
-		TraceFunc.BindUObject(const_cast<USussEnvQueryTest_TraceExtended*>(this), bTraceToItem ? &USussEnvQueryTest_TraceExtended::RunSphereTraceTo : &USussEnvQueryTest_TraceExtended::RunSphereTraceFrom);
+		TraceFunc.BindUObject(const_cast<USussEnvQueryTest_TraceExtended*>(this), bTraceToItem ? &USussEnvQueryTest_TraceExtended::DoSphereTraceTo : &USussEnvQueryTest_TraceExtended::DoSphereTraceFrom);
 		break;
 
 	case EEnvTraceShape::Capsule:
-		TraceFunc.BindUObject(const_cast<USussEnvQueryTest_TraceExtended*>(this), bTraceToItem ? &USussEnvQueryTest_TraceExtended::RunCapsuleTraceTo : &USussEnvQueryTest_TraceExtended::RunCapsuleTraceFrom);
+		TraceFunc.BindUObject(const_cast<USussEnvQueryTest_TraceExtended*>(this), bTraceToItem ? &USussEnvQueryTest_TraceExtended::DoCapsuleTraceTo : &USussEnvQueryTest_TraceExtended::DoCapsuleTraceFrom);
 		break;
 
 	default:
@@ -68,7 +138,6 @@ void USussEnvQueryTest_TraceExtended::RunTest(FEnvQueryInstance& QueryInstance) 
 
 	for (FEnvQueryInstance::ItemIterator It(this, QueryInstance); It; ++It)
 	{
-		// SUSS begin
 		FVector ItemLocation = GetItemLocation(QueryInstance, It.GetIndex()) + FVector(0, 0, ItemZ);
 		AActor* ItemActor = GetItemActor(QueryInstance, It.GetIndex());
 
@@ -83,8 +152,6 @@ void USussEnvQueryTest_TraceExtended::RunTest(FEnvQueryInstance& QueryInstance) 
 				ContextLocation += ContextOffsetVal * ContextToItemVec;
 				ItemLocation -= ItemOffsetVal * ContextToItemVec;
 			}
-
-			// SUSS end
 			
 			const bool bHit = TraceFunc.Execute(ItemLocation, ContextLocation, ItemActor, QueryInstance.World, TraceCollisionChannel, TraceParams, TraceExtent);
 			It.SetScore(TestPurpose, FilterType, bHit, bWantsHit);
