@@ -4,8 +4,10 @@
 
 #include "Debug\GameplayDebuggerCategorySUSS.h"
 #include "GameplayDebugger.h"
+#if WITH_EDITOR
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
+#endif
 #include "SussSettings.h"
 #include "Misc/MessageDialog.h"
 #include "Modules/ModuleManager.h"
@@ -16,8 +18,10 @@
 
 void FSUSSModule::StartupModule()
 {
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
+	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin
+	// file per-module
 
+#if WITH_EDITOR
 	// register settings
 	ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings");
 	if (SettingsModule)
@@ -28,6 +32,7 @@ void FSUSSModule::StartupModule()
 			GetMutableDefault<USussSettings>()
 		);
 	}
+#endif
 
 #if WITH_GAMEPLAY_DEBUGGER
 	IGameplayDebugger& GameplayDebuggerModule = IGameplayDebugger::Get();
