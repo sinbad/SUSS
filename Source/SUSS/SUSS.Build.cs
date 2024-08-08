@@ -31,7 +31,6 @@ public class SUSS : ModuleRules
                 "AIModule",
                 "GameplayTags",
                 "NavigationSystem",
-                "Settings",
                 "GameplayAbilities",
                 "GameplayDebugger"
                 
@@ -39,8 +38,7 @@ public class SUSS : ModuleRules
                 // ... add other public dependencies that you statically link with here ...
 			}
 			);
-			
-		
+
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
@@ -48,7 +46,11 @@ public class SUSS : ModuleRules
 			}
 			);
 		
-		
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.Add("Settings");
+		}
+
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]
 			{
