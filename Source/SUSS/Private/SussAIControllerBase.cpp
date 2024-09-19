@@ -2,6 +2,7 @@
 #include "SussAIControllerBase.h"
 
 #include "SussBrainComponent.h"
+#include "SussTargetInterface.h"
 
 ASussAIControllerBase::ASussAIControllerBase(const FObjectInitializer& ObjectInitializer)
 {
@@ -62,7 +63,12 @@ FVector ASussAIControllerBase::GetFocalPointOnActor(const AActor* Actor) const
 	if (!Actor)
 		return FAISystem::InvalidLocation;
 
-	const FVector FocusBaseLoc = Actor->GetActorLocation();
+	FVector FocusBaseLoc = Actor->GetActorLocation();
+	// Adjust by focus offset
+	if (Actor->Implements<USussTargetInterface>())
+	{
+		FocusBaseLoc = Actor->GetActorTransform().TransformPosition(ISussTargetInterface::Execute_GetFocalPointLocalSpace(Actor));
+	}
 	const APawn* AgentPawn = GetPawn();
 	if (AgentPawn && LeadTargetProjectileVelocity > 0)
 	{
