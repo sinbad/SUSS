@@ -64,10 +64,12 @@ FVector ASussAIControllerBase::GetFocalPointOnActor(const AActor* Actor) const
 		return FAISystem::InvalidLocation;
 
 	FVector FocusBaseLoc = Actor->GetActorLocation();
+	bool bLeadTargetIgnoreZVelocity = false;
 	// Adjust by focus offset
 	if (Actor->Implements<USussTargetInterface>())
 	{
 		FocusBaseLoc = Actor->GetActorTransform().TransformPosition(ISussTargetInterface::Execute_GetFocalPointLocalSpace(Actor));
+		bLeadTargetIgnoreZVelocity = ISussTargetInterface::Execute_GetLeadTargetIgnoreZVelocity(Actor);
 	}
 	const APawn* AgentPawn = GetPawn();
 	if (AgentPawn && LeadTargetProjectileVelocity > 0)
@@ -79,6 +81,12 @@ FVector ASussAIControllerBase::GetFocalPointOnActor(const AActor* Actor) const
 		// We simply calculate the time it would take the projectile to hit the target where it is now, and calculate
 		// where it will be in that time and aim at that instead
 		const float TimeToHitCurrent = FVector::Distance(AgentPawn->GetActorLocation(), FocusBaseLoc) / LeadTargetProjectileVelocity;
+		FVector V = Actor->GetVelocity();
+		if (bLeadTargetIgnoreZVelocity)
+		{
+			V.Z = 0;
+			V.Normalize();
+		}
 		return FocusBaseLoc + TimeToHitCurrent * Actor->GetVelocity();
 	}
 	else

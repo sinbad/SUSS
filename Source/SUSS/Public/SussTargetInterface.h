@@ -21,6 +21,11 @@ public:
 	/// an AI. Useful if your target's origin is at its feet but AIs should aim at its center of mass.
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Suss|Target")
 	FVector GetFocalPointLocalSpace() const;
+
+	/// When leading the target, should we ignore Z velocity? This prevents AI from aiming at the sky/floor
+	/// when target is jumping
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Suss|Target")
+	bool GetLeadTargetIgnoreZVelocity() const;
 	
 };
 
