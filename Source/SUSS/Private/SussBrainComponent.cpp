@@ -1440,6 +1440,12 @@ void USussBrainComponent::AddTemporaryActionScoreAdjustment(int ActionIndex, flo
 
 void USussBrainComponent::ResetTemporaryActionScoreAdjustment(int ActionIndex)
 {
+	if (ActionHistory.IsValidIndex(ActionIndex))
+	{
+		auto& H = ActionHistory[ActionIndex];
+		H.TempScoreAdjust = 0;
+		H.TempScoreAdjustCooldownRate = 0;
+	}
 }
 
 FString USussBrainComponent::GetDebugSummaryString() const
