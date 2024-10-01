@@ -32,27 +32,53 @@ FSussScopeReservedMap::~FSussScopeReservedMap()
 	}
 }
 
-USussAction* USussPoolSubsystem::ReserveAction(const UClass* ActionClass,
-	UObject* OwnerIfCreated,
-	UObject* TemplateIfCreated)
+TSussReservedActionPtr USussPoolSubsystem::ReserveAction(UClass* ActionClass,
+                                                         UObject* TemplateIfCreated)
 {
 	FScopeLock Lock(&Guard);
-	
+
+	USussAction* Ret = nullptr;
 	if (auto FreeList = FreeActionClassPools.Find(ActionClass))
 	{
 		if (FreeList->Pool.Num() > 0)
 		{
-			return FreeList->Pool.Pop();
+			Ret = FreeList->Pool.Pop();
 		}
 	}
 
-	return 	NewObject<USussAction>(OwnerIfCreated, ActionClass, NAME_None, RF_NoFlags, TemplateIfCreated);
+	if (!Ret)
+	{
+		Ret = NewObject<USussAction>(this, ActionClass, NAME_None, RF_NoFlags, TemplateIfCreated);
+	}
+
+	auto ReserveList = ReservedActionClassPools.Find(ActionClass);
+	if (!ReserveList)
+	{
+		ReserveList = &ReservedActionClassPools.Emplace(ActionClass);
+	}
+	ReserveList->Pool.Push(Ret);
+
+	//UE_LOG(LogTemp, Warning, TEXT("Reserved action: %s"), *Ret->GetName())
+
+	// return a shared ptr which doesn't delete, it frees the reserved action
+	return TSussReservedActionPtr(Ret, [this](USussAction* Obj)
+	{
+		if (Obj && IsValid(this)) 
+		{
+			this->InternalFreeAction(Obj);
+		}
+	});
 
 }
 
-void USussPoolSubsystem::FreeAction(USussAction* Action)
+void USussPoolSubsystem::InternalFreeAction(USussAction* Action)
 {
 	FScopeLock Lock(&Guard);
+
+	if (!Action)
+		return;
+
+	//UE_LOG(LogTemp, Warning, TEXT("Freed action: %s"), *Action->GetName())
 	
 	auto FreeList = FreeActionClassPools.Find(Action->GetClass());
 	if (!FreeList)
@@ -60,6 +86,15 @@ void USussPoolSubsystem::FreeAction(USussAction* Action)
 		FreeList = &FreeActionClassPools.Emplace(Action->GetClass());
 	}
 	FreeList->Pool.Push(Action);
+
+	// Remove from reserve
+	if (auto ReserveList = ReservedActionClassPools.Find(Action->GetClass()))
+	{
+		ReserveList->Pool.Remove(Action);
+	}
+
+	// Unbind any callback if back to pool
+	Action->InternalOnActionCompleted.Unbind();
 }
 
 void USussPoolSubsystem::Deinitialize()

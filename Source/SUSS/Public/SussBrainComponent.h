@@ -170,8 +170,7 @@ protected:
 	/// The scoring result of the current action definition being executed, if any
 	FSussActionScoringResult CurrentActionResult;
 	/// The instance of the action being executed
-	UPROPERTY()
-	USussAction* CurrentActionInstance = nullptr;
+	TSussReservedActionPtr CurrentActionInstance;
 
 	TArray<FSussActionScoringResult> CandidateActions;
 	/// Record of when each action in CombinedActionsByPriority order has been run & details 
@@ -252,7 +251,7 @@ public:
 	                       bool bIncludeKnownButNotCurrent = true,
 	                       bool bHostileOnly = true,
 	                       TSubclassOf<UAISense> SenseClass = nullptr,
-						   bool bSenseClassInclude = true);
+						   bool bSenseClassInclude = true) const;
 
 	/**
 	 * Retrieves the current perception information, provided the AI controller has a perception component

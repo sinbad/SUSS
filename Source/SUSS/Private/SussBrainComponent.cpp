@@ -379,7 +379,7 @@ void USussBrainComponent::GetPerceptionInfo(TArray<FSussActorPerceptionInfo>& Ou
                                             bool bIncludeKnownButNotCurrent,
                                             bool bHostileOnly,
                                             TSubclassOf<UAISense> SenseClass,
-                                            bool bSenseClassInclude)
+                                            bool bSenseClassInclude) const
 {
 	if (IsValid(PerceptionComp))
 	{
@@ -625,7 +625,7 @@ void USussBrainComponent::StopCurrentAction()
 void USussBrainComponent::CancelCurrentAction(TSubclassOf<USussAction> Interrupter)
 {
 	// Cancel previous action
-	if (IsValid(CurrentActionInstance))
+	if (CurrentActionInstance.IsValid())
 	{
 		CurrentActionInstance->InternalOnActionCompleted.Unbind();
 		CurrentActionInstance->CancelAction(Interrupter);
@@ -639,8 +639,8 @@ void USussBrainComponent::RecordAndResetCurrentAction()
 	History.LastEndTime = GetWorld()->GetTimeSeconds();
 	// Repetition penalties are CUMULATIVE
 	History.RepetitionPenalty += CombinedActionsByPriority[CurrentActionResult.ActionDefIndex].RepetitionPenalty;
-	
-	GetSussPool(GetWorld())->FreeAction(CurrentActionInstance);
+
+	// This will free automatically
 	CurrentActionInstance = nullptr;
 	CurrentActionResult.ActionDefIndex = -1;
 	CurrentActionResult.Score = 0;
@@ -678,7 +678,7 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 #endif
 
 	TSubclassOf<USussAction> PreviousActionClass = nullptr;
-	if (IsValid(CurrentActionInstance))
+	if (CurrentActionInstance.IsValid())
 	{
 		PreviousActionClass = CurrentActionInstance->GetClass();
 	}
@@ -697,7 +697,7 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 		History.LastContext = ActionResult.Context;
 		
 		// Note that to allow BP classes we need to construct using the default object
-		CurrentActionInstance = GetSussPool(GetWorld())->ReserveAction(ActionClass, this, ActionClass->GetDefaultObject());
+		CurrentActionInstance = GetSussPool(GetWorld())->ReserveAction(ActionClass, ActionClass->GetDefaultObject());
 		CurrentActionInstance->Init(this, ActionResult.Context, ActionResult.ActionDefIndex);
 		CurrentActionInstance->InternalOnActionCompleted.BindUObject(this, &USussBrainComponent::OnActionCompleted);
 		CurrentActionInstance->PerformAction(ActionResult.Context, Def.ActionParams, PreviousActionClass);
@@ -717,7 +717,7 @@ void USussBrainComponent::ChooseAction(const FSussActionScoringResult& ActionRes
 void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 {
 	// Sometimes possible for actions to call us back late when we've already abandoned them, ignore that
-	if (IsValid(CurrentActionInstance) && CurrentActionInstance == SussAction)
+	if (CurrentActionInstance.IsValid() && CurrentActionInstance.Get() == SussAction)
 	{
 		SussAction->InternalOnActionCompleted.Unbind();
 		RecordAndResetCurrentAction();
@@ -743,7 +743,7 @@ void USussBrainComponent::Update()
 		return;
 
 	/// If we can't be interrupted, no need to check what else we could be doing
-	if (IsValid(CurrentActionInstance) && !CurrentActionInstance->CanBeInterrupted())
+	if (CurrentActionInstance.IsValid() && !CurrentActionInstance->CanBeInterrupted())
 		return;
 
 #if ENABLE_VISUAL_LOG
@@ -764,7 +764,7 @@ void USussBrainComponent::Update()
 	{
 		const FSussActionDef& NextAction = CombinedActionsByPriority[i];
 
-		if (IsValid(CurrentActionInstance) && CurrentActionInstance->AllowInterruptionsFromHigherPriorityGroupsOnly() && CurrentActionDef->Priority <= NextAction.Priority)
+		if (CurrentActionInstance.IsValid() && CurrentActionInstance->AllowInterruptionsFromHigherPriorityGroupsOnly() && CurrentActionDef->Priority <= NextAction.Priority)
 		{
 			// Don't consider anything else of equal or lower priority
 			break;
@@ -1479,7 +1479,7 @@ FString USussBrainComponent::GetDebugSummaryString() const
 
 void USussBrainComponent::DebugLocations(TArray<FVector>& OutLocations, bool bIncludeDetails) const
 {
-	if (IsValid(CurrentActionInstance))
+	if (CurrentActionInstance.IsValid())
 	{
 		CurrentActionInstance->DebugLocations(OutLocations, bIncludeDetails);
 	}

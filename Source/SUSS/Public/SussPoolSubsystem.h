@@ -319,6 +319,10 @@ public:
 	TArray<class USussAction*> Pool;
 };
 
+// Used to auto-free actions
+typedef TSharedPtr<USussAction, ESPMode::ThreadSafe> TSussReservedActionPtr;
+
+
 /**
  * Helper system to provide re-usable pools of eg arrays between brains so they don't have to maintain their own for temp results.
  */
@@ -334,6 +338,9 @@ protected:
 
 	UPROPERTY()
 	TMap<UClass*, FSussActionPool> FreeActionClassPools;
+	// For GC purposes
+	UPROPERTY()
+	TMap<UClass*, FSussActionPool> ReservedActionClassPools;
 	
 	template<typename T>
 	FSussScopeReservedArray ReserveArrayImpl()
@@ -405,8 +412,10 @@ public:
 		FreeMapPools.Add(Holder);
 	}
 
-	USussAction* ReserveAction(const UClass* ActionClass, UObject* OwnerIfCreated, UObject* TemplateIfCreated);
-	void FreeAction(USussAction* Action);
+	TSussReservedActionPtr ReserveAction(UClass* ActionClass, UObject* TemplateIfCreated);
+
+	// Not neededby clients, just clear your TSussReservedActionPtr
+	void InternalFreeAction(USussAction* Action);
 	virtual void Deinitialize() override;
 };
 
