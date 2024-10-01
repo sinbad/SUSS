@@ -27,6 +27,8 @@ protected:
 	TArray<FGameplayAbilitySpec*> AbilitiesActivating;
 	FDelegateHandle OnAbilityEndedHandle;
 
+	virtual void Reset_Implementation() override;
+
 	UFUNCTION()
 	void DelayedCompletion();
 	UFUNCTION()

@@ -23,6 +23,11 @@ bool USussAction::CanBeInterrupted_Implementation() const
 	return bAllowInterruptions;
 }
 
+void USussAction::Reset_Implementation()
+{
+	// Subclasses should implement
+}
+
 UWorld* USussAction::GetWorld() const
 {
 	if (IsValid(Brain))

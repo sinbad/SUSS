@@ -15,7 +15,7 @@ DECLARE_DELEGATE_OneParam(FSussOnActionCompleted, class USussAction*);
 /**
  * An Action is one thing that an AI decides to do right now.
  * Actions are instantiated when they're executed, and can therefore store state for the duration of the action.
- * Action instances are RE-USED, so ensure that you reset any state when PerformAction is called.
+ * Action instances are RE-USED, so ensure that you reset any state by overriding Reset()
  */
 UCLASS(Blueprintable, Abstract)
 class SUSS_API USussAction : public UObject
@@ -45,6 +45,13 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Transient)
 	int BrainActionIndex;
+
+	
+	/// Override this function to reset this action instance back to its initial state. Because
+	/// action instances are re-used it's important to reset any additional state you store in an
+	/// action to prevent its previous state from being incorrectly re-used.
+	UFUNCTION(BlueprintNativeEvent)
+	void Reset();
 public:
 
 	void Init(USussBrainComponent* InBrain, const FSussContext& InContext, int ActionIndex)
@@ -52,7 +59,9 @@ public:
 		Brain = InBrain;
 		CurrentContext = InContext;
 		BrainActionIndex = ActionIndex;
+		Reset();
 	}
+
 
 	const FGameplayTag& GetActionTag() const { return ActionTag; }
 	

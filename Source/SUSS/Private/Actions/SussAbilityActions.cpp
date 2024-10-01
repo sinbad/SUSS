@@ -84,6 +84,13 @@ void USussActivateAbilityActionBase::Activate(const FSussContext& Context, float
 }
 
 
+void USussActivateAbilityActionBase::Reset_Implementation()
+{
+	Super::Reset_Implementation();
+
+	PostCompletionDelay = 0;
+}
+
 void USussActivateAbilityActionBase::DelayedCompletion()
 {
 	ActionCompleted();
