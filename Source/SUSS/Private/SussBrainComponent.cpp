@@ -719,6 +719,10 @@ void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 	// Sometimes possible for actions to call us back late when we've already abandoned them, ignore that
 	if (CurrentActionInstance.IsValid() && CurrentActionInstance.Get() == SussAction)
 	{
+#if ENABLE_VISUAL_LOG
+		UE_VLOG(GetLogOwner(), LogSuss, Log, TEXT("Action completed: %s"), *SussAction->GetActionTag().ToString());
+#endif
+		
 		SussAction->InternalOnActionCompleted.Unbind();
 		RecordAndResetCurrentAction();
 		// Immediately queue for update so no hesitation after completion
