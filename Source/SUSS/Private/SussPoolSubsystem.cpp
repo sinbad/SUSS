@@ -61,11 +61,13 @@ TSussReservedActionPtr USussPoolSubsystem::ReserveAction(UClass* ActionClass,
 	//UE_LOG(LogTemp, Warning, TEXT("Reserved action: %s"), *Ret->GetName())
 
 	// return a shared ptr which doesn't delete, it frees the reserved action
-	return TSussReservedActionPtr(Ret, [this](USussAction* Obj)
+	// Use WeakPtr to guard against shutdown issues
+	TWeakObjectPtr<USussPoolSubsystem> WeakThis(this);
+	return TSussReservedActionPtr(Ret, [WeakThis](USussAction* Obj)
 	{
-		if (Obj && IsValid(this)) 
+		if (Obj && WeakThis.IsValid()) 
 		{
-			this->InternalFreeAction(Obj);
+			WeakThis->InternalFreeAction(Obj);
 		}
 	});
 
