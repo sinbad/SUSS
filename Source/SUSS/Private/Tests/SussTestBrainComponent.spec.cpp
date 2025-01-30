@@ -7,9 +7,15 @@
 UE_DISABLE_OPTIMIZATION
 
 
+#if ENGINE_MAJOR_VERSION==5&&ENGINE_MINOR_VERSION>=5
+BEGIN_DEFINE_SPEC(FSussBrainTestContextsSpec,
+				  "SUSS: Test  Contexts",
+				  EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::ProductFilter);
+#else
 BEGIN_DEFINE_SPEC(FSussBrainTestContextsSpec,
 				  "SUSS: Test  Contexts",
 				  EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter);
+#endif
 
 	TUniquePtr<FSussTestWorldFixture> WorldFixture;
 
