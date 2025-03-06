@@ -316,7 +316,7 @@ EAILogicResuming::Type USussBrainComponent::ResumeLogic(const FString& Reason)
 			GetWorld()->GetTimerManager().UnPauseTimer(UpdateRequestTimer);
 		}
 
-		bIsLogicStopped = true;
+		bIsLogicStopped = false;
 		LogicStoppedReason = "";
 
 	}
