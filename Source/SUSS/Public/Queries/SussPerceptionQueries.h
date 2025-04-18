@@ -86,7 +86,7 @@ protected:
 struct FActorPerceptionInfo;
 
 USTRUCT(BlueprintType)
-struct FSussActorPerceptionInfo : public FSussContextValueStructBase
+struct SUSS_API FSussActorPerceptionInfo : public FSussContextValueStructBase
 {
 	GENERATED_BODY()
 public:
