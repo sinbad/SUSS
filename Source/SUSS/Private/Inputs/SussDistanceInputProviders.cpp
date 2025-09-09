@@ -81,10 +81,14 @@ USussTargetDistancePathInputProvider::USussTargetDistancePathInputProvider()
 	InputTag = TAG_SussInputTargetDistancePath;
 }
 
+DECLARE_CYCLE_STAT(TEXT("SUSS Target Distance Path Input"), STAT_SUSSTargetDistancePathInput, STATGROUP_SUSS);
+
 float USussTargetDistancePathInputProvider::Evaluate_Implementation(const USussBrainComponent* Brain,
 	const FSussContext& Context,
 	const TMap<FName, FSussParameter>& Parameters) const
 {
+	SCOPE_CYCLE_COUNTER(STAT_SUSSTargetDistancePathInput);
+
 	if (Context.Target.IsValid())
 	{
 		return USussUtility::GetPathDistanceTo(Brain->GetAIController(), Context.Target->GetActorLocation());
@@ -97,9 +101,13 @@ USussLocationDistancePathInputProvider::USussLocationDistancePathInputProvider()
 	InputTag = TAG_SussInputLocationDistancePath;
 }
 
+DECLARE_CYCLE_STAT(TEXT("SUSS Location Distance Path Input"), STAT_SUSSLocationDistancePathInput, STATGROUP_SUSS);
+
 float USussLocationDistancePathInputProvider::Evaluate_Implementation(const USussBrainComponent* Brain,
 	const FSussContext& Context,
 	const TMap<FName, FSussParameter>& Parameters) const
 {
+	SCOPE_CYCLE_COUNTER(STAT_SUSSLocationDistancePathInput);
+
 	return USussUtility::GetPathDistanceTo(Brain->GetAIController(), Context.Location);
 }
