@@ -256,23 +256,23 @@ public:
 	 * Get the distance along navmesh paths from an actor's current location to a desired location.
 	 * @param Agent The actor in question
 	 * @param Location The desired location
-	 * @param bAllowPartialPaths 
+	 * @param bAllowPartialPaths Whether to allow partial paths
 	 * @return Distance, or BIG_NUMBER if unreachable
 	 */
 	UFUNCTION(BlueprintCallable, Category="SUSS")
-	static float GetPathDistanceTo(AAIController* Agent, const FVector& Location, bool bAllowPartialPaths);
+	static float GetPathDistanceTo(AAIController* Agent, const FVector& Location, bool bAllowPartialPaths = false);
 
 	/**
 	 * Get the distance along navmesh paths between 2 locations, for an actor.
 	 * @param Agent The actor in question
 	 * @param FromLocation The location to measure from
 	 * @param ToLocation The desired location
-	 * @param bAllowPartialPath 
+	 * @param bAllowPartialPath Whether to allow partial paths
 	 * @return Distance, or BIG_NUMBER if unreachable
 	 */
 	UFUNCTION(BlueprintCallable, Category="SUSS")
 	static float GetPathDistanceFromTo(AAIController* Agent, const FVector& FromLocation, const FVector& ToLocation, bool
-	                                   bAllowPartialPath);
+	                                   bAllowPartialPath = false);
 
 	UFUNCTION(Blueprintable, Category="SUSS")
 	static ECollisionChannel GetLineOfSightTraceChannel();
