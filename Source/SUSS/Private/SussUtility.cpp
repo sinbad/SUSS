@@ -700,16 +700,17 @@ float USussUtility::EvalCurve(ESussCurveType CurveType, float Input, const FVect
 	return 0;
 }
 
-float USussUtility::GetPathDistanceTo(AAIController* Agent, const FVector& Location)
+float USussUtility::GetPathDistanceTo(AAIController* Agent, const FVector& Location, bool bAllowPartialPaths)
 {
 	if (Agent && Agent->GetPawn())
 	{
-		return GetPathDistanceFromTo(Agent, Agent->GetPawn()->GetActorLocation(), Location);
+		return GetPathDistanceFromTo(Agent, Agent->GetPawn()->GetActorLocation(), Location, false);
 	}
 	return BIG_NUMBER;
 }
 
-float USussUtility::GetPathDistanceFromTo(AAIController* Agent, const FVector& FromLocation, const FVector& ToLocation)
+float USussUtility::GetPathDistanceFromTo(AAIController* Agent, const FVector& FromLocation, const FVector& ToLocation, bool
+                                          bAllowPartialPath)
 {
 	if (!Agent)
 	{
@@ -732,7 +733,7 @@ float USussUtility::GetPathDistanceFromTo(AAIController* Agent, const FVector& F
 		{
 			FSharedConstNavQueryFilter NavFilter = UNavigationQueryFilter::GetQueryFilter(*NavData, Agent->GetDefaultNavigationFilterClass());
 			FPathFindingQuery Query(Agent, *NavData, FromLocation, ToLocation, NavFilter);
-			Query.SetAllowPartialPaths(false);
+			Query.SetAllowPartialPaths(bAllowPartialPath);
 			auto Result = NavSys->FindPathSync(Query);
 
 			if (Result.IsSuccessful())

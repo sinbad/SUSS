@@ -75,7 +75,9 @@ public:
 };
 
 /**
- * Input that provides the distance from the AI to a given target along available paths 
+ * Input that provides the distance from the AI to a given target along available paths.
+ * Parameters allowed:
+ *  - AllowPartialPath (bool, default false)
  */
 UCLASS()
 class SUSS_API USussTargetDistancePathInputProvider : public USussInputProvider
@@ -91,6 +93,8 @@ public:
 
 /**
  * Input that provides the distance from the AI to a given location along available paths
+ * Parameters allowed:
+ *  - AllowPartialPath (bool, default false)
  */
 UCLASS()
 class SUSS_API USussLocationDistancePathInputProvider : public USussInputProvider

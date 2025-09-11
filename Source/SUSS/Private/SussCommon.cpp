@@ -12,3 +12,4 @@ const FName SUSS::CompletionDelayParamName("CompletionDelay");
 const FName SUSS::WaitForEndParamName("WaitForEnd");
 const FName SUSS::RadiusParamName("Radius");
 const FName SUSS::PerceptionInfoValueName("PerceptionInfo");
+const FName SUSS::AllowPartialPathParamName("AllowPartialPath");

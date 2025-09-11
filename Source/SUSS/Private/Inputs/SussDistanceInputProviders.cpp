@@ -91,7 +91,13 @@ float USussTargetDistancePathInputProvider::Evaluate_Implementation(const USussB
 
 	if (Context.Target.IsValid())
 	{
-		return USussUtility::GetPathDistanceTo(Brain->GetAIController(), Context.Target->GetActorLocation());
+		bool bAllowPartialPath = false;
+		if (auto pAllowPartialPathParam = Parameters.Find(SUSS::AllowPartialPathParamName))
+		{
+			bAllowPartialPath = pAllowPartialPathParam->BoolValue;
+		}
+
+		return USussUtility::GetPathDistanceTo(Brain->GetAIController(), Context.Target->GetActorLocation(), bAllowPartialPath);
 	}
 	return BIG_NUMBER;
 }
@@ -109,5 +115,11 @@ float USussLocationDistancePathInputProvider::Evaluate_Implementation(const USus
 {
 	SCOPE_CYCLE_COUNTER(STAT_SUSSLocationDistancePathInput);
 
-	return USussUtility::GetPathDistanceTo(Brain->GetAIController(), Context.Location);
+	bool bAllowPartialPath = false;
+	if (auto pAllowPartialPathParam = Parameters.Find(SUSS::AllowPartialPathParamName))
+	{
+		bAllowPartialPath = pAllowPartialPathParam->BoolValue;
+	}
+
+	return USussUtility::GetPathDistanceTo(Brain->GetAIController(), Context.Location, bAllowPartialPath);
 }
