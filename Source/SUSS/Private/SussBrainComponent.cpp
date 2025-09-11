@@ -739,6 +739,8 @@ void USussBrainComponent::Update()
 	if (!GetOwner()->HasAuthority())
 		return;
 
+	OnPreBrainUpdate.Broadcast(this);
+
 	// This is to catch updates called after StopLogic/PauseLogic because they were already queued
 	if (bIsLogicStopped)
 		return;
@@ -926,6 +928,8 @@ void USussBrainComponent::Update()
 	}
 
 	ChooseActionFromCandidates();
+
+	OnPostBrainUpdate.Broadcast(this);
 	
 }
 

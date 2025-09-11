@@ -11,6 +11,8 @@
 #include "SussBrainComponent.generated.h"
 
 class UCharacterMovementComponent;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSussBrainUpdate, class USussBrainComponent*, Brain);
 /// How to choose the action to run
 UENUM(BlueprintType)
 enum class ESussActionChoiceMethod : uint8
@@ -187,6 +189,15 @@ public:
 	// Sets default values for this component's properties
 	USussBrainComponent();
 
+	
+	/// Delegate called just before a brain is updated
+	UPROPERTY(BlueprintAssignable)
+	FOnSussBrainUpdate OnPreBrainUpdate;
+
+	/// Delegate called just after a brain is updated
+	UPROPERTY(BlueprintAssignable)
+	FOnSussBrainUpdate OnPostBrainUpdate;
+	
 	const FSussBrainConfig& GetBrainConfig() const { return BrainConfig; }
 
 	UFUNCTION(BlueprintCallable)
