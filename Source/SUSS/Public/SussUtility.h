@@ -280,4 +280,12 @@ public:
 	/// Helper function to retrieve the "PerceptionInfo" named struct from a context
 	UFUNCTION(BlueprintCallable, Category="SUSS")
 	static const FSussActorPerceptionInfo& GetPerceptionInfoFromContext(const FSussContext& Context, bool& bSuccess);
+
+	/// Retrieve a sense class specified in parameters
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static TSubclassOf<UAISense> GetSenseClassFromParams(const TMap<FName, FSussParameter>& Params);
+
+	/// Retrieve ignore tags from parameters ("IgnoreTags" 
+	UFUNCTION(BlueprintCallable, Category="SUSS")
+	static void GetIgnoreTagsFromParams(const TMap<FName, FSussParameter>& Params, FGameplayTagContainer& OutTags);
 };

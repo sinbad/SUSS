@@ -13,6 +13,22 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussQueryPerceptionKnownHostiles);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussQueryPerceptionKnownNonHostiles);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussQueryPerceptionKnownHostilesExtended);
 
+/// Base known targets query provider (not to be used directly)
+UCLASS(Abstract)
+class SUSS_API USussPerceptionKnownTargetsQueryProviderBase : public USussTargetQueryProvider
+{
+	GENERATED_BODY()
+
+public:
+	USussPerceptionKnownTargetsQueryProviderBase();
+protected:
+
+	/// Retrieve the specific sense class from params or otherwise
+	virtual TSubclassOf<UAISense> GetSenseClass(const TMap<FName, FSussParameter>& Params);
+	/// Populate a list of tags that if a target has any of them, they are ignored
+	virtual void GetIgnoreTags(const TMap<FName, FSussParameter>& Params, FGameplayTagContainer& OutTags);
+};
+
 /**
  * Query provider which provides a list of all targets (hostile, friendly, neutral) that are "known" by the perception system of the agent.
  * Requires that the agent's AI controller has a UAIPerceptionComponent.
@@ -22,7 +38,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SussQueryPerceptionKnownHostilesExtended);
  *    "IgnoreTags": TagContainer of tags which you want to ignore if the actor has (e.g. dead, invisible)
  */
 UCLASS()
-class SUSS_API USussPerceptionKnownTargetsQueryProvider : public USussTargetQueryProvider
+class SUSS_API USussPerceptionKnownTargetsQueryProvider : public USussPerceptionKnownTargetsQueryProviderBase
 {
 	GENERATED_BODY()
 
@@ -47,7 +63,7 @@ protected:
  *    "IgnoreTags": TagContainer of tags which you want to ignore if the actor has (e.g. dead, invisible)
  */
 UCLASS()
-class SUSS_API USussPerceptionKnownHostilesQueryProvider : public USussTargetQueryProvider
+class SUSS_API USussPerceptionKnownHostilesQueryProvider : public USussPerceptionKnownTargetsQueryProviderBase
 {
 	GENERATED_BODY()
 public:
@@ -70,7 +86,7 @@ protected:
  *    "IgnoreTags": TagContainer of tags which you want to ignore if the actor has (e.g. dead, invisible)
  */
 UCLASS()
-class SUSS_API USussPerceptionKnownNonHostilesQueryProvider : public USussTargetQueryProvider
+class SUSS_API USussPerceptionKnownNonHostilesQueryProvider : public USussPerceptionKnownTargetsQueryProviderBase
 {
 	GENERATED_BODY()
 public:
@@ -141,6 +157,12 @@ class SUSS_API USussPerceptionKnownHostilesExtendedQueryProvider : public USussN
 public:
 	USussPerceptionKnownHostilesExtendedQueryProvider();
 protected:
+
+	/// Retrieve the specific sense class from params or otherwise
+	virtual TSubclassOf<UAISense> GetSenseClass(const TMap<FName, FSussParameter>& Params);
+	/// Populate a list of tags that if a target has any of them, they are ignored
+	virtual void GetIgnoreTags(const TMap<FName, FSussParameter>& Params, FGameplayTagContainer& OutTags);
+	
 	virtual void ExecuteQuery(USussBrainComponent* Brain,
 		AActor* Self,
 		const TMap<FName, FSussParameter>& Params,

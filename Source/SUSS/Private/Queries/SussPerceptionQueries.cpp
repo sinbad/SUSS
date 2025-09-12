@@ -5,60 +5,29 @@
 #include "Perception/AISense_Damage.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Sight.h"
-#include "Perception/AISense_Team.h"
-#include "Perception/AISense_Touch.h"
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussQueryPerceptionKnownTargets, "Suss.Query.Perception.Targets.AllKnown", "Query all targets known to this agent's perception system. Optional param 'Sense' to filter ('Sight', 'Hearing' etc)")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussQueryPerceptionKnownHostiles, "Suss.Query.Perception.Targets.HostilesKnown", "Query all hostiles known to this agent's perception system. Optional param 'Sense' to filter ('Sight', 'Hearing' etc)")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussQueryPerceptionKnownNonHostiles, "Suss.Query.Perception.Targets.NonHostilesKnown", "Query all non-hostiles known to this agent's perception system. Optional param 'Sense' to filter ('Sight', 'Hearing' etc)")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_SussQueryPerceptionKnownHostilesExtended, "Suss.Query.Perception.Targets.HostilesKnown.Extended", "Query all hostiles known to this agent's perception system, return named value struct 'PerceptionInfo' of type FSussActorPerceptionInfo. Optional param 'Sense' to filter ('Sight', 'Hearing' etc)")
 
-static const FName SussQuerySenseParam("Sense");
-static const FName SussQuerySenseSightValue("Sight");
-static const FName SussQuerySenseHearingValue("Hearing");
-static const FName SussQuerySenseDamageValue("Damage");
-static const FName SussQuerySenseTouchValue("Touch");
-static const FName SussQuerySenseTeamValue("Team");
-static const FName SussQueryIgnoreTagsParam("IgnoreTags");
 
-TSubclassOf<UAISense> GetSenseClassFromParams(const TMap<FName, FSussParameter>& Params)
+USussPerceptionKnownTargetsQueryProviderBase::USussPerceptionKnownTargetsQueryProviderBase()
 {
-	if (auto pSense = Params.Find(SussQuerySenseParam))
-	{
-		if (*pSense == SussQuerySenseSightValue)
-		{
-			return UAISense_Sight::StaticClass();
-		}
-		else if (*pSense == SussQuerySenseHearingValue)
-		{
-			return UAISense_Hearing::StaticClass();
-		}
-		else if (*pSense == SussQuerySenseDamageValue)
-		{
-			return UAISense_Damage::StaticClass();
-		}
-		else if (*pSense == SussQuerySenseTouchValue)
-		{
-			return UAISense_Touch::StaticClass();
-		}
-		else if (*pSense == SussQuerySenseTeamValue)
-		{
-			return UAISense_Team::StaticClass();
-		}
-	}
-
-	return nullptr;
+	// Nothing to do here, not a concrete query
 }
 
-void GetIgnoreTagsFromParams(const TMap<FName, FSussParameter>& Params, FGameplayTagContainer& OutTags)
+TSubclassOf<UAISense> USussPerceptionKnownTargetsQueryProviderBase::GetSenseClass(
+	const TMap<FName, FSussParameter>& Params)
 {
-	if (auto pTagContainer = Params.Find(SussQueryIgnoreTagsParam))
-	{
-		if (pTagContainer->Type == ESussParamType::TagContainer)
-		{
-			OutTags.AppendTags(pTagContainer->TagContainer);
-		}
-	}
+	return USussUtility::GetSenseClassFromParams(Params);
+}
+
+void USussPerceptionKnownTargetsQueryProviderBase::GetIgnoreTags(
+	const TMap<FName, FSussParameter>& Params,
+	FGameplayTagContainer& OutTags)
+{
+	USussUtility::GetIgnoreTagsFromParams(Params, OutTags);
 }
 
 USussPerceptionKnownTargetsQueryProvider::USussPerceptionKnownTargetsQueryProvider()
@@ -75,9 +44,9 @@ void USussPerceptionKnownTargetsQueryProvider::ExecuteQuery(USussBrainComponent*
 	if (const auto Perception = Brain->GetPerceptionComponent())
 	{
 		TArray<AActor*> PerceptionResults;
-		TSubclassOf<UAISense> SenseClass = GetSenseClassFromParams(Params);
+		TSubclassOf<UAISense> SenseClass = GetSenseClass(Params);
 		FGameplayTagContainer IgnoreTags;
-		GetIgnoreTagsFromParams(Params, IgnoreTags);
+		GetIgnoreTags(Params, IgnoreTags);
 		if (SenseClass)
 		{
 			// Note that the "known" excludes forgotten actors but includes actors which are not *currently* perceived but
@@ -115,9 +84,9 @@ void USussPerceptionKnownHostilesQueryProvider::ExecuteQuery(USussBrainComponent
 	if (const auto Perception = Brain->GetPerceptionComponent())
 	{
 		TArray<AActor*> PerceptionResults;
-		TSubclassOf<UAISense> SenseClass = GetSenseClassFromParams(Params);
+		TSubclassOf<UAISense> SenseClass = GetSenseClass(Params);
 		FGameplayTagContainer IgnoreTags;
-		GetIgnoreTagsFromParams(Params, IgnoreTags);
+		GetIgnoreTags(Params, IgnoreTags);
 
 		if (SenseClass)
 		{
@@ -152,9 +121,9 @@ void USussPerceptionKnownNonHostilesQueryProvider::ExecuteQuery(USussBrainCompon
 	if (const auto Perception = Brain->GetPerceptionComponent())
 	{
 		TArray<AActor*> PerceptionResults;
-		TSubclassOf<UAISense> SenseClass = GetSenseClassFromParams(Params);
+		TSubclassOf<UAISense> SenseClass = GetSenseClass(Params);
 		FGameplayTagContainer IgnoreTags;
-		GetIgnoreTagsFromParams(Params, IgnoreTags);
+		GetIgnoreTags(Params, IgnoreTags);
 		if (SenseClass)
 		{
 			const FAISenseID SenseID = UAISense::GetSenseID(SenseClass);
@@ -207,18 +176,31 @@ USussPerceptionKnownHostilesExtendedQueryProvider::USussPerceptionKnownHostilesE
 	QueryValueType = ESussContextValueType::Struct;
 }
 
-void USussPerceptionKnownHostilesExtendedQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
-	AActor* Self,
+TSubclassOf<UAISense> USussPerceptionKnownHostilesExtendedQueryProvider::GetSenseClass(
+	const TMap<FName, FSussParameter>& Params)
+{
+	return USussUtility::GetSenseClassFromParams(Params);
+}
+
+void USussPerceptionKnownHostilesExtendedQueryProvider::GetIgnoreTags(
 	const TMap<FName, FSussParameter>& Params,
-	const FSussContext& Context,
-	TArray<FSussContextValue>& OutResults)
+	FGameplayTagContainer& OutTags)
+{
+	USussUtility::GetIgnoreTagsFromParams(Params, OutTags);
+}
+
+void USussPerceptionKnownHostilesExtendedQueryProvider::ExecuteQuery(USussBrainComponent* Brain,
+                                                                     AActor* Self,
+                                                                     const TMap<FName, FSussParameter>& Params,
+                                                                     const FSussContext& Context,
+                                                                     TArray<FSussContextValue>& OutResults)
 {
 	if (const auto Perception = Brain->GetPerceptionComponent())
 	{
-		TSubclassOf<UAISense> SenseClass = GetSenseClassFromParams(Params);
+		TSubclassOf<UAISense> SenseClass = GetSenseClass(Params);
 		const FAISenseID SenseID = UAISense::GetSenseID(SenseClass);
 		FGameplayTagContainer IgnoreTags;
-		GetIgnoreTagsFromParams(Params, IgnoreTags);
+		GetIgnoreTags(Params, IgnoreTags);
 		for (auto It = Perception->GetPerceptualDataConstIterator(); It; ++It)
 		{
 			const FActorPerceptionInfo& Info = It->Value;
