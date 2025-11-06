@@ -25,6 +25,12 @@ protected:
 
 	/// Subclasses: fill this with the abilities you want to activate
 	TArray<FGameplayAbilitySpec*> AbilitiesActivating;
+
+	/// If true, pass EventData to the abilities you're activating.
+	uint8 bUseEventData : 1 = false;
+	/// Populate this with extra event data you want to pass to the abilities being activated and set bUseEventData = true
+	FGameplayEventData EventData;
+	
 	FDelegateHandle OnAbilityEndedHandle;
 
 	virtual void Reset_Implementation() override;

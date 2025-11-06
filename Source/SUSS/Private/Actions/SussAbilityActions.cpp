@@ -56,11 +56,22 @@ void USussActivateAbilityActionBase::Activate(const FSussContext& Context, float
 			for (int i = 0; i < AbilitiesActivating.Num(); ++i)
 			{
 				auto Spec = AbilitiesActivating[i];
-				if (ASC->TryActivateAbility(Spec->Handle, bAllowRemote))
+				
+				if (bUseEventData)
 				{
-					bSuccess = true;
+					bSuccess = ASC->TriggerAbilityFromGameplayEvent(
+						Spec->Handle,
+						ASC->AbilityActorInfo.Get(),
+						EventData.EventTag,
+						&EventData,
+						*ASC);
 				}
 				else
+				{
+					bSuccess = ASC->TryActivateAbility(Spec->Handle, bAllowRemote);
+				}
+
+				if (!bSuccess)
 				{
 					AbilitiesActivating.RemoveAt(i);
 					--i;
