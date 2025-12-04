@@ -85,7 +85,6 @@ FVector ASussAIControllerBase::GetFocalPointOnActor(const AActor* Actor) const
 		if (bLeadTargetIgnoreZVelocity)
 		{
 			V.Z = 0;
-			V.Normalize();
 		}
 		return FocusBaseLoc + TimeToHitCurrent * V;
 	}
