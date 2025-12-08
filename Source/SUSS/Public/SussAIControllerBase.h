@@ -54,4 +54,7 @@ public:
 
 	// Overriden to support leading moving targets
 	virtual FVector GetFocalPointOnActor(const AActor* Actor) const override;
+	
+	/// Call this to supply a custom actor velocity (e.g. averaged)
+	virtual FVector EstimateFutureActorPosition(const AActor* Actor, const FVector& ActorVelocity) const;
 };

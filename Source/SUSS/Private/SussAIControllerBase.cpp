@@ -60,6 +60,13 @@ void ASussAIControllerBase::StopCurrentAction()
 
 FVector ASussAIControllerBase::GetFocalPointOnActor(const AActor* Actor) const
 {
+	
+	return EstimateFutureActorPosition(Actor, Actor->GetVelocity());
+}
+
+FVector ASussAIControllerBase::EstimateFutureActorPosition(const AActor* Actor,
+	const FVector& ActorVelocity) const
+{
 	if (!Actor)
 		return FAISystem::InvalidLocation;
 
@@ -81,7 +88,7 @@ FVector ASussAIControllerBase::GetFocalPointOnActor(const AActor* Actor) const
 		// We simply calculate the time it would take the projectile to hit the target where it is now, and calculate
 		// where it will be in that time and aim at that instead
 		const float TimeToHitCurrent = FVector::Distance(AgentPawn->GetActorLocation(), FocusBaseLoc) / LeadTargetProjectileVelocity;
-		FVector V = Actor->GetVelocity();
+		FVector V = ActorVelocity;
 		if (bLeadTargetIgnoreZVelocity)
 		{
 			V.Z = 0;
