@@ -177,6 +177,10 @@ void USussGameSubsystem::RegisterActionClass(TSubclassOf<USussAction> ActionClas
 			UE_LOG(LogSuss, Warning, TEXT("Unable to register Action Class %s, tag is invalid. Did you forget to set it in your class defaults? If this is an abstract base class, mark it as abstract to remove this warning."), *ActionClass->GetName())
 		}
 	}
+	else
+	{
+		UE_LOG(LogSuss, Warning, TEXT("Unable to register Action Class %s, class default object is null."), *ActionClass->GetName())
+	}
 }
 
 void USussGameSubsystem::UnregisterActionClass(TSubclassOf<USussAction> ActionClass)
