@@ -416,7 +416,7 @@ TArray<FSussActorPerceptionInfo> USussBrainComponent::GetPerceptionInfo(bool bIn
 	GetPerceptionInfo(Ret, bIncludeKnownButNotCurrent, bHostileOnly, SenseClass, bSenseClassInclude);
 	return Ret;
 }
-UE_DISABLE_OPTIMIZATION
+
 FSussActorPerceptionInfo USussBrainComponent::GetMostRecentPerceptionInfo(bool& bIsValid, bool bHostileOnly,
                                                                           TSubclassOf<UAISense> SenseClass,
                                                                           bool bSenseClassInclude)
@@ -461,7 +461,7 @@ FSussActorPerceptionInfo USussBrainComponent::GetMostRecentPerceptionInfo(bool& 
 	bIsValid = false;
 	return FSussActorPerceptionInfo();
 }
-UE_ENABLE_OPTIMIZATION
+
 bool USussBrainComponent::IsUpdatePrevented() const
 {
 	if (BrainConfig.PreventBrainUpdateIfAnyTags.Num() > 0)
