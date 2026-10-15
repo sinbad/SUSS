@@ -96,11 +96,17 @@ USTRUCT()
 struct FSussActionScoringResult
 {
 	GENERATED_BODY()
-
-public:
-	int ActionDefIndex;
+	
+	int ActionDefIndex = INDEX_NONE;
 	FSussContext Context;
 	float Score = 0;
+	
+	void Reset()
+	{
+		ActionDefIndex = INDEX_NONE;
+		Context.Reset();
+		Score = 0;
+	}
 };
 
 
@@ -200,9 +206,19 @@ public:
 	
 	const FSussBrainConfig& GetBrainConfig() const { return BrainConfig; }
 
+	/// Initialise the brain with a configuration.
+	/// Note: it is NOT recommended to change this after the brain has started running. Use priority groups
+	/// and action sets to partition your behaviour into groups if you need to change between various states,
+	/// and use a static brain configuration once started.
+	/// Calling this after the brain has started running will re-initialise it and cancel any running action.
 	UFUNCTION(BlueprintCallable)
 	void SetBrainConfig(const FSussBrainConfig& NewConfig);
 
+	/// Initialise the brain with a configuration.
+	/// Note: it is NOT recommended to change this after the brain has started running. Use priority groups
+	/// and action sets to partition your behaviour into groups if you need to change between various states,
+	/// and use a static brain configuration once started.
+	/// Calling this after the brain has started running will re-initialise it and cancel any running action.
 	UFUNCTION(BlueprintCallable)
 	void SetBrainConfigFromAsset(USussBrainConfigAsset* Asset);
 

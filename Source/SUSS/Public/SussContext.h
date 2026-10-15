@@ -207,7 +207,7 @@ USTRUCT(BlueprintType)
 struct FSussContext
 {
 	GENERATED_BODY()
-public:
+
 	/// Actor which represents the pawn with the brain, this is always present
 	UPROPERTY(BlueprintReadOnly)
 	AActor* ControlledActor = nullptr;
@@ -246,6 +246,13 @@ public:
 
 		return true;
 					
+	}
+	
+	void Reset()
+	{
+		ControlledActor = nullptr;
+		Target.Reset();
+		NamedValues.Reset();
 	}
 
 	FString ToString() const

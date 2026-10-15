@@ -50,6 +50,8 @@ void USussBrainComponent::BrainConfigChanged()
 {
 	if (GetOwner()->HasAuthority())
 	{
+		StopCurrentAction();
+		CurrentActionResult.Reset();
 		InitActions();
 	}
 }
@@ -350,6 +352,7 @@ void USussBrainComponent::InitActions()
 	});
 
 	// Init history
+	ActionHistory.Reset(CombinedActionsByPriority.Num());
 	ActionHistory.SetNum(CombinedActionsByPriority.Num());
 }
 
