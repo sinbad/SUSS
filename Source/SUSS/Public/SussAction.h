@@ -46,6 +46,8 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Transient)
 	int BrainActionIndex;
 
+	/// The brain updates BrainActionIndex when a config change re-orders its action list while this action is running
+	friend class USussBrainComponent;
 	
 	/// Override this function to reset this action instance back to its initial state. Because
 	/// action instances are re-used it's important to reset any additional state you store in an

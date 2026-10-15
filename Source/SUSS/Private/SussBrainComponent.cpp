@@ -50,7 +50,23 @@ void USussBrainComponent::BrainConfigChanged()
 {
 	if (GetOwner()->HasAuthority())
 	{
-		InitActions();
+		// Rebuild the action list straight away, except in the two cases where it must wait for the next Update():
+		//  - we're inside our own Update(). ChooseAction holds references into the action list across PerformAction
+		//    and across the outgoing action's CancelAction, so a config change made from action code (or from an
+		//    OnPreBrainUpdate listener) must not rebuild the list underneath it.
+		//  - the new config removes the action that's currently running. InitActions is pure data and never calls
+		//    into action code, so it can't stop the action itself; Update() does that (if the action can be
+		//    interrupted) before rebuilding.
+		// In both cases the pending change is applied at the start of the next Update(), which we queue here.
+		bConfigChangePending = true;
+		if (!bInUpdate)
+		{
+			InitActions();
+		}
+		if (bConfigChangePending)
+		{
+			QueueForUpdate();
+		}
 	}
 }
 
@@ -325,29 +341,101 @@ EAILogicResuming::Type USussBrainComponent::ResumeLogic(const FString& Reason)
 
 void USussBrainComponent::InitActions()
 {
+	// Several things are keyed by an action's POSITION in CombinedActionsByPriority: ActionHistory, the running
+	// action's CurrentActionResult.ActionDefIndex, and the running USussAction's own BrainActionIndex. Rebuilding the
+	// list from a new config re-sorts it, so we build the new list beside the old one, remembering where each entry came
+	// from, and then move everything position-keyed through one old-to-new index map. Two entries are the same action
+	// when they come from the same place (same action set or the brain's own ActionDefs, same index there) and have
+	// the same ActionTag.
+	//
+	// This function is pure data: it never calls into action code. If the new config has no place for the action
+	// that is currently running, nothing is committed and the change stays pending; Update() stops the action (if it
+	// can be interrupted) and calls us again.
+	TArray<TPair<FSussActionDef, FSussActionOrigin>> Entries;
 	// Collate all the actions from referenced action sets, and actions only on this instance
-	CombinedActionsByPriority.Empty();
 	for (auto ActionSet : BrainConfig.ActionSets)
 	{
 		// Guard against bad config
 		if (IsValid(ActionSet))
 		{
-			for (auto& Action : ActionSet->GetActions())
+			for (int32 i = 0; i < ActionSet->GetActions().Num(); ++i)
 			{
-				CombinedActionsByPriority.Add(Action);
+				Entries.Emplace(ActionSet->GetActions()[i], FSussActionOrigin(ActionSet, i));
 			}
 		}
 	}
-	for (auto& Action : BrainConfig.ActionDefs)
+	for (int32 i = 0; i < BrainConfig.ActionDefs.Num(); ++i)
 	{
-		CombinedActionsByPriority.Add(Action);
+		Entries.Emplace(BrainConfig.ActionDefs[i], FSussActionOrigin(FObjectKey(), i));
 	}
 
-	// Sort by ascending priority
-	CombinedActionsByPriority.Sort([](const FSussActionDef& A, const FSussActionDef& B)
+	// Sort by ascending priority. The predicate only reads the def's priority, so the resulting order (ties included)
+	// is the same as sorting the defs on their own.
+	Entries.Sort([](const TPair<FSussActionDef, FSussActionOrigin>& A, const TPair<FSussActionDef, FSussActionOrigin>& B)
 	{
-		return A.Priority < B.Priority;
+		return A.Key.Priority < B.Key.Priority;
 	});
+
+	// OldIndexOf[New] is the index in the OLD list of the entry that new entry New is, or INDEX_NONE if it's new.
+	// The pairing is one-to-one: each new entry takes the first unclaimed old entry with the same origin and tag,
+	// except that the running entry is taken in preference whenever it's a candidate. That matters when a config lists
+	// the same action set twice (two entries with one origin): dropping one listing must keep the copy that's running.
+	const int32 Running = CurrentActionResult.ActionDefIndex;
+	TArray<int32> OldIndexOf;
+	for (const TPair<FSussActionDef, FSussActionOrigin>& Entry : Entries)
+	{
+		auto IsSame = [&](const int32 Old)
+		{
+			return !OldIndexOf.Contains(Old) && ActionOrigins[Old] == Entry.Value
+				&& CombinedActionsByPriority[Old].ActionTag == Entry.Key.ActionTag;
+		};
+		int32 Old = (CombinedActionsByPriority.IsValidIndex(Running) && IsSame(Running)) ? Running : 0;
+		while (CombinedActionsByPriority.IsValidIndex(Old) && !IsSame(Old))
+		{
+			++Old;
+		}
+		OldIndexOf.Add(CombinedActionsByPriority.IsValidIndex(Old) ? Old : INDEX_NONE);
+	}
+
+	// The running action has no place in the new config: commit nothing, leave the change pending for Update()
+	if (IsActionInProgress() && CombinedActionsByPriority.IsValidIndex(Running) && !OldIndexOf.Contains(Running))
+	{
+		return;
+	}
+
+	// Commit, moving everything position-keyed through the same map. A surviving action keeps its history entry, a new
+	// one starts from defaults, and a removed one's entry is dropped. On the FIRST build there is no old list to map
+	// from, so the history is left alone (SetNum below) in case it was restored before the list was built.
+	bConfigChangePending = false;
+	const bool bRebuild = !CombinedActionsByPriority.IsEmpty();
+	TArray<FSussActionHistory> History;
+	History.SetNum(Entries.Num());
+	CombinedActionsByPriority.Reset();
+	ActionOrigins.Reset();
+	for (int32 New = 0; New < Entries.Num(); ++New)
+	{
+		CombinedActionsByPriority.Add(MoveTemp(Entries[New].Key));
+		ActionOrigins.Add(Entries[New].Value);
+		if (ActionHistory.IsValidIndex(OldIndexOf[New]))
+		{
+			History[New] = MoveTemp(ActionHistory[OldIndexOf[New]]);
+		}
+	}
+	if (bRebuild)
+	{
+		ActionHistory = MoveTemp(History);
+	}
+	// The running action's index moves with it (INDEX_NONE stays INDEX_NONE: nothing chosen, or the action has ended)
+	if (CurrentActionResult.ActionDefIndex != INDEX_NONE)
+	{
+		CurrentActionResult.ActionDefIndex = OldIndexOf.Find(CurrentActionResult.ActionDefIndex);
+	}
+	if (CurrentActionInstance.IsValid())
+	{
+		CurrentActionInstance->BrainActionIndex = CurrentActionResult.ActionDefIndex;
+	}
+	// The last update's candidates refer to old positions (the gameplay debugger reads them); the next update rebuilds them
+	CandidateActions.Reset();
 
 	// Init history
 	ActionHistory.SetNum(CombinedActionsByPriority.Num());
@@ -734,6 +822,8 @@ void USussBrainComponent::OnActionCompleted(USussAction* SussAction)
 
 void USussBrainComponent::Update()
 {
+	// A config change made while we're in here is deferred until the next Update() (see BrainConfigChanged)
+	TGuardValue<bool> InUpdate(bInUpdate, true);
 	bQueuedForUpdate = false;
 	
 	if (!GetOwner()->HasAuthority())
@@ -744,6 +834,29 @@ void USussBrainComponent::Update()
 	// This is to catch updates called after StopLogic/PauseLogic because they were already queued
 	if (bIsLogicStopped)
 		return;
+
+	// Apply a config change that had to wait (it was made from inside an earlier Update(), or it removes the action
+	// that is running), before anything below takes a reference into the action list. A running action that survives
+	// the new config is simply re-indexed and carries on. One that doesn't is stopped here, if it can be interrupted,
+	// BETWEEN two rebuilds: the first finds no place for it and commits nothing; the stop runs the action's CancelAction
+	// (which may itself change the config - that's deferred again, since we're inside Update); the second rebuild
+	// then applies whatever config is current. If the running action can't be interrupted, the change stays pending
+	// and the old list stays in use until it completes (which queues another update).
+	if (bConfigChangePending)
+	{
+		InitActions();
+		if (bConfigChangePending && CurrentActionInstance->CanBeInterrupted())
+		{
+			const FSussActionDef& Def = CombinedActionsByPriority[CurrentActionResult.ActionDefIndex];
+			UE_LOG(LogSuss, Log, TEXT("%s: new brain config has no place for the running action %s, stopping it"),
+				*GetNameSafe(GetOwner()), Def.Description.IsEmpty() ? *Def.ActionTag.ToString() : *Def.Description);
+			StopCurrentAction();
+			if (bConfigChangePending)
+			{
+				InitActions();
+			}
+		}
+	}
 
 	if (CombinedActionsByPriority.IsEmpty())
 		return;

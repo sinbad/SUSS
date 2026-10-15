@@ -8,6 +8,7 @@
 #include "SussPoolSubsystem.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Runtime/AIModule/Classes/BrainComponent.h"
+#include "UObject/ObjectKey.h"
 #include "SussBrainComponent.generated.h"
 
 class UCharacterMovementComponent;
@@ -98,7 +99,8 @@ struct FSussActionScoringResult
 	GENERATED_BODY()
 
 public:
-	int ActionDefIndex;
+	/// Index into the brain's combined action list; INDEX_NONE when nothing has been chosen (0 is a valid index)
+	int ActionDefIndex = INDEX_NONE;
 	FSussContext Context;
 	float Score = 0;
 };
@@ -135,6 +137,7 @@ class SUSS_API USussBrainComponent : public UBrainComponent
 #if WITH_AUTOMATION_TESTS
 public:
 	friend class FSussBrainTestContextsSpec;
+	friend class FSussBrainConfigSwapSpec;
 #endif
 	
 protected:
@@ -199,6 +202,13 @@ public:
 	FOnSussBrainUpdate OnPostBrainUpdate;
 	
 	const FSussBrainConfig& GetBrainConfig() const { return BrainConfig; }
+
+	/// Whether the brain config has changed but the action list has not caught up with it yet. A config change is
+	/// normally applied immediately, but it has to wait when it is made from inside this brain's own Update() (e.g.
+	/// from an action's PerformAction / CancelAction), or when it removes the action that is currently running. In
+	/// both cases it is applied at the start of the next Update(). While this is true, GetBrainConfig() returns the new
+	/// config but the action history is still keyed to the old action list.
+	bool IsConfigChangePending() const { return bConfigChangePending; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetBrainConfig(const FSussBrainConfig& NewConfig);
@@ -471,4 +481,17 @@ protected:
 	
 	FSussParameter ResolveParameter(const FSussContext& SelfContext, const FSussParameter& Value) const;
 	void ResolveParameters(AActor* Self, const TMap<FName, FSussParameter>& InParams, TMap<FName, FSussParameter>& OutParams);
+
+private:
+	/// Where an entry of CombinedActionsByPriority came from: the action set it was defined in (a null key for the
+	/// brain's own ActionDefs) and its index within that set. Together with the def's ActionTag this identifies the
+	/// same action across a rebuild of the list, so that a config change can move the history and the running action's
+	/// index along with it rather than leaving them keyed to stale positions.
+	using FSussActionOrigin = TPair<FObjectKey, int32>;
+	/// One origin per entry of CombinedActionsByPriority, in the same order
+	TArray<FSussActionOrigin> ActionOrigins;
+	/// BrainConfig has changed but the action list has not been rebuilt from it yet (see IsConfigChangePending)
+	bool bConfigChangePending = false;
+	/// True while Update() is on the stack, so that a config change made from inside it is deferred
+	bool bInUpdate = false;
 };
